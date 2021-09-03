@@ -1,0 +1,98 @@
+---
+title: "data.prep"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(data.table)
+library(tidyverse)
+library(rprojroot)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+The internet archive data is saved on /hdd
+
+```{r}
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path <- paste0(data.folder, "all.csv")
+
+all <- fread(data.path)
+#glimpse(all)
+unique(all$year)
+
+all$id <- seq.int(nrow(all))
+
+# for test at the end
+test.all <- dim(all[1])
+
+# data.path_ <- paste0(data.folder, "all_sample.csv")
+# all_ <-fread(data.path_)
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- fread(path.lookup)
+#glimpse(lookup)
+```
+Merge
+
+```{r}
+setkey(lookup, pcds)
+setkey(all, pc)
+all.msoa <- lookup[all]
+
+sapply(all.msoa, function(x) sum(is.na(x)))
+```
+
+The next snippet drops URLS from the same host referring to same postcode, which
+were observed more than once per year. 
+In other words, it drops URLs, which were archived multiple times per year.
+
+```{r}
+all.msoa <- unique(all.msoa, by = c("host", "year", "pcds"))
+```
+
+Aggregate
+
+```{r}
+msoa <- all.msoa[, .(count.url=.N), by = .(year, msoa11cd)]
+```
+
+Test to see if i have missed any of the original urls
+
+```{r}
+test.msoa <- sum(msoa$count.url)
+ifelse(test.all==test.msoa, yes = "OK", no = "problem")
+
+missing <- msoa[is.na(msoa$msoa11cd)]
+print(sum(missing$count.url)) #
+```
+
+Drop the observations without MSOA code
+
+```{r}
+msoa <- msoa[!is.na(msoa11cd)]
+```
+
+Export
+
+```{r}
+path.out <- paste0(path, "/data/temp/msoa.csv")
+fwrite(msoa, path.out) # for all obs
+```
