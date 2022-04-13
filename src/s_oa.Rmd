@@ -1,0 +1,501 @@
+---
+title: "s.function"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(broom)
+library(rprojroot)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>% # for n == 1 
+  ungroup()
+
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## Help, not really used
+
+```{r, eval=FALSE}
+
+df.test <- df %>% filter(oa11cd == "E00000007" |
+                         oa11cd == "E00000021" |
+                         oa11cd == "E00000025") %>% 
+  mutate(rownum = row_number(),
+         value2 = n/max(n))
+
+# function to select unique groups
+sample_n_groups = function(grouped_df, size, replace = FALSE, weight=NULL) {
+  grp_var <- grouped_df %>% 
+    groups %>%
+    unlist %>% 
+    as.character
+  random_grp <- grouped_df %>% 
+    summarise() %>% 
+    sample_n(size, replace, weight) %>% 
+    mutate(unique_id = 1:NROW(.))
+  grouped_df %>% 
+    right_join(random_grp, by=grp_var) %>% 
+    group_by_(grp_var) 
+}
+
+df.test <- df %>% group_by(oa11cd) %>% 
+  sample_n_groups(10000) %>% 
+  arrange(oa11cd, year) %>% 
+  select(-unique_id)
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
+  
+fd.nls <- df.test %>% 
+  group_by(oa11cd) %>%
+  select(year, oa11cd, n) %>% 
+  do(fitloop = tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .))) %>% 
+  unnest(fitloop)
+
+fd.nls %>% filter(term=="xmid") %>% 
+  summarise(rng = range(estimate))
+```
+
+## Test for S function estimation
+
+To interpret the coefficients, check [SSlogis](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/SSlogis).
+This is a self-starting model, which estimates the starting values. 
+
+
+```{r}
+df.test <- df %>% filter(oa11cd == "S00103828") 
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
+summary(fit)
+
+df.test$prednls = predict(fit)
+
+ggplot(df.test, aes(x = year, y = n) ) +
+  geom_point() +
+  geom_line(aes(y = prednls), size = 1) +
+  scale_x_continuous("year", labels = as.character(df.test$year), breaks = df.test$year) +
+  ylab("N. of websites")
+  #scale_x_date(breaks = df.test$year) 
+```
+
+## S function estimation for all the country
+
+```{r}
+df.country <- df %>% group_by(year) %>% 
+  summarise(n = sum(n))
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
+summary(fit)
+
+df.country$prednls = predict(fit)
+
+ggplot(df.country, aes(x = year, y = n) ) +
+  geom_point() +
+  geom_line(aes(y = prednls), size = 1) +
+  scale_x_continuous("year", labels = as.character(df.country$year), breaks = df.country$year) +
+  ylab("N. of websites") +
+  ggtitle("Country")
+  #scale_x_date(breaks = df.test$year) 
+```
+
+## Loop for S function estimation for OA
+
+```{r}
+a <- as_tibble()
+all.oa <- unique(df$oa11cd)
+for (oa in all.oa){
+  data <- df %>% filter(oa11cd==oa) %>%
+    select(year, oa11cd, n) 
+    #lm(n~year, data = .)
+    #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
+  tryCatch(b <- tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
+  tryCatch(a <-rbind(a,b), error=function(e) NULL)
+}
+
+a %>% filter(term=="xmid") %>% 
+  mutate(estimate = round(estimate, 0)) %>% 
+  select(estimate) %>% 
+  summarise(r = range(estimate))
+
+a %>% filter(term=="xmid") %>% 
+  mutate(estimate = round(estimate, 0)) %>% 
+  filter(p.value < 0.01) %>%    # (227759 - 212782)/227759  # 6% not sig 
+  select(estimate) %>% 
+  ggplot(aes(x=estimate)) + 
+  geom_histogram(binwidth = 1) +
+  geom_vline(xintercept = 2003, colour = "red")
+  scale_x_continuous("year", labels = round(a$estimate, 0), breaks = round(a$estimate, 0)) 
+  #scale_x_discrete(labels = as.factor(a$estimate))
+  
+a <- a %>% filter(term=="xmid") %>% 
+    bind_cols(all.oa) %>% 
+    mutate(estimate = round(estimate, 0)) %>% 
+    filter(p.value < 0.01) %>%    # (227759 - 212782)/227759  # 6% not sig 
+    rename(id = ...6) %>% 
+    select(id, estimate)
+```
+
+write the object with all the models
+
+```{r}
+path.out <- paste0(path, "/data/temp/s.csv")
+write_csv(a, path.out)
+```
+
+## Map the xmid
+
+Spatial data
+
+```{r}
+# get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+oa.ew <- spTransform(oa.ew, CRS("+init=epsg:4326"))
+
+# keep in the data slot only the ONS Output Area id, renaming it as 'id'
+oa.ew <- oa.ew[, c('OA11CD', 'Shape__Area')]
+colnames(oa.ew@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.ew <- spChFIDs(oa.ew, as.character(oa.ew$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.ew)
+
+# # get OA for Scotland
+# path.geo.sc <- paste0(path, "/data/raw/SG_DataZoneBdry_2011")
+# oa.sc <- readOGR(dsn=path.geo.sc, layer = "SG_DataZone_Bdry_2011")
+# # source: https://data.gov.uk/dataset/ab9f1f20-3b7f-4efa-9bd2-239acf63b540/data-zone-boundaries-2011
+# 
+# # spatial transformations
+# oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+# 
+# # Scotland (follows same steps as EW, see notes above)
+# oa.sc <- oa.sc[, 'DataZone']
+# colnames(oa.sc@data) <- c('id')
+# 
+# # reassign the polygon IDs
+# oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+# 
+# # check the CRS has changed correctly, and the data slot has shrink to only the ID
+# summary(oa.sc)
+
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- readOGR(dsn=path.geo.sc, layer = "OutputArea2011_MHW")
+# source: https://www.nrscotland.gov.uk/statistics-and-data/geography/our-products/census-datasets/2011-census/2011-boundaries
+
+# spatial transformations
+oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+
+# Scotland (follows same steps as EW, see notes above)
+oa.sc <- oa.sc[, c('code', 'SHAPE_1_Ar')]
+colnames(oa.sc@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.sc)
+
+# build oa for GB
+oa.gb <- spRbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+
+# oa.gb$geometry <- oa.gb$geometry %>%
+#   s2::s2_rebuild() %>%
+#   sf::st_as_sfc()
+
+# get GB
+path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+gb <- readOGR(path.gb)
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+
+gb.df <- fortify(gb)
+```
+
+```{r}
+
+# spatial transformations
+oa.gb <- spTransform(oa.gb, CRS("+init=epsg:4326"))
+
+# ggplot2 maps
+oa.gb.f <- fortify(oa.gb, region = "id")
+
+oa.gb.f <- oa.gb.f %>% left_join(a, by = "id") %>% 
+  mutate(fast = ifelse(estimate < 2003, "fast", "slow")) %>% 
+  arrange(order)  # if i don't order merge.nuts.f loses order and the map has gaps
+
+
+# oa.gb.f %>% mutate(fast = ifelse(estimate < 2003, 1, 0)) %>% 
+#   arrange(order) %>% 
+ggplot(data = oa.gb.f %>% arrange(order), aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = estimate)) + #fill = fast, 
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  scale_fill_continuous(type = "viridis") +
+  theme_void()
+```
+
+## OA classification
+
+[Source](https://data.cdrc.ac.uk/dataset/output-area-classification-2011)
+
+```{r}
+oa.class.path <- paste0(path, "/data/raw/Output Area Classification")
+oa.class <- readOGR(dsn = oa.class.path)
+oa.class@data %>% glimpse()
+
+pen.path <- paste0(path, "/data/raw/Output Area Classification/penportraits.csv")
+pen <- read.csv(pen.path, sep = "\t")
+
+oa.class.df <- a %>%  
+  mutate(fast = ifelse(estimate < 2003, "fast", "slow")) %>% 
+  left_join(oa.class@data, by = c("id"="OA_SA")) %>% 
+  select(1:10) %>% 
+  arrange(id) 
+
+length(unique(oa.class.df$GRP))
+
+oa.class.df %>% 
+  filter(fast == "slow") %>% 
+  group_by(SUBGRP) %>% 
+  summarise(n=n()) %>% 
+  arrange(-n) %>% 
+  mutate(freq = n / sum(n),
+         freq = round(freq, 2),
+         cum.n = cumsum(n),
+         cum.freq = cumsum(n / sum(n)),
+         cum.freq = round(cum.freq, 2)) %>% 
+  left_join(pen %>% select(code, name),
+            by = c("SUBGRP" = "code")) %>% 
+  kable()
+
+# no obvious group / subgroup patterns between slow and fast
+```
+
+## Regress xmid
+
+### Distances to cities and retail centres
+
+First set up the destinations. Origins are all the OA.
+
+Major cities from [source](https://www.citypopulation.de/en/uk/cities/).
+Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-boundaries)
+
+```{r}
+# oa centroids
+# oa.gb.c <- (rgeos::gCentroid(oa.gb, byid=TRUE))@coords %>% as.data.frame()
+# oa.gb.c$id <- row.names(oa.gb.c)  #as_tibble(rownames = NA) %>% 
+#   mutate(id = row.names())
+oa.gb.c <- gCentroid(oa.gb, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id")
+
+# cities
+city.names <- c("London, UK", 
+"Birmingham, UK",
+"Glasgow, UK",
+"Liverpool, UK",
+"Bristol, UK",
+"Manchester, UK",
+"Sheffield, UK",
+"Leeds, UK",
+"Edinburgh, UK",
+"Leicester, UK")	
+
+cities <- geo(city.names, no_query = F, method = "arcgis")
+
+# retail centres
+geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
+retail <-readOGR(geo.path) 
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id") #%>%
+
+retail.major.cetres <- retail.major.cetres.help %>% 
+  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+  st_transform(4326) %>%
+  st_coordinates() %>%
+  as_tibble() %>% 
+  bind_cols(retail.major.cetres.help$id) %>% 
+  rename(id = '...3') %>% 
+  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+```
+
+Distance to cities
+
+```{r}
+dist <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- round((dist/1000),2) %>% 
+  as_tibble()  
+
+city.names <- city.names %>% stringr::str_remove(", UK")
+names(dist) <- city.names 
+
+dist <- dist %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+dist <- transform(dist, dist = do.call(pmin, dist[-1]))
+
+
+
+# NOT USED AS IT SCREWS UP THE REGRESSIONS
+# Complete panel, N = 3871903, 17 year * 227759 OA
+# df <- df %>% bind_rows(dist %>% select(oa11cd)) %>% 
+#   mutate(year = ifelse(is.na(year),1000, year),
+#          country = substring(oa11cd, 1, 1)) %>% 
+#   filter(country != "L" & country != "M" & country != "N") %>% 
+#   filter(!is.na(country)) %>% 
+#   complete(year, oa11cd, fill = list(n = 0)) %>% 
+#   filter(year!=1000,
+#          !is.na(oa11cd)) %>% 
+#   select(-country)
+
+
+
+# tests
+# test$country <- substring(test$oa11cd, 1, 1)
+# unique(test$country)
+# length(unique(test$oa11cd))
+
+# Join with distance and area
+oa.class.df <- oa.class.df %>% left_join(dist, by = c("id" = "oa11cd")) 
+sapply(df, function(x) sum(is.na(x)))
+```
+
+Distance to retail centres
+
+```{r}
+dist.retail <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- round((dist.retail/1000),2) %>% 
+  as_tibble()  
+
+# retail.names <- retail.major.cetres$RC_Name
+# names(dist.retail) <- retail.names 
+
+dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# Minimum distance 
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
+dist.retail <- dist.retail %>% select(oa11cd, dist.retail)
+
+# Join with complete panel
+oa.class.df <- oa.class.df %>% left_join(dist.retail, by = c("id" = "oa11cd")) 
+
+sapply(oa.class.df, function(x) sum(is.na(x)))
+```
+
+Distance regressions
+
+```{r}
+
+oa.class.df <- oa.class.df %>% left_join(df %>% group_by(oa11cd) %>% summarise(max.n = max(n, na.rm = T)), #filter(year==2012), 
+                          by = c("id"="oa11cd")) 
+
+model.n <- lm(estimate ~ max.n, data = oa.class.df) #%>%filter(estimate>1996 & estimate <2012)
+summary(model.n)
+nobs(model.n)
+
+
+model <- lm(estimate ~ log(London + 1) + log(dist + 1) + log(dist.retail + 1) + 
+              as.factor(SPRGRP) + log(POPULATION) + max.n, data = oa.class.df) #%>%filter(estimate>1996 & estimate <2012)
+summary(model)
+nobs(model)
+
+oa.class.df <- oa.class.df %>% mutate(fast.f = recode(fast, "fast" = 1, 
+                                          "slow" = 0)) %>% 
+  relocate(fast.f, .after = fast)
+
+model.glm <- glm(fast.f ~ log(London + 1) + log(dist + 1) + log(dist.retail + 1) + 
+              as.factor(SPRGRP) + log(POPULATION) + max.n, family = binomial(link='logit'), data = oa.class.df) #%>%filter(estimate>1996 & estimate <2012)
+summary(model.glm)
+nobs(model.glm)
+
+library(pscl)
+pR2(model.glm)
+
+
+```

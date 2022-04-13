@@ -1,0 +1,212 @@
+---
+title: "data.prep.2011-2012"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(urltools)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, msoa11cd) %>% 
+  dplyr::rename(pc = pcds)
+  # the below is for a 'fuzzy' pc match for missing pc
+  #mutate(pc_1 = str_sub(pc, start = 1, end = nchar(pc)-1))
+
+#glimpse(lookup)
+#problems(lookup)
+#lookup[400296:400300,]
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+
+# old pc file to fill a few hundred NA
+old.pc.path <- "/hdd/internet_archive/archive/ONSPD_FEB_2017_UK.csv"
+old.pc <- read_csv(old.pc.path) %>% 
+  dplyr::select(pcds, msoa11) %>% 
+  rename(msoa11.help = msoa11)
+
+```
+
+Download the 2011-2012 data.
+
+**TODO** move to second drive.
+
+```{r eval=F}
+pre <- "https://www.webarchive.org.uk/datasets/ukwa.ds.2/geo/2011-201304/arcs/part-"
+post <- ".bz2"  
+numbers <- 0:49 
+numbers <- ifelse(numbers < 10, paste0("0000", numbers), paste0("000", numbers))
+urls <- lapply(numbers, function(x) paste0(pre, numbers, post))
+urls <- urls[1]
+
+for (url in urls) {
+    #download.file(url, destfile = basename(url), method="curl", extra="-k")
+    download.file(url, destfile = paste0(path,"/data/temp/", basename(url)))
+}
+```
+
+Loop over the 50 .bz2 files of raw data for 2011-2012 and create a tibble.
+
+```{r}
+
+#bz2.path <- paste0(path,"/data/temp/part-00000.bz2")
+
+all2011_12 <- tibble()
+
+files <- list.files(path=paste0(path,"/data/temp"), pattern="*.bz2", full.names=TRUE, recursive=FALSE)
+
+# files <-c("/home/nw19521/projects/web.diffusion/data/temp/part-00000.bz2",
+#            "/home/nw19521/projects/web.diffusion/data/temp/part-00001.bz2")
+# 
+# x <- files[2]
+
+#lapply(files, function(x) {
+
+for (x in files){
+  df <- read_delim(x, delim = "\t", col_names = F) %>% 
+    rename(url = X1,
+         pc = X2) %>%
+    mutate(year = str_sub(url, start = 1, end = 4),
+           newurl = substring(url,16),
+           domain.ext = domain(newurl)) %>% 
+    #suffix = suffix_extract(domain.ext)[,4])
+    left_join(lookup, by = "pc", suffix =c("","")) %>% 
+    left_join(old.pc, by=c("pc" = "pcds")) %>% 
+    mutate(msoa11cd = ifelse(is.na(msoa11cd), msoa11.help,
+                             msoa11cd)) %>% 
+    select(-msoa11.help) %>% 
+    filter(!is.na(msoa11cd))
+  
+  help <- suffix_extract(df$domain.ext) %>% 
+    select(host, domain, suffix)
+  
+  #file.name = paste0(path,"/data/temp/data20112012_", substr(x[1], 56, 57), ".csv")
+  
+  df <- df %>% 
+    bind_cols(help) %>% 
+    select(-newurl, -domain.ext) %>% 
+    filter(suffix == "co.uk")  # keep the .co.uk
+    #write_csv(file = file.name)
+    
+  all2011_12 <- all2011_12 %>% bind_rows(df)
+  
+  rm(help)
+ }
+
+path.all2011_12 <- paste0(path, "/data/temp/all2011_2012.csv")
+write_csv(all2011_12, path.all2011_12)
+```
+Create PC frequencies and bring them in all2011_2021.
+
+As per the `loop_read_bb_new.R`:
+
+`f <- a[, uniqueN(pc), by = .(host,year)][order(-V1)]`
+`f.old <- a[, .N, by = .(host,year)][order(-N)] # old f`
+
+I need to replicate V1 as this is what I have been using in other papers too.
+
+```{r}
+# # help code
+# f <- test %>% 
+#   group_by(domain.ext, year) %>%
+#   summarise(V1 = n_distinct(pc))
+# 
+# f.old <- test %>% 
+#   group_by(domain.ext, year) %>%
+#   summarise(N = n())
+# # equivalent to:
+# test %>% count(domain.ext, year)
+# 
+# left_join(test, f, by = c("domain.ext" = "domain.ext",
+#                           "year" = "year"))
+
+f <- all2011_12 %>% 
+  group_by(host, year) %>%
+  summarise(V1 = n_distinct(pc))
+
+all2011_12 <- all2011_12 %>% 
+  left_join(f, by = c("host" = "host",
+                      "year" = "year"))
+#sapply(all2011_12, function(x) sum(is.na(x)))
+```
+Aggregate
+
+```{r}
+all2011_12 <- all2011_12 %>% 
+  
+  # strips out the timestamp from the url
+  mutate(url.no.date = substring(url, 16)) %>% 
+  
+  # OLD 
+  # Drops URLS from the same host referring to same postcode, which
+  # are observed more than once per year. 
+  # In other words, it drops URLs, which were archived multiple times per year.
+  #distinct(host, pc,  .keep_all = TRUE) %>%
+  
+  # Drops URLs (no timestamp) referring to same postcode, which
+  # are observed more than once per year. 
+  # In other words, it drops pairs of URLs and postcodes, which were archived multiple times per year.
+  distinct(url.no.date, pc, year, .keep_all = TRUE) %>% 
+  # from 162,716,272 to 106,755,879 rows
+  
+  # Aggregate:
+  # Counts how many unique pairs of url.no.date and pc exist in every MSOA per year.
+  # In other words, it provides the number of georeferenced archived webpages per MSOA and year
+  count(msoa11cd, year) %>% 
+  
+  # Drops 2013 as we only have data for the 1st quarter
+  filter(year!=2013) 
+
+# exports one file per year
+all2011_12 %>% 
+  group_by(year) %>%
+  group_map(~ write_csv(.x, paste0(path,"/data/temp/msoa", .y$year, ".csv")))
+```
+
+Test with other PC files from https://geoportal.statistics.gov.uk/.
+None of the below decreases NA substantially. The old file adds 
+helps a bit, so I use this above.
+
+```{r eval=F}
+# I can only find a few more hunderd PC from the 46k missing.
+old.pc.path <- "/hdd/internet_archive/archive/ONSPD_FEB_2017_UK.csv"
+old.pc <- read_csv(old.pc.path)
+missing_ <- left_join(missing, old.pc, by=c("pc" = "pcds"))
+sapply(missing_, function(x) sum(is.na(x)))
+
+# New pc file
+#https://geoportal.statistics.gov.uk/datasets/national-statistics-postcode-lookup-august-2011/about
+new.pc.file <- "/home/nw19521/projects/web.diffusion/data/raw/NSPL_AUG_2011_UK/Data/NSPL_AUG_2011.csv"
+new.pc <- read_csv(new.pc.file, col_names = F)
+missing_ <- left_join(missing, new.pc, by=c("pc" = "X1"))
+sapply(missing_, function(x) sum(is.na(x)))
+
+# NHS pc file
+nhs.pc.file <- "/home/nw19521/projects/web.diffusion/data/raw/NHSPD_UK_FULL/Data/nhg21aug.csv"
+nhs.pc <- read_csv(nhs.pc.file, col_names = F)
+missing_ <- left_join(missing, nhs.pc, by=c("pc" = "X2"))
+sapply(missing_, function(x) sum(is.na(x)))
+```
+

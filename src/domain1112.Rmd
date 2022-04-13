@@ -1,0 +1,55 @@
+---
+title: "domain1112"
+output: html_document
+---
+
+The following creates a file with a unique pc per domain per year. 
+The `all.csv` was based on all pc per host per year.
+Here, I am using the domain, which in essense is the 3rd level DN.
+
+It is based on the `/archive/data/domain.r` but for the last 2011-2012 data.
+
+```{r setup, include=FALSE}
+library(data.table)
+library(kableExtra)
+library(rprojroot)
+
+path <- find_rstudio_root_file()
+```
+
+
+```{r}
+
+data.path2011_2012 <- paste0(path, "/data/temp/all2011_2012.csv")
+#add comments
+all1112 <- read_csv(data.path2011_2012)
+all1112 <- as.data.table(all1112)
+
+f <- all1112[, uniqueN(pc), by = .(domain,year)][order(-V1)]
+
+setkey(all1112, domain, year) # table, column
+setkey(f, domain, year) # 
+
+# perform the join, eliminating not matched rows from Right
+dim(all1112)
+dim(f)
+all1112<-all1112[f] #, nomatch=0
+
+dim(all1112)
+setnames(all1112, old=("V1"), new=("V1.domain"))  
+
+# unique rows: 1 row per domain, postcode and year. No URLs
+all1112.unique <- unique(all1112, by = c("domain", "pc", "year"))
+dim(all1112.unique)
+all1112.unique$url <- NULL
+all1112.unique$host <-NULL
+all1112.unique$V1 <-NULL
+all1112.unique$N <- NULL
+all1112.unique$msoa11cd <- NULL
+all1112.unique$suffix <- NULL
+
+# export data
+path.out <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+fwrite(all1112.unique, path.out)
+```
+

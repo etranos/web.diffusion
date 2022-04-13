@@ -1,0 +1,243 @@
+---
+title: "diffusion, websites with 1 pc"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(spdep)
+library(tmap)
+library(maptools)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes 
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  #arrange(year, domain) %>% 
+  filter(V1.domain == n,
+         year > 1995) %>% 
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  summarise(n = sum(V1.domain)) %>% 
+  group_by(oa11cd) %>%                   # turn on for growth
+  mutate(growth = (n - lag(n))/lag(n)) %>% # turn on for growth 
+  filter(year != 1996)
+
+rm(df9610, df1112)
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>%
+#   summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="E00000001",
+#               year==2010)
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+# 
+# test@data %>% filter(id=="S00088961",
+#                      year==2010)
+```
+
+## maps
+
+```{r}
+# get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+oa.ew <- spTransform(oa.ew, CRS("+init=epsg:4326"))
+
+# keep in the data slot only the ONS Output Area id, renaming it as 'id'
+oa.ew <- oa.ew[, 'OA11CD']
+colnames(oa.ew@data) <- c('id')
+
+# reassign the polygon IDs
+oa.ew <- spChFIDs(oa.ew, as.character(oa.ew$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.ew)
+
+# get OA for Scotland
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- readOGR(dsn=path.geo.sc, layer = "OutputArea2011_MHW")
+# source: https://www.nrscotland.gov.uk/statistics-and-data/geography/our-products/census-datasets/2011-census/2011-boundaries
+
+# spatial transformations
+oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+
+# Scotland (follows same steps as EW, see notes above)
+oa.sc <- oa.sc[, 'code']
+colnames(oa.sc@data) <- c('id')
+
+# reassign the polygon IDs
+oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.sc)
+
+# build oa for GB
+oa.gb <- spRbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+
+# get GB
+path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+gb <- readOGR(path.gb)
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+
+```
+
+## lisa
+
+```{r}
+
+path.out <- paste0(path, "/outputs/lisa_growth_pc", n, "_oa")
+morani <- data.frame()
+
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(oa.gb)
+listw<- nb2listw(nb, style = "W", zero.policy = T)
+
+for (t in 1997:2012){
+test <- oa.gb
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("id"="oa11cd")) #%>% 
+  # mutate(n = ifelse(is.na(n), 0, n),
+  #        year = ifelse(is.na(year), 1996, year))
+  
+#spatial weight matrix
+#moved out of the loop
+
+#Moran's I
+globalMoran <- moran.test(test$growth, listw, zero.policy = T, na.action = na.exclude)
+a <- cbind(globalMoran$estimate[[1]],globalMoran$p.value, t[1])
+morani <- rbind(a, morani)
+
+#LISA
+lmoran<- cbind(test@data, localmoran(test$growth, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
+#lmoran
+
+# centers the local Moran's around the mean
+lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
+lmoran$lag.growth <- lag.listw(listw,lmoran$growth, NAOK = TRUE)
+
+# centers the variable of interest around its mean
+
+lmoran$ns <- lmoran$growth - mean(lmoran$growth, na.rm = TRUE) 
+lmoran$lag.growth <- lmoran$lag.growth - mean(lmoran$lag.growth, na.rm = TRUE) 
+
+signif <- 0.05
+#lmoran
+
+
+lmoran <- lmoran%>% 
+  mutate(quadrant= ifelse(ns>0 & lag.growth > 0, 1, 0)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.growth < 0, 2, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.growth > 0, 3, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns>0 & lag.growth < 0, 4, quadrant)) %>%   
+  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
+  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+
+
+#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
+# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
+#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
+  
+mun_merge_new<- merge(test, lmoran, by="id")
+
+# R p value map
+breaks = c(0, 1, 2, 3, 4, 5) 
+
+map <- tm_shape(mun_merge_new) + 
+  tm_fill(col = "quadrant", breaks = breaks, palette = c("white","red","blue",
+                                                         rgb(0,0,1,alpha=0.4),
+                                                         rgb(1,0,0,alpha=0.4)), 
+          labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), 
+          title="LISA for growth, OA") +
+  tm_legend(text.size = 1) +
+  # tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
+  # tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
+  # tm_borders(alpha=.5) +
+  tm_borders(lwd = 0) +
+  tm_shape(gb, simplify = .2) + tm_borders(alpha=1, lwd = .5) +
+  tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values")
+ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
+}
+```
+
+Moran I
+
+```{r}
+morani %>% as_tibble() %>% 
+  rename('morani'=V1,
+                   p = V2,
+                   year = V3) %>% 
+  kable()
+```
+
+Spatial regression
+
+```{r}
+library(splm)
+m <- spml(log(n)~lag(log(n)), data = df, listw = listw, lag = TRUE, spatial.error = "b", 
+          model = "within", effect = "individual", method = "eigen", na.action = na.fail)
+
+```

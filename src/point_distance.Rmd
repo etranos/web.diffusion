@@ -1,0 +1,313 @@
+---
+title: "point.distance"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(spdep)
+library(dbscan)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+
+# path.lookup <- "/hdd/internet_archive/archive/ONSPD_FEB_2017_UK.csv"
+# lookup <- read_csv(path.lookup) %>% 
+#   select(pcds, oseast1m, osnrth1m) %>% 
+#   dplyr::rename(pc = pcds)
+
+```
+
+The internet archive data is saved on /hdd.
+
+```{r}
+n = 1 #number of unique postcodes 
+
+data.folder9610 <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder9610, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+data.path1112 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+df1112 <- read_csv(data.path1112)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(V1.domain == n,
+         year > 1995) %>% 
+  left_join(lookup, by = "pc", suffix =c("","")) 
+
+rm(df9610, df1112)
+```
+
+## Boundary data
+
+```{r}
+# get GB
+path.gb <- paste0(path, "/data/raw/Countries_(December_2020)_UK_BUC.geojson")
+gb <- readOGR(path.gb) 
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+gb <- subset(gb, CTRY20NM != "Northern Ireland")
+gb.df <- fortify(gb, region = "CTRY20NM")
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+# get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+oa.ew <- spTransform(oa.ew, CRS("+init=epsg:4326"))
+
+# keep in the data slot only the ONS Output Area id, renaming it as 'id'
+oa.ew <- oa.ew[, c('OA11CD', 'Shape__Area')]
+colnames(oa.ew@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.ew <- spChFIDs(oa.ew, as.character(oa.ew$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.ew)
+
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- readOGR(dsn=path.geo.sc, layer = "OutputArea2011_MHW")
+# source: https://www.nrscotland.gov.uk/statistics-and-data/geography/our-products/census-datasets/2011-census/2011-boundaries
+
+# spatial transformations
+oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+
+# Scotland (follows same steps as EW, see notes above)
+oa.sc <- oa.sc[, c('code', 'SHAPE_1_Ar')]
+colnames(oa.sc@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.sc)
+
+# build oa for GB
+oa.gb <- spRbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+```
+
+## Distances to cities and retail centres
+
+First set up the destinations. Origins are all the OA.
+
+Major cities from [source](https://www.citypopulation.de/en/uk/cities/).
+Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-boundaries)
+
+```{r}
+# oa centroids
+# oa.gb.c <- (rgeos::gCentroid(oa.gb, byid=TRUE))@coords %>% as.data.frame()
+# oa.gb.c$id <- row.names(oa.gb.c)  #as_tibble(rownames = NA) %>% 
+#   mutate(id = row.names())
+oa.gb.c <- gCentroid(oa.gb, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id")
+
+# cities
+city.names <- c("London, UK", 
+"Birmingham, UK",
+"Glasgow, UK",
+"Liverpool, UK",
+"Bristol, UK",
+"Manchester, UK",
+"Sheffield, UK",
+"Leeds, UK",
+"Edinburgh, UK",
+"Leicester, UK")	
+
+cities <- geo(city.names, no_query = F, method = "arcgis")
+
+# retail centres
+geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
+retail <-readOGR(geo.path) 
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id") #%>%
+
+retail.major.cetres <- retail.major.cetres.help %>% 
+  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+  st_transform(4326) %>%
+  st_coordinates() %>%
+  as_tibble() %>% 
+  bind_cols(retail.major.cetres.help$id) %>% 
+  rename(id = '...3') %>% 
+  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+```
+
+Distance to cities
+
+```{r}
+dist <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- round((dist/1000),2) %>% 
+  as_tibble()  
+
+city.names <- city.names %>% stringr::str_remove(", UK")
+names(dist) <- city.names 
+
+dist <- dist %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+dist <- transform(dist, dist = do.call(pmin, dist[-1]))
+
+# tests
+# test$country <- substring(test$oa11cd, 1, 1)
+# unique(test$country)
+# length(unique(test$oa11cd))
+
+# Join with distance and area
+```
+
+Distance to retail centres
+
+```{r}
+dist.retail <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- round((dist.retail/1000),2) %>% 
+  as_tibble()  
+
+# retail.names <- retail.major.cetres$RC_Name
+# names(dist.retail) <- retail.names 
+
+dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# Minimum distance 
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
+dist.retail <- dist.retail %>% select(oa11cd, dist.retail)
+```
+
+Joins
+
+**IMPORTANT** these are distants not to points but to the centroids of the OA they fall within.
+
+```{r}
+
+df <- df %>% left_join(dist, by = c("oa11cd" = "oa11cd")) %>% 
+  left_join(oa.gb@data, by = c("oa11cd" = "id")) %>% 
+  relocate(area, .after = n) %>% 
+  mutate(area = area / 1000000,
+         density = n / area) %>% 
+  relocate(density, .after = area)
+sapply(df, function(x) sum(is.na(x)))
+
+# Join with complete panel
+df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd")) 
+
+sapply(df, function(x) sum(is.na(x)))
+
+
+```
+
+## distance to London plot
+
+```{r}
+df %>%
+  #mutate(text = fct_reorder(text, value)) %>%
+  ggplot( aes(x=London, color=year, fill=year)) +
+    geom_histogram(alpha=0.6, binwidth = 5) +
+    #scale_fill_viridis(discrete=F) +
+    #scale_color_viridis(discrete=F) +
+    #theme_ipsum() +
+    
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    ) +
+    xlab("") +
+    ylab("domains") +
+    facet_wrap(~year, scales = "free_y")
+```
+
+## distance to cities plot
+
+```{r}
+df %>%
+  #mutate(text = fct_reorder(text, value)) %>%
+  ggplot( aes(x=dist, color=year, fill=year)) +
+  geom_histogram(alpha=0.6, binwidth = 5) +
+    #scale_fill_viridis(discrete=F) +
+    #scale_color_viridis(discrete=F) +
+    #theme_ipsum() +
+    
+  # geom_histogram(aes(y = stat(count) / sum(count)), alpha=0.6, binwidth = 5) +
+  # scale_y_continuous(labels = scales::percent)+
+
+  
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    ) +
+    xlab("") +
+    ylab("domains") +
+    facet_wrap(~year, scales = "free_y")
+```
+
+## distance to retail centres
+
+```{r}
+df %>%
+  #mutate(text = fct_reorder(text, value)) %>%
+  ggplot( aes(x=dist.retail, color=year, fill=year)) +
+    geom_histogram(alpha=0.6, binwidth = 5) +
+    #scale_fill_viridis(discrete=F) +
+    #scale_color_viridis(discrete=F) +
+    #theme_ipsum() +
+    
+  theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8)
+    ) +
+    xlab("") +
+    ylab("domains") +
+    facet_wrap(~year, scales = "free_y")
+```

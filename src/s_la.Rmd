@@ -1,0 +1,280 @@
+---
+title: "s.function"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(broom)
+library(rprojroot)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    V1.domain < m,             # for multiple pc
+    #V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, ladcd) %>%
+  summarise(n = n()) %>%            # for multiple pc  
+  #summarise(n = sum(V1.domain)) %>% # for n == 1 
+  ungroup()
+
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## Help, not really used
+
+```{r, eval=FALSE}
+
+df.test <- df %>% filter(oa11cd == "E00000007" |
+                         oa11cd == "E00000021" |
+                         oa11cd == "E00000025") %>% 
+  mutate(rownum = row_number(),
+         value2 = n/max(n))
+
+# function to select unique groups
+sample_n_groups = function(grouped_df, size, replace = FALSE, weight=NULL) {
+  grp_var <- grouped_df %>% 
+    groups %>%
+    unlist %>% 
+    as.character
+  random_grp <- grouped_df %>% 
+    summarise() %>% 
+    sample_n(size, replace, weight) %>% 
+    mutate(unique_id = 1:NROW(.))
+  grouped_df %>% 
+    right_join(random_grp, by=grp_var) %>% 
+    group_by_(grp_var) 
+}
+
+df.test <- df %>% group_by(oa11cd) %>% 
+  sample_n_groups(10000) %>% 
+  arrange(oa11cd, year) %>% 
+  select(-unique_id)
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
+  
+fd.nls <- df.test %>% 
+  group_by(oa11cd) %>%
+  select(year, oa11cd, n) %>% 
+  do(fitloop = tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .))) %>% 
+  unnest(fitloop)
+
+fd.nls %>% filter(term=="xmid") %>% 
+  summarise(rng = range(estimate))
+```
+
+## Test for S function estimation
+
+To interpret the coefficients, check [SSlogis](https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/SSlogis).
+This is a self-starting model, which estimates the starting values. 
+
+
+```{r}
+df.test <- df %>% filter(ladcd == "S12000033") 
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
+summary(fit)
+
+df.test$prednls = predict(fit)
+
+ggplot(df.test, aes(x = year, y = n) ) +
+  geom_point() +
+  geom_line(aes(y = prednls), size = 1) +
+  scale_x_continuous("year", labels = as.character(df.test$year), breaks = df.test$year) +
+  ylab("N. of websites")
+  #scale_x_date(breaks = df.test$year) 
+```
+
+## S function estimation for all the country
+
+```{r}
+df.country <- df %>% group_by(year) %>% 
+  summarise(n = sum(n))
+
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
+summary(fit)
+
+df.country$prednls = predict(fit)
+
+ggplot(df.country, aes(x = year, y = n) ) +
+  geom_point() +
+  geom_line(aes(y = prednls), size = 1) +
+  scale_x_continuous("year", labels = as.character(df.country$year), breaks = df.country$year) +
+  ylab("N. of websites") +
+  ggtitle("Country")
+  #scale_x_date(breaks = df.test$year) 
+```
+
+## Loop for S function estimation for Local Authorities
+
+```{r}
+a.la <- as_tibble()
+all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% simplify2array()
+simplify2array(all.la)
+
+for (i in all.la){
+  data <- df %>% filter(ladcd==i) %>%
+    select(year, ladcd, n) 
+    #lm(n~year, data = .)
+    #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
+  tryCatch(b.la <- tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
+  tryCatch(a.la <-rbind(a.la,b.la), error=function(e) NULL)
+}
+
+a.la %>% filter(term=="xmid") %>% 
+  mutate(estimate = round(estimate, 0)) %>% 
+  select(estimate) %>% 
+  summarise(r = range(estimate),
+            median = median(estimate))
+
+a.la %>% filter(term=="xmid") %>% 
+  mutate(estimate = round(estimate, 0)) %>% 
+  filter(p.value < 0.01) %>%    # (227759 - 212782)/227759  # 6% not sig 
+  select(estimate) %>% 
+  ggplot(aes(x=estimate)) + 
+  geom_histogram(binwidth = 1) +
+  geom_vline(xintercept = 2003, colour = "red")
+  scale_x_continuous("year", labels = round(a$estimate, 0), breaks = round(a$estimate, 0)) 
+  #scale_x_discrete(labels = as.factor(a$estimate))
+  
+a.la <- a.la %>% filter(term=="xmid") %>% 
+  bind_cols(as.tibble(all.la)) %>% 
+  mutate(estimate = round(estimate, 0)) %>% 
+  filter(p.value < 0.01) %>%    # 376 / 376, all sig
+  select(ladcd, estimate)
+  #filter(estimate>2011)
+```
+
+write the object with all the models
+
+```{r eval=F}
+path.out <- paste0(path, "/data/temp/s_la.csv")
+write_csv(a.la, path.out)
+```
+
+## Map the xmid
+
+Spatial data
+
+```{r}
+# get LA for the UK
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+la <- spTransform(la, CRS("+init=epsg:4326"))
+
+la.f <- fortify(la, region = "LAD21CD")
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+```
+
+```{r}
+
+la.f <- la.f %>% left_join(a.la, by = c("id" = "ladcd")) %>% 
+  mutate(fast = ifelse(estimate < 2003, "fast", "slow")) %>% 
+  arrange(order)  # if i don't order merge.nuts.f loses order and the map has gaps
+
+
+# oa.gb.f %>% mutate(fast = ifelse(estimate < 2003, 1, 0)) %>% 
+#   arrange(order) %>% 
+ggplot(data = la.f, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = estimate)) + #fill = fast, 
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  scale_fill_continuous(type = "viridis") +
+  theme_void()
+
+ggplot(data = la.f, aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = fast)) + #fill = fast, 
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
+    geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
+  #scale_fill_continuous(type = "viridis") +
+  theme_void()
+
+```
+
+```{r}
+la.f %>% left_join(df %>% filter(year==2012), by = c("id" = "ladcd")) %>% 
+  arrange(order) %>% # if i don't order merge.nuts.f loses order and the map has gaps
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(aes(group = group, fill = n)) + #fill = fast, 
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  scale_fill_continuous(type = "viridis") +
+  theme_void()
+
+```
+

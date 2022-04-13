@@ -1,0 +1,197 @@
+---
+title: "diffusion, websites with 1 pc"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(spdep)
+library(tmap)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, msoa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive data is saved on /hdd.
+
+```{r}
+n = 1 #number of unique postcodes 
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df <- read_csv(data.path) %>% 
+  filter(V1.domain == n,
+         year > 1995) %>% 
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, msoa11cd) %>%
+  summarise(n = sum(V1.domain)) %>% 
+  group_by(msoa11cd) %>%                   # turn on for growth
+  mutate(growth = (n - lag(n))/lag(n)) %>% # turn on for growth 
+  filter(year != 1996 )
+```
+
+## maps
+
+```{r}
+# get MSOA 
+# source: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-generalised-clipped-bgc-ew-v3/explore?location=52.849644%2C-2.489527%2C7.08
+
+path.geo <- paste0(path, "/data/raw/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Generalised_Clipped_(BGC)_EW_V3.geojson")
+msoa <- readOGR(path.geo)
+# UK BFC: la <- readOGR("https://opendata.arcgis.com/datasets/1d78d47c87df4212b79fe2323aae8e08_0.geojson") 
+# source: https://data.gov.uk/dataset/7c387c64-d25f-474a-b07e-b933578caea2/local-authority-districts-april-2019-boundaries-uk-bfe
+
+# spatial transformations
+msoa <- spTransform(msoa, CRS("+init=epsg:4326"))
+```
+
+```{r, eval=F}
+maps <- msoa
+maps.df <- fortify(maps, region = "MSOA11CD")
+
+base <- maps.df %>% left_join(df[df$year==t,], by = c("id"="msoa11cd")) %>% 
+  # mutate(n = ifelse(is.na(n), 0, n),
+  #        year = ifelse(is.na(year), 1996, year))
+  ggplot(mapping = aes(x = long, y = lat, group = group)) + 
+  coord_fixed() + 
+  geom_polygon(color = NA, fill = "white")
+
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+)
+
+#N.web
+base + 
+  geom_polygon(aes(fill = growth), color = NA) +
+  theme_bw() +
+  ditch_the_axes + ggtitle(t) +
+  theme(legend.title=element_text(size=5), legend.text=element_text(size=4)) +
+  guides(fill = guide_colorbar(barwidth = 0.5, barheight = 2.5)) +
+  scale_fill_gradient2(midpoint = 0, mid="#eee8d5", high="#dc322f", low="#268bd2")
+
+  scale_fill_gradientn(colours=c('light gray','dark blue'),
+                     name='N. of web pages',na.value=NA)#, trans = "log10") #  breaks = c(100, 1000, 10000)
+  #coord_map(xlim = c(200000, 300000),ylim = c(200000, 300000)) # zoom in
+
+#ggsave("C:/net27/COSMIC/archive/gis/msoa_Nweb2001.png", dpi = 300, width=4, height=4)
+
+
+```
+
+## lisa
+
+```{r}
+
+# 0 for NAs and the same for year
+
+
+path.out <- paste0(path, "/outputs/lisa_growth_msoa")
+
+for (t in 1997:2010){
+test <- msoa
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("MSOA11CD"="msoa11cd")) #%>% 
+  # mutate(n = ifelse(is.na(n), 0, n),
+  #        year = ifelse(is.na(year), 1996, year))
+  
+#spatial weight matrix
+nb<- poly2nb(test)
+listw<- nb2listw(nb, style = "W", zero.policy = T)
+
+#Moran's I
+globalMoran <- moran.test(test$growth, listw, zero.policy = T, na.action = na.exclude)
+globalMoran
+
+#LISA
+lmoran<- cbind(test@data, localmoran(test$growth, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
+#lmoran
+
+# centers the local Moran's around the mean
+lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
+lmoran$lag.growth <- lag.listw(listw,lmoran$growth, NAOK = TRUE)
+
+# centers the variable of interest around its mean
+
+lmoran$ns <- lmoran$growth - mean(lmoran$growth, na.rm = TRUE) 
+lmoran$lag.growth <- lmoran$lag.growth - mean(lmoran$lag.growth, na.rm = TRUE) 
+
+signif <- 0.05
+#lmoran
+
+
+lmoran <- lmoran%>% 
+  mutate(quadrant= ifelse(ns>0 & lag.growth > 0, 1, 0)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.growth < 0, 2, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.growth > 0, 3, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns>0 & lag.growth < 0, 4, quadrant)) %>%   
+  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
+  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+
+
+#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
+# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
+#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
+  
+mun_merge_new<- merge(test, lmoran, by="MSOA11CD")
+
+# R p value map
+breaks = c(0, 1, 2, 3, 4, 5) 
+
+map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks, palette=  c("white","red","blue",rgb(0,0,1,alpha=0.4),rgb(1,0,0,alpha=0.4)), labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), title="LISA for growth, MSOA") +
+  tm_legend(text.size = 1) +
+ # tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
+  # tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
+    tm_borders(alpha=.5) +
+   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
+tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
+
+
+}
+```
+
+Spatial regression
+
+```{r}
+library(splm)
+m <- spml(log(n)~lag(log(n)), data = df, listw = listw, lag = TRUE, spatial.error = "b", 
+          model = "within", effect = "individual", method = "eigen", na.action = na.fail)
+
+```

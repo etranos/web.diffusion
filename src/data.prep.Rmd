@@ -14,7 +14,6 @@ knit: (function(inputFile, encoding) {
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
-library(data.table)
 library(tidyverse)
 library(rprojroot)
 
@@ -22,57 +21,89 @@ library(rprojroot)
 path <- find_rstudio_root_file()
 ```
 
-The internet archive data is saved on /hdd
+The internet archive data is saved on /hdd.
+Split to yearly files.
 
 ```{r}
 data.folder <- "/hdd/internet_archive/archive/data/"
 data.path <- paste0(data.folder, "all.csv")
 
-all <- fread(data.path)
-#glimpse(all)
-unique(all$year)
-
-all$id <- seq.int(nrow(all))
-
-# for test at the end
-test.all <- dim(all[1])
-
-# data.path_ <- paste0(data.folder, "all_sample.csv")
-# all_ <-fread(data.path_)
+read_csv(data.path) %>% 
+  #distinct(host, year)
+  group_by(year) %>%
+  #group_walk(~ write_csv(.x, paste0(.y$year, ".csv"))) #
+  group_map(~ write_csv(.x, paste0(path,"/data/temp/msoa", .y$year, ".csv")))
 ```
-
 Postcode lookup.
 
 [source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
 
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
-lookup <- fread(path.lookup)
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, msoa11cd) %>% 
+  dplyr::rename(pc = pcds)
 #glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
 ```
-Merge
+
+Bring MSOA code and then aggregate per MSOA.
 
 ```{r}
-setkey(lookup, pcds)
-setkey(all, pc)
-all.msoa <- lookup[all]
 
-sapply(all.msoa, function(x) sum(is.na(x)))
+# all <- read_csv(data.path)
+# all %>% 
+#   #mutate(id = 1:n()) %>% #seq.int(nrow())) %>% 
+#   #mutate(id = id(.)) %>% 
+#   left_join(lookup, by = "pc", suffix =c("","")) %>% 
+#   distinct(host, year, pc, .keep_all = TRUE) %>% 
+#   group_by(msoa11cd) %>% 
+#   summarise(count.url=sum(N))
+#   write_csv(paste0(path,"/data/temp/data", "X", ".csv"))
+
+files <- list.files(path=paste0(path,"/data/temp"), pattern="*.csv", full.names=TRUE, recursive=FALSE)
+lapply(files, function(x) {
+  read_csv(x, col_names = T) %>% 
+    #mutate(id = id(.)) %>%  
+    left_join(lookup, by = "pc", suffix =c("","")) %>% 
+    
+    # strips out the timestamp from the url
+    mutate(url.no.date = substring(url, 16)) %>% 
+    
+    # OLD
+    # Drops URLS from the same host referring to same postcode, which
+    # are observed more than once per year. 
+    # In other words, it drops URLs, which were archived multiple times per year.
+    #distinct(host, pc,  .keep_all = TRUE) %>% 
+    
+    # Drops URLs (no timestamp) referring to same postcode, which
+    # are observed more than once per year. 
+    # In other words, it drops pairs of URLs and postcodes, which were archived multiple times per year.
+    distinct(url.no.date, pc, .keep_all = TRUE) %>% 
+    
+    # OLD Aggregate
+    #group_by(msoa11cd) %>% 
+    #summarise(count.url=sum(N)) %>% 
+
+    # Aggregate:
+    # Counts how many unique pairs of url.no.date and pc exist in every MSOA per year.
+    # In other words, it provides the number of georeferenced archived webpages per MSOA and year
+    count(msoa11cd) %>%
+    
+    write_csv(x)
+})
+
+
+# for test at the end
+#test.all <- dim(all[1])
+
+# data.path_ <- paste0(data.folder, "all_sample.csv")
+# all_ <-fread(data.path_)
 ```
 
-The next snippet drops URLS from the same host referring to same postcode, which
-were observed more than once per year. 
-In other words, it drops URLs, which were archived multiple times per year.
 
-```{r}
-all.msoa <- unique(all.msoa, by = c("host", "year", "pcds"))
-```
-
-Aggregate
-
-```{r}
-msoa <- all.msoa[, .(count.url=.N), by = .(year, msoa11cd)]
-```
 
 Test to see if i have missed any of the original urls
 
@@ -84,15 +115,3 @@ missing <- msoa[is.na(msoa$msoa11cd)]
 print(sum(missing$count.url)) #
 ```
 
-Drop the observations without MSOA code
-
-```{r}
-msoa <- msoa[!is.na(msoa11cd)]
-```
-
-Export
-
-```{r}
-path.out <- paste0(path, "/data/temp/msoa.csv")
-fwrite(msoa, path.out) # for all obs
-```

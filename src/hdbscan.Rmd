@@ -1,0 +1,211 @@
+---
+title: "hdbscan"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(spdep)
+library(dbscan)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, msoa11cd, dointr, doterm) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+
+path.lookup <- "/hdd/internet_archive/archive/ONSPD_FEB_2017_UK.csv"
+lookup <- read_csv(path.lookup) %>% 
+  select(pcds, oseast1m, osnrth1m) %>% 
+  dplyr::rename(pc = pcds)
+
+```
+
+The internet archive data is saved on /hdd.
+
+```{r}
+n = 1 #number of unique postcodes 
+
+data.folder9610 <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder9610, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+data.path1112 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+df1112 <- read_csv(data.path1112)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(V1.domain == n,
+         year > 1995) %>% 
+  left_join(lookup, by = "pc", suffix =c("","")) 
+
+rm(df9610, df1112)
+```
+
+## Boundary data
+
+```{r}
+# get MSOA 
+# source: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-generalised-clipped-bgc-ew-v3/explore?location=52.849644%2C-2.489527%2C7.08
+
+# path.geo <- paste0(path, "/data/raw/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Generalised_Clipped_(BGC)_EW_V3.geojson")
+# msoa <- readOGR(path.geo)
+# # UK BFC: la <- readOGR("https://opendata.arcgis.com/datasets/1d78d47c87df4212b79fe2323aae8e08_0.geojson") 
+# # source: https://data.gov.uk/dataset/7c387c64-d25f-474a-b07e-b933578caea2/local-authority-districts-april-2019-boundaries-uk-bfe
+# 
+# # spatial transformations
+# msoa <- spTransform(msoa, CRS("+init=epsg:4326"))
+
+# get GB
+path.gb <- paste0(path, "/data/raw/Countries_(December_2020)_UK_BUC.geojson")
+gb <- readOGR(path.gb) 
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+gb <- subset(gb, CTRY20NM != "Northern Ireland")
+gb.df <- fortify(gb, region = "CTRY20NM")
+
+# UK boundaries
+# path.uk <- paste0(path, "/data/raw/Countries_(December_2020)_UK_BUC.geojson")
+# uk <- readOGR(path.uk)
+# uk <- spTransform(uk, CRS("+init=epsg:4326"))
+# uk.df <- fortify(uk, region = "CTRY20CD")
+# 
+# # find points not in GB
+# help2 <- df %>% 
+#   #slice_sample(n = 10000) %>% 
+#   filter(!is.na(oseast1m), #6k rows with missing east/north for all years
+#               year == t) %>%
+#   st_as_sf(coords = c("oseast1m", "osnrth1m"), crs = 27700) %>%
+#   st_transform(4326) %>%
+#   st_coordinates() %>%
+#   as_tibble() 
+# 
+# help2 <- df %>% 
+#   filter(!is.na(oseast1m), #6k rows with missing east/north for all years
+#               year == t) %>%
+#   bind_cols(help2)
+# 
+# 
+# points <- st_as_sf(help2, coords = c("X", "Y"), crs = 27700)
+# gb_ <- st_as_sf(gb) #, crs = 27700)
+# gb_ <- st_set_crs(gb_, 27700)
+# 
+# plot(gb_, col = "red")
+# plot(points, pch = 19, cex = 1, add = T)
+# 
+# pip <- points %>%
+#   st_join(gb_)
+# 
+# unique(pip$ctry14nm)
+# missing <- pip %>% filter(is.na(ctry14nm)) %>% 
+#   mutate(pc2dig = substr(pc, 1,2)) 
+# unique(missing$pc2dig)
+# 
+# missing <- pip %>% filter(is.na(ctry14nm)) %>% 
+#   filter(substr(pc, 1,2) !="BT")
+# in 2010 58 points exl. NI have a postcode but not XY
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+```
+
+## hdbscan
+
+```{r}
+t = 1998
+
+x <- df %>%
+    #slice_sample(n = 10000) %>% 
+    filter(!is.na(oseast1m), #6k rows with missing east/north for all years
+           year == t,
+           substr(pc, 1,2) !="BT") %>% #drop Northern Ireland, for 2010 c. 4k obs.
+    st_as_sf(coords = c("oseast1m", "osnrth1m"), crs = 27700) %>%
+    st_transform(4326) %>%
+    st_coordinates() %>%
+    as_tibble()
+
+kNNdistplot(x, k = 2)               # it runs on the console
+abline(h=.3, col = "red", lty=2)
+
+res <- dbscan(x, eps = 0.1, minPts = 3)
+
+plot(x, col = res$cluster + 1L, pch = res$cluster + 1L)
+hullplot(x, res)
+
+res <- optics(x, eps = 10, minPts = 10)
+```
+
+## hex heatmaps
+
+```{r}
+# old code: counts per hexagon based on xy
+#xy point
+
+path.out <- paste0(path, "/outputs/hex", n)
+
+for (t in 1996:2012){
+  p <- df %>%
+    #slice_sample(n = 10000) %>% 
+    filter(!is.na(oseast1m), #6k rows with missing east/north for all years
+           year == t,
+           substr(pc, 1,2) !="BT") %>% #drop Northern Ireland, for 2010 c. 4k obs.
+    st_as_sf(coords = c("oseast1m", "osnrth1m"), crs = 27700) %>%
+    st_transform(4326) %>%
+    st_coordinates() %>%
+    as_tibble() %>% 
+    ggplot(aes(x=X,y=Y)) +
+    
+    stat_binhex(bins=150) + 
+    geom_polygon(data = gb.df, aes(x=long, y = lat, group = group), #gb.df
+                 fill=NA, color = "black", size = 0.1, alpha = 0.8)+
+    scale_fill_gradientn(colours=c('light gray','blue'),
+                         name='Frequency',na.value=NA) + #, trans = "log10") +
+    coord_equal() +
+    labs(x=NULL, y=NULL) +
+    geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
+    geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
+    #theme(legend.key.size = unit(0.05, "cm")) + # legend.key.width=unit(1, "cm"), 
+    ggmap::theme_nothing(legend = T) +
+    theme(legend.title=element_text(size=5.5), legend.text=element_text(size=4)) +
+    #theme(legend.position=c(0.075,0.28))
+    guides(fill = guide_colorbar(barwidth = 0.5, barheight = 2.5)) +
+    ggtitle(t)
+  ggsave(p, filename = paste(path.out, t, ".png", sep = ""))
+}
+```
+
+

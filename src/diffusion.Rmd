@@ -1,0 +1,379 @@
+---
+title: "diffusion"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(urltools)
+library(ggrepel)
+library(tsbox)
+library(dtwclust)
+library(imputeTS)
+library(rgdal)
+library(broom)
+library(cowplot)
+
+#lisa
+library(sp)
+library(sf)
+library(fastmap)
+library(skimr)
+library(tmap)
+library(tmaptools)
+library(spdep)
+library(rgeos)
+library(rgeoda)
+
+options(scipen=999)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Loading yearly files
+
+```{r}
+years <- 1996:2012
+path.files <- paste0(path, "/data/temp/msoa")
+file.names <- lapply(years, function(x) paste0(path.files, years, ".csv"))
+file.names <- unlist(file.names[1])
+
+df <- data.frame()
+year <- 1995
+for (i in file.names){
+  x <- read_csv(i)
+  year <- year + 1
+  x$year <- year
+  df <- rbind(a,x)
+}
+
+df <- df %>% 
+  arrange(msoa11cd, year) %>% 
+  drop_na() %>% 
+  glimpse()
+
+sapply(df, function(x) sum(is.na(x)))
+
+# **NEDD TO SEE WHY I HAVE DUPLICATES**
+df <- df %>% distinct(msoa11cd, year, .keep_all = TRUE)
+
+total <- df %>% 
+  group_by(year) %>% 
+  summarise(n = sum(n)) %>% 
+  glimpse()
+```
+The MSOA plot takes ages to be drawn!!!
+
+```{r}
+for.plot <- all[all$YEAR>1999 & all$YEAR<2011,]
+for.plot[, outlier := ifelse(for.plot$counturlcouk>150000 & for.plot$YEAR==2008, for.plot$regionme, "")] #this line is from the previous version
+#for.plot <- for.plot[for.plot$outlier=="OK",]
+
+tspag = 
+  ggplot(df, aes(x=year, y=n, group = msoa11cd, colour = factor(msoa11cd))) + 
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("N. of .co.uk webpages, NUTS3") +
+  geom_text_repel(aes(label=msoa11cd), cex = 4) + #this line is from the previous version
+  #xlim(2000, 2010) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+  #theme(plot.margin = unit(c(1,3,1,1), "lines")) +
+  #geom_dl(aes(label = outlier), method = list(dl.combine("first.points", "last.points"), cex = 0.8)) + 
+  #scale_x_continuous(breaks=c(1996:2010 )) 
+  #scale_color_discrete(labels = outlier) 
+  #scale_fill_discrete(name="test")
+plot(tspag)
+
+ggplot(data=df, aes(x=year,y=n,group=msoa11cd, colour = msoa11cd)) + geom_line(alpha=I(1/7),size=1)
+
+outliers <-df %>% filter(n>900000) %>% 
+  select(msoa11cd) %>% 
+  pull()
+
+
+df %>% 
+  #rowwise() %>% 
+  filter(n<500000) %>% 
+  #filter(! msoa11cd %in% outliers)
+  ggplot(aes(x=year,y=n,group=msoa11cd)) + geom_line(alpha=I(1/7),size=.5) +
+  scale_y_continuous(labels = scales::comma)
+
+
+total %>% mutate(n.max = n/max(n)) %>% 
+ggplot(aes(x=year, y=n.max)) + 
+  geom_line() + guides(colour=FALSE) + xlab("Year") +
+  ylab("N. of .co.uk webpages, NUTS3") +
+  #geom_text_repel(aes(label=msoa11cd), cex = 4) + #this line is from the previous version
+  #xlim(2000, 2010) +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::number_format(accuracy = 1))
+
+```
+
+time series clusters
+
+```{r}
+# turn to a wide format
+ts.wide <- df %>% 
+  rename(time = year) %>%
+  select(time, msoa11cd, n) %>% 
+  #mutate(year = )
+  ts_wide()
+
+# impute with means of each TS
+# TODO check sensitivity
+ts.wide <- na_mean(ts.wide)
+#sapply(ts.wide, function(x) sum(is.na(x)))
+
+# extract names
+ts.wide.names <- names(ts.wide[,-1])
+ts.wide <- ts.wide[,-1]
+
+# standardise
+ts.wide <- zscore(ts.wide)
+
+# convert to list for tsclust
+ts.wide <- split(ts.wide, rep(1:ncol(ts.wide), each = nrow(ts.wide)))
+
+# 5 - 20 cluster sollutions
+pc_k <- tsclust(ts.wide, k = c(5:15), seed = 94L,
+                type="partitional",
+                distance = "dtw_basic", centroid = "pam", trace = T, 
+                args = tsclust_args(dist = list(window.size = 20L)))
+
+# decide k, see RJ-2019-023 for max/min
+names(pc_k) <- paste0("k_", c("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"))
+cvis <- sapply(pc_k, cvi, type = "internal")
+cvis
+# max Sil
+# max SF
+# max CH
+# min DB
+# min DBstar
+# max D
+# min COP
+
+# loop for k decision
+pref.cvi <- NULL
+
+max.cvis <- c(1:3,6)
+for (i in max.cvis){
+  a <- which.max(cvis[i,])
+  pref.cvi <- c(pref.cvi, a)
+}
+
+min.cvis <- c(4:5,7)
+for (i in min.cvis){
+  a <- which.min(cvis[i,])
+  pref.cvi <- c(pref.cvi, a)
+}
+
+print(pref.cvi) # cvis[2,] is always 0 
+
+pc_k <- tsclust(ts.wide, k = 14, seed = 94L, 
+                type="partitional", 
+                distance = "dtw_basic", centroid = "pam", trace = T, 
+                args = tsclust_args(dist = list(window.size = 20L)))
+plot(pc_k)
+
+clusters <- data.frame(LAD=ts.wide.names,
+                           cluster=pc_k@cluster)
+
+```
+
+## Mapping the clusters
+
+```{r include=TRUE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE, fig.height=10, fig.width=10}
+
+
+# get MSOA 
+# source: https://geoportal.statistics.gov.uk/datasets/middle-layer-super-output-areas-december-2011-boundaries-generalised-clipped-bgc-ew-v3/explore?location=52.849644%2C-2.489527%2C7.08
+
+path.geo <- paste0(path, "/data/raw/Middle_Layer_Super_Output_Areas_(December_2011)_Boundaries_Generalised_Clipped_(BGC)_EW_V3.geojson")
+msoa <- readOGR(path.geo)
+# UK BFC: la <- readOGR("https://opendata.arcgis.com/datasets/1d78d47c87df4212b79fe2323aae8e08_0.geojson") 
+
+# source: https://data.gov.uk/dataset/7c387c64-d25f-474a-b07e-b933578caea2/local-authority-districts-april-2019-boundaries-uk-bfe
+
+# spatial transformations
+msoa <- spTransform(la, CRS("+init=epsg:4326"))
+
+# ggplot2 maps
+msoa.f <- fortify(msoa, region = "MSOA11CD")
+msoa.f <- merge(msoa.f, clusters, by.x = "id", by.y = "LAD")
+msoa.f <- msoa.f[order(msoa.f$order),] # if i don't order merge.nuts.f loses order and the map has gaps
+
+ggplot(msoa.f, aes(x = long, y = lat)) +
+  geom_polygon(aes( group = group, fill = as.factor(cluster))) +
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  scale_fill_viridis_d()+
+  theme_void()
+
+ggplot(la.f, aes(x = long, y = lat)) +
+  geom_polygon(aes( group = group, fill = as.factor(cluster.down))) +
+  theme_nothing(legend = TRUE) +
+  labs(title = "Download clusters") +
+  scale_fill_viridis_d()+
+  theme_void()
+
+cluster.upL <- c(6, 9, 11, 12, 13)
+cluster.upS <- c(1, 2, 3, 7, 8, 10)
+ 
+la.f_ <- la.f #plot the background
+
+cluster.upL.plot <- la.f %>% 
+  filter(cluster.up %in% cluster.upL) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(data = la.f_, color='grey', fill='white', aes(x=long, y=lat, group=group, colour = 'grey30')) +
+  geom_polygon(aes( group = group, fill = as.factor(cluster.up))) +
+  labs(title = "Larger clusters, upload speeds") + 
+  scale_fill_viridis_d() +
+  guides(fill=guide_legend(title="Clusters")) +
+  theme_void()
+
+cluster.upS.plot <- la.f %>% 
+  filter(cluster.up %in% cluster.upS) %>% 
+  ggplot(aes(x = long, y = lat)) +
+  geom_polygon(data = la.f_, color='grey', fill='white', aes(x=long, y=lat, group=group, colour = 'grey30')) +
+  geom_polygon(aes( group = group, fill = as.factor(cluster.up))) +
+  labs(title = "Smaller clusters, upload speeds") + 
+  scale_fill_viridis_d() +
+  guides(fill=guide_legend(title="Clusters")) +
+  theme_void()
+
+plot_grid(cluster.upL.plot, cluster.upS.plot, nrow = 1,
+          align = "h", axis = "l", 
+          #labels = c(".co.uk / pop., 2000", ".co.uk / pop., 2010", "non .co.uk / pop., 2000", "non .co.uk / pop., 2010", ""), 
+          #label_size = 12,
+          greedy = T)
+          #rel_heights = c(1, 1, .3)) # this is the relative position of the 3 lines
+
+#ggsave("all_maps2.png") # this is the colour map for the preprint
+out.path.map <- paste0(path, "/paper/v1/figures/map.up.clusters.png")
+ggsave(out.path.map)#,
+       #width = 210, #A4
+       #height = 297, #A4
+       #units = "mm")
+```
+
+## maps
+
+```{r}
+
+t = 1996
+
+maps <- msoa
+maps.df <- fortify(maps, region = "MSOA11CD")
+
+maps.df <- maps.df %>% left_join(df[df$year==t,], by = c("id"="msoa11cd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),
+         year = ifelse(is.na(year), 1996, year))
+
+#plot
+options(scipen=10000)
+
+base <- ggplot(data = maps.df, mapping = aes(x = long, y = lat, group = group)) + 
+  coord_fixed() + 
+  geom_polygon(color = NA, fill = "white")
+
+ditch_the_axes <- theme(
+  axis.text = element_blank(),
+  axis.line = element_blank(),
+  axis.ticks = element_blank(),
+  panel.border = element_blank(),
+  panel.grid = element_blank(),
+  axis.title = element_blank()
+)
+
+#N.web
+base + 
+  geom_polygon(aes(fill = n), color = NA) +
+  theme_bw() +
+  ditch_the_axes + ggtitle(t) +
+  theme(legend.title=element_text(size=5), legend.text=element_text(size=4)) +
+  guides(fill = guide_colorbar(barwidth = 0.5, barheight = 2.5)) +
+  scale_fill_gradientn(colours=c('light gray','dark blue'),
+                     name='N. of web pages',na.value=NA)#, trans = "log10") #  breaks = c(100, 1000, 10000)
+  #coord_map(xlim = c(200000, 300000),ylim = c(200000, 300000)) # zoom in
+ggsave("C:/net27/COSMIC/archive/gis/msoa_Nweb2001.png", dpi = 300, width=4, height=4)
+
+
+```
+
+## lisa
+
+```{r}
+
+# 0 for NAs and the same for year
+test <- msoa
+test@data <- test@data %>% left_join(df[df$year==1996,], by = c("MSOA11CD"="msoa11cd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),
+         year = ifelse(is.na(year), 1996, year))
+  
+
+#spatial weight matrix
+nb<- poly2nb(test)
+listw<- nb2listw(nb, style = "W", zero.policy = T)
+
+#Moran's I
+globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
+globalMoran
+
+#LISA
+lmoran<- cbind(test@data, localmoran(test$n, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
+#lmoran
+
+# centers the local Moran's around the mean
+lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
+lmoran$lag.n<-  lag.listw(listw,lmoran$n, NAOK = TRUE)
+
+# centers the variable of interest around its mean
+
+lmoran$ns <- lmoran$n - mean(lmoran$n, na.rm = TRUE) 
+lmoran$lag.n <- lmoran$lag.n - mean(lmoran$lag.n, na.rm = TRUE) 
+
+signif <- 0.05
+#lmoran
+
+
+lmoran <- lmoran%>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n > 0, 1, 0)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n < 0, 2, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n > 0, 3, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n < 0, 4, quadrant)) %>%   
+  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
+  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+
+
+#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
+# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
+#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
+  
+mun_merge_new<- merge(test, lmoran, by="MSOA11CD")
+
+# R p value map
+breaks = c(0, 1, 2, 3, 4, 5) 
+
+tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks, palette=  c("white","red","blue",rgb(0,0,1,alpha=0.4),rgb(1,0,0,alpha=0.4)), labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), title="") +
+  tm_legend(text.size = 1) +
+ # tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
+  # tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
+    tm_borders(alpha=.5) +
+   tm_layout( frame = FALSE,  title = "LISA with the R p-values ")
+
+```
