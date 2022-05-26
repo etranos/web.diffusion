@@ -33,7 +33,7 @@ Postcode lookup.
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
-  select(pcds, msoa11cd, dointr, doterm) %>% 
+  dplyr::select(pcds, msoa11cd, dointr, doterm) %>% 
   dplyr::rename(pc = pcds)
 #glimpse(lookup)
 # The problems refer to Welsh LAD names. Not a problem for the analysis.
@@ -42,7 +42,7 @@ lookup <- read_csv(path.lookup) %>%
 
 path.lookup <- "/hdd/internet_archive/archive/ONSPD_FEB_2017_UK.csv"
 lookup <- read_csv(path.lookup) %>% 
-  select(pcds, oseast1m, osnrth1m) %>% 
+  dplyr::select(pcds, oseast1m, osnrth1m) %>% 
   dplyr::rename(pc = pcds)
 
 ```
@@ -181,5 +181,42 @@ for (t in 1996:2012){
   ggsave(p, filename = paste(path.out, t, ".png", sep = ""))
 }
 ```
+## hex heatmaps log transformed
 
+```{r}
+# old code: counts per hexagon based on xy
+#xy point
 
+path.out <- paste0(path, "/outputs/hex_log", n)
+
+for (t in 1996:2012){
+  p <- df %>%
+    #slice_sample(n = 10000) %>% 
+    filter(!is.na(oseast1m), #6k rows with missing east/north for all years
+           year == t,
+           substr(pc, 1,2) !="BT") %>% #drop Northern Ireland, for 2010 c. 4k obs.
+    st_as_sf(coords = c("oseast1m", "osnrth1m"), crs = 27700) %>%
+    st_transform(4326) %>%
+    st_coordinates() %>%
+    as_tibble() %>% 
+    ggplot(aes(x=X,y=Y)) +
+    
+    #stat_binhex(bins=150) +
+    stat_binhex(aes(fill=log(..count..)), bins=150) +
+    geom_polygon(data = gb.df, aes(x=long, y = lat, group = group), #gb.df
+                 fill=NA, color = "black", size = 0.1, alpha = 0.8)+
+    scale_fill_gradientn(colours=c('light gray','blue'),
+                         name='Frequency',na.value=NA) + #, trans = "log10") +
+    coord_equal() +
+    labs(x=NULL, y=NULL) +
+    geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
+    geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
+    #theme(legend.key.size = unit(0.05, "cm")) + # legend.key.width=unit(1, "cm"), 
+    ggmap::theme_nothing(legend = T) +
+    theme(legend.title=element_text(size=5.5), legend.text=element_text(size=4)) +
+    #theme(legend.position=c(0.075,0.28))
+    guides(fill = guide_colorbar(barwidth = 0.5, barheight = 2.5)) +
+    ggtitle(t)
+  ggsave(p, filename = paste(path.out, t, ".png", sep = ""))
+}
+```

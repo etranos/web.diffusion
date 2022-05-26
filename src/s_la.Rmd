@@ -17,12 +17,22 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(broom)
 library(rprojroot)
+library(rgdal)
+library(sf)
+library(modelr)
 
 options(scipen=10000)
 
 # This is the project path
 path <- find_rstudio_root_file()
 ```
+
+## TODO
+
+- speed, other metrics? 
+- understand rsquare
+- model LAs
+- add SE for the line plots [link](https://stackoverflow.com/questions/26020142/adding-shade-to-r-lineplot-denotes-standard-error)
 
 ## Load data
 
@@ -135,7 +145,7 @@ This is a self-starting model, which estimates the starting values.
 
 
 ```{r}
-df.test <- df %>% filter(ladcd == "S12000033") 
+df.test <- df %>% filter(ladcd == "E06000002") 
 
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
 summary(fit)
@@ -159,12 +169,16 @@ df.country <- df %>% group_by(year) %>%
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
 summary(fit)
 
+rsquare(fit, df.country)
+
 df.country$prednls = predict(fit)
 
-ggplot(df.country, aes(x = year, y = n) ) +
+df.country %>% 
+  ggplot(aes(x = year, y = n) ) +
   geom_point() +
   geom_line(aes(y = prednls), size = 1) +
   scale_x_continuous("year", labels = as.character(df.country$year), breaks = df.country$year) +
+  geom_vline(xintercept = 2003) +
   ylab("N. of websites") +
   ggtitle("Country")
   #scale_x_date(breaks = df.test$year) 
@@ -210,11 +224,113 @@ a.la <- a.la %>% filter(term=="xmid") %>%
   #filter(estimate>2011)
 ```
 
+## Loop for S function estimation for Local Authorities keeping the model objects
+
+```{r}
+a.la <- as_tibble()
+all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% simplify2array()
+simplify2array(all.la)
+
+for (i in all.la){
+  data <- df %>% filter(ladcd==i) %>%
+    select(year, ladcd, n) 
+    #lm(n~year, data = .)
+    #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
+  tryCatch(model <- (nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
+  model.name <- paste0("model.", i)
+  assign(model.name, model)
+  tryCatch(b.la <- tidy(model), error=function(e) NULL)
+  
+  tryCatch(b.la$r2 <- rsquare(model, data), error=function(e) NULL)
+  
+  tryCatch(a.la <-rbind(a.la,b.la), error=function(e) NULL)
+}
+
+a.la <- a.la %>% filter(term=="xmid") %>% 
+  bind_cols(as.tibble(all.la)) %>% 
+  #mutate(estimate = round(estimate, 0)) %>% 
+  #summarise(r = range(r2))
+  filter(p.value < 0.01 & 
+         r2 > 0.9) %>%    # 376 / 376, all sig, 330 r2 > 0.9
+  select(ladcd, estimate, r2, std.error) %>%
+  mutate(fast = ifelse(estimate < 2003, "fast", "slow")) 
+
+
+# predictions 
+pred <- tibble()
+help <- tibble(year = 1996:2012)
+for (i in all.la){
+  model.name <- (paste0("model.", i))
+  #assign(col.name, paste0("pred.", i))
+  pred_ <- df %>% filter(ladcd == i) %>% 
+    mutate(prednls = eval(call("predict", as.name(model.name))))  # "pred.{i}" :=
+  help_ <- help %>% left_join(pred_)  
+
+  pred <- pred %>% bind_rows(help_) 
+}
+
+# plots
+path.out <- paste0(path, "/outputs/lad_")
+
+for (i in all.la){
+p <- ggplot(pred %>% left_join(a.la) %>% 
+              filter(ladcd == i), aes(x = year, y = n, color = fast) ) +
+  geom_point() +
+  geom_line(aes(y = prednls), size = 1) +
+  scale_x_continuous("year", labels = as.character(df.test$year), breaks = df.test$year) +
+  geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% select(estimate) %>% first()) +
+  ylab("N. of websites") + 
+  labs(title = paste0(la@data %>% filter(LAD21CD== i) %>% select(LAD21NM) %>% first(), ", ", i)) +
+  theme(legend.position=c(.9,.15)) +
+  scale_color_manual(values = c("fast" = "purple",
+                                "slow"="orange")) 
+
+ggsave(p, filename = paste(path.out, i, ".png", sep = ""))
+  
+}
+```
+
+## Xmid frequency graph
+
+```{r}
+ggplot(a.la, aes(as.factor(round(estimate, 0)))) +
+  geom_bar(fill = "#0073C2FF")
+```
+
 write the object with all the models
 
 ```{r eval=F}
 path.out <- paste0(path, "/data/temp/s_la.csv")
 write_csv(a.la, path.out)
+```
+
+## Survival
+
+- pop.density
+- income
+- firms
+- employment
+- N/S
+- London
+
+Time series formula will look like this:
+
+`coxph(Surv(tstart, tstop, infect) ~ treat + inherit + steroids, data =newcgd, cluster = id)`
+
+This is what @perkins2005international should be using.
+See p. 7 [here](https://cran.r-project.org/web/packages/survival/vignettes/timedep.pdf).
+
+
+```{r}
+library(survival)
+
+test.surv.data <- a.la %>% mutate(status = 1) %>% 
+  left_join(data.la, by = c("ladcd" = "LAD21CD")) %>% 
+  left_join(df %>% filter(year == 2012), by = "ladcd")
+
+cf <- coxph(Surv((estimate-1996), status) ~ log(distLondon) + log(distMet) + log(pop16_64) + log(pop.dens) + log(econ.act) + log(earnings) + log(total.busi) + south + log(n), data=test.surv.data, weights = 1/(std.error)^2)
+summary(cf)
+
 ```
 
 ## Map the xmid
@@ -278,3 +394,144 @@ la.f %>% left_join(df %>% filter(year==2012), by = c("id" = "ladcd")) %>%
 
 ```
 
+## time series clusters
+
+2 clusters is the preferred solution, but when I plot individual local authorities 
+I cannot interpret the differences between the two clusters
+
+```{r}
+library(dtwclust)
+library(tsbox)
+library(imputeTS)
+
+
+# turn to a wide format
+ts.wide <- df %>% 
+  filter(!is.na(ladcd)) %>% 
+  rename(time = year) %>%
+  dplyr::select(time, ladcd, n) %>% 
+  #mutate(year = )
+  ts_wide()
+
+# impute with means of each TS
+# TODO check sensitivity
+ts.wide <- na_mean(ts.wide)
+#sapply(ts.wide, function(x) sum(is.na(x)))
+
+# extract names
+ts.wide.names <- names(ts.wide[,-1])
+ts.wide <- ts.wide[,-1]
+
+# standardise
+ts.wide <- zscore(ts.wide)
+
+# convert to list for tsclust
+ts.wide <- split(ts.wide, rep(1:ncol(ts.wide), each = nrow(ts.wide)))
+
+# 5 - 20 cluster sollutions
+pc_k <- tsclust(ts.wide, k = c(2:10), seed = 94L,
+                type="partitional",
+                distance = "dtw_basic", centroid = "pam", trace = T, 
+                args = tsclust_args(dist = list(window.size = 20L)))
+
+# decide k, see RJ-2019-023 for max/min
+#names(pc_k) <- paste0("k_", c("5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"))
+names(pc_k) <- paste0("k_", c("2", "3", "4", "5", "6", "7", "8", "9", "10"))
+cvis <- sapply(pc_k, cvi, type = "internal")
+cvis
+# max Sil
+# max SF
+# max CH
+# min DB
+# min DBstar
+# max D
+# min COP
+
+# loop for k decision
+pref.cvi <- NULL
+
+max.cvis <- c(1:3,6)
+for (i in max.cvis){
+  a <- which.max(cvis[i,])
+  pref.cvi <- c(pref.cvi, a)
+}
+
+min.cvis <- c(4:5,7)
+for (i in min.cvis){
+  a <- which.min(cvis[i,])
+  pref.cvi <- c(pref.cvi, a)
+}
+
+print(pref.cvi) # just count how many time each k_* appears, this is the preferred solution 
+
+pc_k <- tsclust(ts.wide, k = 7, seed = 94L,  # 7 or 2
+                type="partitional", 
+                distance = "dtw_basic", centroid = "pam", trace = T, 
+                args = tsclust_args(dist = list(window.size = 20L)))
+plot(pc_k)
+
+clusters <- data.frame(LAD=ts.wide.names,
+                           cluster=pc_k@cluster)
+
+```
+
+## Mapping the clusters
+
+```{r include=TRUE, echo=FALSE, results= 'markup', message=FALSE, warning = FALSE, fig.height=10, fig.width=10}
+
+la.f <- la.f %>% left_join(clusters, by = c("id" = "LAD")) %>% 
+  arrange(order)  # if i don't order merge.nuts.f loses order and the map has gaps
+
+ggplot(la.f %>% filter(!is.na(r2)), aes(x = long, y = lat)) +
+  geom_polygon(aes( group = group, fill = as.factor(cluster))) +
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Clusters") +
+  scale_fill_viridis_d()+
+  theme_void()
+
+# ggplot(la.f, aes(x = long, y = lat)) +
+#   geom_polygon(aes( group = group, fill = as.factor(cluster.down))) +
+#   theme_nothing(legend = TRUE) +
+#   labs(title = "Download clusters") +
+#   scale_fill_viridis_d()+
+#   theme_void()
+# 
+# cluster.upL <- c(6, 9, 11, 12, 13)
+# cluster.upS <- c(1, 2, 3, 7, 8, 10)
+#  
+# la.f_ <- la.f #plot the background
+# 
+# cluster.upL.plot <- la.f %>% 
+#   filter(cluster.up %in% cluster.upL) %>% 
+#   ggplot(aes(x = long, y = lat)) +
+#   geom_polygon(data = la.f_, color='grey', fill='white', aes(x=long, y=lat, group=group, colour = 'grey30')) +
+#   geom_polygon(aes( group = group, fill = as.factor(cluster.up))) +
+#   labs(title = "Larger clusters, upload speeds") + 
+#   scale_fill_viridis_d() +
+#   guides(fill=guide_legend(title="Clusters")) +
+#   theme_void()
+# 
+# cluster.upS.plot <- la.f %>% 
+#   filter(cluster.up %in% cluster.upS) %>% 
+#   ggplot(aes(x = long, y = lat)) +
+#   geom_polygon(data = la.f_, color='grey', fill='white', aes(x=long, y=lat, group=group, colour = 'grey30')) +
+#   geom_polygon(aes( group = group, fill = as.factor(cluster.up))) +
+#   labs(title = "Smaller clusters, upload speeds") + 
+#   scale_fill_viridis_d() +
+#   guides(fill=guide_legend(title="Clusters")) +
+#   theme_void()
+# 
+# plot_grid(cluster.upL.plot, cluster.upS.plot, nrow = 1,
+#           align = "h", axis = "l", 
+#           #labels = c(".co.uk / pop., 2000", ".co.uk / pop., 2010", "non .co.uk / pop., 2000", "non .co.uk / pop., 2010", ""), 
+#           #label_size = 12,
+#           greedy = T)
+#           #rel_heights = c(1, 1, .3)) # this is the relative position of the 3 lines
+# 
+# #ggsave("all_maps2.png") # this is the colour map for the preprint
+# out.path.map <- paste0(path, "/paper/v1/figures/map.up.clusters.png")
+# ggsave(out.path.map)#,
+#        #width = 210, #A4
+#        #height = 297, #A4
+#        #units = "mm")
+```

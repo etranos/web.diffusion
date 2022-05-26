@@ -1,0 +1,325 @@
+---
+title: "LA data"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: FALSE
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+Taken from `broadband.speed.covid` project.
+
+```{r settings, include = FALSE}
+library(tidyverse)
+library(rprojroot)
+# library(lubridate)
+# library(knitr)
+# library(rprojroot)
+# library(nnet)
+# library(stargazer)
+# library(openair)
+# library(rgdal)
+# library(corrplot)
+# library(DescTools)
+library(geosphere)
+library(sf)
+# library(rgeos)
+library(raster)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+
+## Distance to Metro Area
+
+Assumes LA spatial object is already loaded
+
+```{r}
+
+# spatial transformations
+ladDist <- la@data[,c("LAD21CD", "LAD21NM")]
+
+############# names(ladDist)[1] <- "lad19cd"
+
+#distance from London and other 
+coords_LAD <- la@data[,c("LONG", "LAT")]
+London <- la[which(la@data$LAD21NM == "City of London"),]
+London <- gCentroid(London)
+distLondon <- distm(coords_LAD, London, fun=distCosine) 
+#result in meters - change to km
+distLondon <- round((distLondon/1000),2)
+Birmingham <- la[which(la@data$LAD21NM == "Birmingham"),]
+Birmingham <- gCentroid(Birmingham)
+distBham <- distm(coords_LAD, Birmingham, fun=distCosine)
+distBham <- round((distBham/1000),2)
+Manchester <- la[which(la@data$LAD21NM == "Manchester"),]
+Manchester <- gCentroid(Manchester)
+distManc <- distm(coords_LAD, Manchester, fun=distCosine)
+distManc <- round((distManc/1000),2)
+Leeds <- la[which(la@data$LAD21NM == "Leeds"),]
+Leeds <- gCentroid(Leeds)
+distLeeds <- distm(coords_LAD, Leeds, fun=distCosine)
+distLeeds <- round((distLeeds/1000),2)
+Liverpool <- la[which(la@data$LAD21NM == "Liverpool"),]
+Liverpool <- gCentroid(Liverpool)
+distLivp <- distm(coords_LAD, Liverpool, fun=distCosine)
+distLivp <- round((distLivp/1000),2)
+Newcastle <- la[which(la@data$LAD21NM == "Newcastle upon Tyne"),]
+Newcastle <- gCentroid(Newcastle)
+distNewc <- distm(coords_LAD, Newcastle, fun=distCosine)
+distNewc <- round((distNewc/1000),2)
+Sheffield <- la[which(la@data$LAD21NM == "Sheffield"),]
+Sheffield <- gCentroid(Sheffield)
+distShef <- distm(coords_LAD, Sheffield, fun=distCosine)
+distShef <- round((distShef/1000),2)
+SouthHants <- la[which(la@data$LAD21NM == "Fareham"),]
+SouthHants <- gCentroid(SouthHants)
+distSHam <- distm(coords_LAD, SouthHants, fun=distCosine)
+distSHam <- round((distSHam/1000),2)
+Nottingham <- la[which(la@data$LAD21NM == "Nottingham"),]
+Nottingham <- gCentroid(Nottingham)
+distNotts <- distm(coords_LAD, Nottingham, fun=distCosine)
+distNotts <- round((distNotts/1000),2)
+Bristol <- la[which(la@data$LAD21NM == "Bristol, City of"),]
+Bristol <- gCentroid(Bristol)
+distBris <- distm(coords_LAD, Bristol, fun=distCosine)
+distBris <- round((distBris/1000),2)
+Cardiff <- la[which(la@data$LAD21NM == "Cardiff"),]
+Cardiff <- gCentroid(Cardiff)
+distCard <- distm(coords_LAD, Cardiff, fun=distCosine)
+distCard <- round((distCard/1000),2)
+Glasgow <- la[which(la@data$LAD21NM == "Glasgow City"),]
+Glasgow <- gCentroid(Glasgow)
+distGlas <- distm(coords_LAD, Glasgow, fun=distCosine) 
+distGlas <- round((distGlas/1000),2)
+
+ladDist <- cbind(ladDist, distLondon, distBham, distManc, distLeeds,
+                 distLivp, distNewc, distShef, distSHam, distNotts, 
+                 distBris, distCard, distGlas)
+
+ladDist$distMet <- apply(ladDist[,3:14], 1, min)
+ladDist <- ladDist %>%
+  dplyr::select(LAD21CD, LAD21NM, distLondon, distMet)
+
+
+#test <- left_join(lad, ladDist)
+```
+
+## Job density 2018
+
+```{r}
+
+job.dens <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_57_1.data.csv?geography=1816133633...1816133848,1820327937...1820328318&date=latest&item=3&measures=20100")
+
+job.dens <- job.dens %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, OBS_VALUE) %>%
+  rename(job.dens2018 = OBS_VALUE) %>%
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  distinct()
+
+# test <- left_join(lad, job.dens, by = "lad19cd")
+```
+
+## Population 2018
+
+```{r}
+# pop <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_31_1.data.csv?geography=1807745025...1807745028,1807745030...1807745032,1807745034...1807745155,1807745157...1807745164,1807745166...1807745170,1807745172...1807745177,1807745179...1807745194,1807745196,1807745197,1807745199,1807745201...1807745218,1807745221,1807745222,1807745224,1807745226...1807745231,1807745233,1807745234,1807745236...1807745244,1807745271...1807745281,1811939329...1811939332,1811939334...1811939336,1811939338...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS1-latest&sex=7&age=0,22&measures=20100")
+
+pop <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_31_1.data.csv?geography=1820327937...1820328318,1816133633...1816133848&date=latestMINUS1-latest&sex=7&age=0,22&measures=20100")
+
+pop <- pop %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, AGE_NAME, OBS_VALUE) %>%
+  distinct(GEOGRAPHY_CODE, AGE_NAME, .keep_all = T) %>% 
+  spread(AGE_NAME, OBS_VALUE) %>% 
+  rename(pop16_64 = `Aged 16 - 64`) %>%
+  rename(pop = `All ages`) %>%
+  rename(LAD21CD = GEOGRAPHY_CODE)
+
+# test <- left_join(lad, pop, by = "lad19cd")
+# sapply(test, function(x) sum(is.na(x)))
+```
+
+## Population density 2018
+
+```{r}
+
+# this is just population
+pop.dens <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_31_1.data.csv?geography=1820327937...1820328318,1816133633...1816133848&date=latestMINUS1-latest&sex=7&age=0,22&measures=20100")
+
+pop.dens <- pop.dens %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, AGE_NAME, OBS_VALUE) %>%
+  distinct(GEOGRAPHY_CODE, AGE_NAME, .keep_all = T) %>% 
+  spread(AGE_NAME, OBS_VALUE) %>% 
+  rename(pop16_64 = `Aged 16 - 64`) %>%
+  rename(pop = `All ages`) %>%
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  dplyr::select(-pop16_64)
+
+raster::crs(la)
+la$area_sqkm <- raster::area(la) / 1000000
+
+pop.dens <- merge(pop.dens, la@data, by.x = "LAD21CD", by.y = "LAD21CD", all.x = T)
+
+pop.dens <- pop.dens %>%
+  mutate(pop.dens = pop/area_sqkm) %>%
+  dplyr::select(LAD21CD,pop.dens)
+
+# sapply(pop.dens, function(x) sum(is.na(x)))
+# test <- pop.dens[is.na(pop.dens$area_sqkm),]
+```
+
+## N/S divide
+
+```{r}
+
+# It only includes only the south
+ 
+ns <- read_csv("https://opendata.arcgis.com/datasets/3ba3daf9278f47daba0f561889c3521a_0.csv") %>%
+  mutate(south = ifelse(RGN19NM=="London" | 
+                        RGN19NM=="South West" |
+                        RGN19NM=="East of England" |
+                        RGN19NM=="South East", 1, 0)) %>%
+  dplyr::select(LAD19CD, south) %>% 
+  dplyr::filter(south==1) %>%
+  rename(LAD21CD = LAD19CD)
+```
+
+## Labour supply March 2020
+
+```{r}
+
+labour <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_17_5.data.csv?geography=1816133633...1816133837,1820327937...1820328307&date=latest&variable=18,1532...1540,290,720&measures=20599,21001,21002,21003")
+
+labour <- labour %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, VARIABLE_NAME, OBS_VALUE) %>%
+  distinct(GEOGRAPHY_CODE, VARIABLE_NAME, .keep_all = T) %>% 
+  spread(VARIABLE_NAME, OBS_VALUE) %>% 
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  rename(managers =  `% all in employment who are - 1: managers, directors and senior officials (SOC2010)`) %>%
+  rename(prof = `% all in employment who are - 2: professional occupations (SOC2010)`) %>%
+  rename(tech = `% all in employment who are - 3: associate prof & tech occupations (SOC2010)`) %>%
+  rename(admin = `% all in employment who are - 4: administrative and secretarial occupations (SOC2010)`) %>%
+  rename(skilled = `% all in employment who are - 5: skilled trades occupations (SOC2010)`) %>%
+  rename(caring = `% all in employment who are - 6: caring, leisure and other service occupations (SOC2010)`) %>%
+  rename(sales = `% all in employment who are - 7: sales and customer service occupations (SOC2010)`) %>%
+  rename(plant = `% all in employment who are - 8: process, plant and machine operatives (SOC2010)`) %>%
+  rename(elementary = `% all in employment who are - 9: elementary occupations (SOC2010)`) %>%
+  rename(NVQ3 = `% with NVQ3+ - aged 16-64`) %>%
+  rename(NVQ4 = `% with NVQ4+ - aged 16-64`) %>%
+  rename(econ.act = `Economic activity rate - aged 16-64`) %>% # No NVQ data here as this is for Jul 2019-Jun 2020. NVQ is only  
+  dplyr::select(-NVQ3, -NVQ4)                                  # available for Dec - Dec. I download these data seperetely.
+
+# test <- left_join(lad, labour, by = "lad19cd")
+# sapply(test, function(x) sum(is.na(x)))
+```
+
+## NVQ4 March 2020
+
+```{r}
+
+nvq4 <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_17_5.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1807745025...1807745028,1807745030...1807745032,1807745034...1807745155,1807745157...1807745164,1807745166...1807745170,1807745172...1807745177,1807745179...1807745194,1807745196,1807745197,1807745199,1807745201...1807745218,1807745221,1807745222,1807745224,1807745226...1807745231,1807745233,1807745234,1807745236...1807745244&date=latestMINUS2&variable=290&measures=20599,21001,21002,21003")
+
+nvq4 <- nvq4 %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, MEASURES_NAME, OBS_VALUE) %>%
+  filter(MEASURES_NAME=="Variable") %>%
+  dplyr::select(-MEASURES_NAME) %>%
+  distinct(GEOGRAPHY_CODE, OBS_VALUE, .keep_all = T) %>% 
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  rename(nvq4 = OBS_VALUE)
+```
+
+## Earnings 2019
+
+```{r}
+
+earnings <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_30_1.data.csv?geography=1946157348,2092957698,2013265929,1816133633...1816133837,1820327937...1820328307&date=latest&sex=8&item=2&pay=1&measures=20100,20701")
+
+earnings <- earnings %>%
+  filter(MEASURES_NAME == "Value") %>% # dropiing the confedence
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, OBS_VALUE) %>%
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  rename(earnings =  OBS_VALUE) %>%
+  distinct()
+
+# test <- left_join(lad, earnings, by = "lad19cd")
+# sapply(test, function(x) sum(is.na(x)))
+```
+
+## Business counts 2019
+
+```{r}
+
+# busi <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_141_1.data.csv?geography=1816133633...1816133848,1820327937...1820328318,1870659585...1870659791,1870659801,1870659792...1870659800,1879048193...1879048573,1879048583,1879048574...1879048582&date=latest&industry=163577857...163577874&employment_sizeband=0&legal_status=0&measures=20100")
+
+busi <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_141_1.data.csv?geography=1816133633...1816133848,1820327937...1820328318,1870659585...1870659791,1870659801,1870659792...1870659800,1879048193...1879048573,1879048583,1879048574...1879048582&date=latest&industry=150994945...150994965&employment_sizeband=0&legal_status=0&measures=20100")
+
+busi <- busi %>%
+  dplyr::select(GEOGRAPHY_CODE, GEOGRAPHY_NAME, INDUSTRY_NAME, OBS_VALUE) %>%
+  distinct(GEOGRAPHY_CODE, INDUSTRY_NAME, .keep_all = T) %>% 
+  spread(INDUSTRY_NAME, OBS_VALUE) %>% 
+  rename(LAD21CD = GEOGRAPHY_CODE) %>%
+  rename(A = `A : Agriculture, forestry and fishing`) %>%
+  rename(B = `B : Mining and quarrying`) %>%
+  rename(C = `C : Manufacturing`) %>%
+  rename(D = `D : Electricity, gas, steam and air conditioning supply`) %>%
+  rename(E = `E : Water supply; sewerage, waste management and remediation activities`) %>%
+  rename(F = `F : Construction`) %>%
+  rename(G = `G : Wholesale and retail trade; repair of motor vehicles and motorcycles`) %>%
+  rename(H = `H : Transportation and storage`) %>%
+  rename(I = `I : Accommodation and food service activities`) %>%
+  rename(J = `J : Information and communication`) %>%
+  rename(K = `K : Financial and insurance activities`) %>%
+  rename(L = `L : Real estate activities`) %>%
+  rename(M = `M : Professional, scientific and technical activities`) %>%
+  rename(N = `N : Administrative and support service activities`) %>%
+  rename(O = `O : Public administration and defence; compulsory social security`) %>%
+  rename(P = `P : Education`) %>%
+  rename(Q = `Q : Human health and social work activities`) %>%
+  rename(R = `R : Arts, entertainment and recreation`) %>%
+  rename(S = `S : Other service activities`) %>%
+  rename(T = `T : Activities of households as employers;undifferentiated goods-and services-producing activities of households for own use`) %>%
+  rename(U = `U : Activities of extraterritorial organisations and bodies`) %>%
+  mutate(total.busi = rowSums(.[3:23]))
+
+# test <- left_join(lad, busi, by = "lad19cd")
+# sapply(test, function(x) sum(is.na(x)))
+```
+
+## Urban/rural
+
+```{r eval=F}
+# not complete
+url <- "https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/137663/la-class-dataset-post0409.xls"
+GET(url, write_disk(tf <- tempfile(fileext = ".xls")))
+urban.rural <- read_excel(tf, 1L, range = "A17:CP1877", col_names = T)
+
+```
+
+## merge
+
+```{r}
+data.la <- list(ladDist, job.dens, pop, pop.dens, labour, earnings, busi) # ns; nvq4 
+sapply(data.la, function(x) dim(x))
+sapply(data.la, function(x) names(x))
+
+# merge with reduce
+data.la <- data.la %>% 
+  reduce(inner_join, by = "LAD21CD") %>%
+  #distinct(.keep_all = T)
+  unique()
+sapply(data.la, function(x) sum(is.na(x)))
+
+data.la <- merge(data.la, ns, all.x = T)
+data.la$south <- ifelse(is.na(data.la$south),0, data.la$south)
+
+# NOT RUN
+# export file for future reference / backup
+# data.out.path <- paste0(path, "/data/temp/data_for_aux.csv")
+# write.csv(data, data.out.path)
+```
