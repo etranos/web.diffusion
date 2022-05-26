@@ -1,0 +1,132 @@
+---
+title: 'Digital economy in the UK: an evolutionary story'
+# date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+author: |
+  |
+  | Emmanouil Tranos
+  |
+  | <small>University of Bristol, Alan Turing Institute</small>
+  | <small>e.tranos@bristol.ac.uk, [\@EmmanouilTranos](https://twitter.com/EmmanouilTranos), [etranos.info](https://etranos.info/)</small>
+output: 
+  revealjs::revealjs_presentation:
+    theme: simple
+    self_contained: true
+    reveal_options:
+      width: 1150
+      height: 720
+bibliography: mybibfile.bib
+biblio-style: "apalike"
+css: style.css
+---
+
+```{r, echo=FALSE, results=FALSE, include=FALSE}
+library(knitr)
+library(rprojroot)
+
+knitr::opts_chunk$set(echo = FALSE, message = F, warning = F) # By default, hide code; set to TRUE to see code
+#knitr::opts_chunk$set(out.width = '100%', dpi=300) # Figure resolution and size
+
+# This is the project path
+path <- find_rstudio_root_file()
+
+#bibliography: ../bibliography.bib
+```
+
+## Contents
+- Introduction
+- Web data and spatial research
+- Empirical strategy
+- Descriptive statistics
+- Results
+- Conclusions
+<br>
+<br>
+[etranos.info/post/sad2021](https://etranos.info/post/sad2021)
+
+# Introduction
+
+## Aims
+
+- Map the active engagement with the *digital*
+- Over time, early stages of the internet
+- Granular spatial level
+- Importance: understand how the adoption of technologies evolves
+- Predictions of introduction times for future technologies [@meade2021modelling]
+  
+  - Network operators
+  
+  - Suppliers of network equipment
+  
+  - Regulatory authorities  
+
+## Diffusion
+
+Large scale adoption studies
+
+Add Figure
+
+
+## Spatiality of the internet using supply-side measures
+
+- Map internet infrastructure, *both*: 
+
+  - backbone (ADD REF), and 
+
+  - last mile (ADD REF, Singleton, Hannah)
+
+- Economic effects:
+
+  - Kolko
+
+  - Nathan
+  
+## ???
+
+@beardsell1999spatial used the employment in the computer industry to assess
+its evolution
+
+# Results
+
+--- 
+
+```{r results='asis', out.width = "60%"}
+
+library(magick)
+library(purrr)
+path.images <- paste0(path, "/outputs/")
+
+list.files(path = path.images, pattern = "^hex1", full.names = T) %>% 
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(delay=50) #%>% # animates, can opt for number of loops
+  #image_write("test.gif") # write to current dir
+
+```
+
+---
+
+```{r results='asis', out.width = "60%"}
+
+library(magick)
+library(purrr)
+path.images <- paste0(path, "/outputs/")
+
+list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>% 
+  map(image_read) %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(delay=50) #%>% # animates, can opt for number of loops
+  #image_write("test.gif") # write to current dir
+
+```
+
+```{r eval=FALSE, fig.show='animate', ffmpeg.format='gif', dev='jpeg', interval=0.01}
+
+hex.images <- list.files(path = path.images, pattern = "^hex", full.names = T)
+for (i in hex.images){
+  plot(i) # for example
+}
+```
+  
+
+
+## References {.allowframebreaks}
