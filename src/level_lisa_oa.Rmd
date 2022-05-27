@@ -25,6 +25,7 @@ library(knitr)
 library(REAT)
 library(tidygeocoder)
 library(geosphere)
+library(broom)
 
 options(scipen=10000)
 
@@ -39,7 +40,7 @@ Postcode lookup.
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
-  select(pcds, oa11cd) %>% 
+  dplyr::select(pcds, oa11cd) %>% 
   dplyr::rename(pc = pcds)
 #glimpse(lookup)
 # The problems refer to Welsh LAD names. Not a problem for the analysis.
@@ -69,13 +70,13 @@ df1112 <- read_csv(data.path2011_2012)
 
 df <- bind_rows(df9610, df1112) %>% 
   filter(
-    V1.domain < m,             # for multiple pc
-    #V1.domain == n,             # for n == 1
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
     year > 1995 & year <2013) %>%   
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, oa11cd) %>%
-  summarise(n = n()) %>%            # for multiple pc  
-  #summarise(n = sum(V1.domain)) %>% # for n == 1 
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>%  # for n == 1 
   ungroup()
 
 
@@ -168,8 +169,8 @@ gb <- spTransform(gb, CRS("+init=epsg:4326"))
 
 ```{r}
 
-#path.out <- paste0(path, "/outputs/lisa_level_pc", n, "_oa") # for unique PC
-path.out <- paste0(path, "/outputs/lisa_level_pc", m, "_oa")  # for multiple PC
+path.out <- paste0(path, "/outputs/lisa_level_pc", n, "_oa") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa_level_pc", m, "_oa")  # for multiple PC
 
 morani <- data.frame()
 
@@ -255,11 +256,13 @@ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 Moran I
 
 ```{r}
+path.out <- paste0(path, "/outputs/morani.csv")
 morani %>% as_tibble() %>% 
   rename('morani'=V1,
                    p = V2,
                    year = V3) %>% 
-  kable()
+  kable() #%>% 
+  #write_csv(path.out)
 
 ```
 
@@ -275,6 +278,9 @@ for (t in 1996:2012){
   b$year = t
   gini.df <- rbind(gini.df, b)
 }
+
+path.out <- paste0(path, "/outputs/gini.csv")
+gini.df %>% write_csv(path.out)
 ```
 
 ## Getis-Ord
@@ -404,7 +410,7 @@ dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>%
 
 # Minimum distance 
 dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
-dist.retail <- dist.retail %>% select(oa11cd, dist.retail)
+dist.retail <- dist.retail %>% dplyr::select(oa11cd, dist.retail)
 
 # Join with complete panel
 df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd")) 
@@ -431,20 +437,30 @@ for (t in 1996:2012){
 }
 
 names(dens.London)[1] <- "rsquared"
-ggplot(dens.London) +
-  geom_line(aes(x=year, y = rsquared))
 
-library(broom)
+path.out <- paste0(path,"/outputs/rsq_dist_london.png")
+ggplot(dens.London) +
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to London on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
+
 out.model <- out.model %>% 
   mutate(year = 1996:2012)
 
+path.out <- paste0(path,"/outputs/b_dist_london.png")
 ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
 #ggplot(out.model, aes(x=year, y = estimate)) +  
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
                        position = "dodge", color="turquoise4") +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() 
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to London on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
 ```
 
 Website density regressions to the nearest city
@@ -466,18 +482,29 @@ for (t in 1996:2012){
 }
 
 names(dens.distMet)[1] <- "rsquared"
+
+path.out <- paste0(path,"/outputs/rsq_dist_city.png")
 ggplot(dens.distMet) +
-  geom_line(aes(x=year, y = rsquared))
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to nearest city on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
 
 out.modelMet <- out.modelMet %>% 
   mutate(year = 1996:2012)
 
+path.out <- paste0(path,"/outputs/b_dist_city.png")
 ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
                        position = "dodge", color="turquoise4") +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() 
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
 ```
 
 Website density regressions to the nearest retail centre
@@ -499,18 +526,29 @@ for (t in 1996:2012){
 }
 
 names(dens.dist.retail)[1] <- "rsquared"
+
+path.out <- paste0(path,"/outputs/rsq_dist_centre.png")
 ggplot(dens.dist.retail) +
-  geom_line(aes(x=year, y = rsquared))
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to nearest retail centre on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
 
 out.model.retail <- out.model.retail %>% 
   mutate(year = 1996:2012)
 
+path.out <- paste0(path,"/outputs/b_dist_centre.png")
 ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
                        position = "dodge", color="turquoise4") +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() 
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ggsave(path.out)
 
 
 # library(pscl)
@@ -522,6 +560,8 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
 #   group_by(group = cut(n, breaks = c(0, 1, 2, 10, 100, 1000, 10000), include.lowest = T, right = F)) %>%  #seq(0, max(n), 100))) %>%
 #   summarise(n = sum(n))
 ```
+
+## The below are unfinished 
 
 Website density regressions to the nearest retail centre with spatial lag
 
