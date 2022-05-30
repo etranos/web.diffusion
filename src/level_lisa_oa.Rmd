@@ -270,10 +270,20 @@ morani %>% as_tibble() %>%
 
 ```{r}
 
+# add OAs with 0s
+df.with0s <- df %>% mutate(country = substring(oa11cd, 1, 1)) %>%
+  filter(country != "L" & country != "M" & country != "N") %>%
+  filter(!is.na(country)) %>%
+  complete(year, oa11cd, fill = list(n = 0)) %>%
+  filter(year!=1000,
+         !is.na(oa11cd)) %>%
+  dplyr::select(-country)
+
+
 gini.df <- data.frame()
 
 for (t in 1996:2012){
-    a <- df %>% filter(year==t)
+    a <- df.with0s %>% filter(year==t)
   b <- as.data.frame(gini(a$n))
   b$year = t
   gini.df <- rbind(gini.df, b)
@@ -367,15 +377,15 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 
 # NOT USED AS IT SCREWS UP THE REGRESSIONS
 # Complete panel, N = 3871903, 17 year * 227759 OA
-# df <- df %>% bind_rows(dist %>% select(oa11cd)) %>% 
+# df <- df %>% bind_rows(dist %>% dplyr::select(oa11cd)) %>%
 #   mutate(year = ifelse(is.na(year),1000, year),
-#          country = substring(oa11cd, 1, 1)) %>% 
-#   filter(country != "L" & country != "M" & country != "N") %>% 
-#   filter(!is.na(country)) %>% 
-#   complete(year, oa11cd, fill = list(n = 0)) %>% 
+#          country = substring(oa11cd, 1, 1)) %>%
+#   filter(country != "L" & country != "M" & country != "N") %>%
+#   filter(!is.na(country)) %>%
+#   complete(year, oa11cd, fill = list(n = 0)) %>%
 #   filter(year!=1000,
-#          !is.na(oa11cd)) %>% 
-#   select(-country)
+#          !is.na(oa11cd)) %>%
+#   dplyr::select(-country)
 
 
 
@@ -445,7 +455,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_london_oa.png")
 ggplot(dens.London) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to London on website density") +
+  ggtitle("Regression fit, distance to London on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -461,9 +471,12 @@ ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to London on website density") +
+  ggtitle("Regression coefficients, distance to London on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
+
+r2.all <- dens.London %>% 
+  rename(London = rsquared)
 ```
 
 Website density regressions to the nearest city
@@ -490,7 +503,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_city_oa.png")
 ggplot(dens.distMet) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest city on website density") +
+  ggtitle("Regression fit, distance to nearest city on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -505,9 +518,12 @@ ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  ggtitle("Regression coefficients, distance to nearest city on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
+
+r2.all <- r2.all %>% left_join(dens.distMet) %>% 
+  rename(cities = rsquared)
 ```
 
 Website density regressions to the nearest retail centre
@@ -534,7 +550,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_centre_oa.png")
 ggplot(dens.dist.retail) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest retail centre on website density") +
+  ggtitle("Regression fit, distance to nearest retail centre on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -549,7 +565,7 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  ggtitle("Regression coefficients, distance to nearest city on website density, OA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -562,6 +578,22 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
 # df %>% filter(year == 1996) %>% 
 #   group_by(group = cut(n, breaks = c(0, 1, 2, 10, 100, 1000, 10000), include.lowest = T, right = F)) %>%  #seq(0, max(n), 100))) %>%
 #   summarise(n = sum(n))
+```
+All R^2 dataframe
+
+```{r}
+path.out <- paste0(path, "/outputs/r2_all.csv")
+
+r2.all <- dens.London %>% 
+  rename(London = rsquared) %>% 
+  left_join(dens.distMet) %>% 
+  rename(cities = rsquared) %>% 
+  left_join(dens.dist.retail) %>% 
+  rename(retail = rsquared) %>% 
+  relocate(year, .before = London) %>% 
+  arrange(year)
+
+write_csv(r2.all, path.out)
 ```
 
 ## The below are unfinished 

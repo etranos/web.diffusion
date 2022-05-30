@@ -220,6 +220,8 @@ morani %>% as_tibble() %>%
 
 ```{r}
 
+# No need to add 0s like OAs as there aren't any LA with 0s
+
 gini.df <- data.frame()
 
 for (t in 1996:2012){
@@ -395,7 +397,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_london_la.png")
 ggplot(dens.London) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to London on website density") +
+  ggtitle("Regression fit, distance to London on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -411,7 +413,7 @@ ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to London on website density") +
+  ggtitle("Regression coefficients, distance to London on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 ```
@@ -440,7 +442,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_city_la.png")
 ggplot(dens.distMet) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest city on website density") +
+  ggtitle("Regression fit, distance to nearest city on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -455,7 +457,7 @@ ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  ggtitle("Regression coefficients, distance to nearest city on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 ```
@@ -484,7 +486,7 @@ path.out <- paste0(path,"/outputs/rsq_dist_centre_la.png")
 ggplot(dens.dist.retail) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest retail centre on website density") +
+  ggtitle("Regression fit, distance to nearest retail centre on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
@@ -499,7 +501,7 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density") +
+  ggtitle("Regression coefficients, distance to nearest city on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
