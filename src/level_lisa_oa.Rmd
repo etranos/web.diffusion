@@ -582,7 +582,7 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
 All R^2 dataframe
 
 ```{r}
-path.out <- paste0(path, "/outputs/r2_all.csv")
+path.out <- paste0(path, "/outputs/r2_all_oa.csv")
 
 r2.all <- dens.London %>% 
   rename(London = rsquared) %>% 
