@@ -26,6 +26,7 @@ library(REAT)
 library(tidygeocoder)
 library(geosphere)
 library(broom)
+library(foreach)
 
 options(scipen=10000)
 
@@ -199,6 +200,114 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
   tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
   tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
+tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
+}
+```
+
+## lisa maps parallel
+
+```{r}
+
+path.out <- paste0(path, "/outputs/lisa_level_pc_test", n, "_la") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa_level_pc", m, "_la")  # for multiple PC
+
+#setup cluster
+#https://www.blasbenito.com/post/02_parallelizing_loops_with_r/
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+  )
+print(my.cluster)
+doParallel::registerDoParallel(cl = my.cluster)
+foreach::getDoParWorkers()
+
+morani <- data.frame()
+
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(la)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+#for (t in 1996:2012){
+foreach(t = 1996:2012, .packages = c("tidyverse",
+                                     "rgdal",
+                                     "rgeos",
+                                     "spdep",
+                                     "tmap",
+                                     "maptools",
+                                     "knitr",
+                                     "broom")) %dopar% {
+test <- la
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
+         year = ifelse(is.na(year), t, year))
+  
+#spatial weight matrix
+#moved out of the loop
+
+#Moran's I
+globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
+a <- cbind(globalMoran$estimate[[1]],globalMoran$p.value, t[1])
+morani <- rbind(a, morani)
+
+#LISA
+lmoran<- cbind(test@data, localmoran(test$n, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
+#lmoran
+
+# centers the local Moran's around the mean
+lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
+lmoran$lag.n<-  lag.listw(listw,lmoran$n, NAOK = TRUE)
+
+# centers the variable of interest around its mean
+
+lmoran$ns <- lmoran$n - mean(lmoran$n, na.rm = TRUE) 
+lmoran$lag.n <- lmoran$lag.n - mean(lmoran$lag.n, na.rm = TRUE) 
+
+signif <- 0.05
+#lmoran
+
+lmoran <- lmoran%>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n > 0, 1, 0)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n < 0, 2, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n > 0, 3, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n < 0, 4, quadrant)) %>%   
+  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
+  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+
+
+#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
+# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
+#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
+  
+mun_merge_new<- merge(test, lmoran, by="LAD21CD")
+
+# R p value map
+breaks = c(0, 1, 2, 3, 4, 5) 
+
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+
+map <- tm_shape(mun_merge_new, projection = "+init=epsg:4326") + tm_fill(col = "quadrant", breaks = breaks, 
+                                         palette = c("white","red","blue",
+                                                     rgb(0,0,1,alpha=0.4),
+                                                     rgb(1,0,0,alpha=0.4)), 
+                                         labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), 
+                                         title="LISA for level, LA") +
+  tm_legend(text.size = 1) +
+  #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
+  #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
+  #tm_borders(alpha=.1) +
+  tm_borders(lwd = 0) +
+  tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
+  tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
+  tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ") +
+tmap_options(check.and.fix = TRUE)
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 }
 ```
@@ -516,3 +625,19 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
 #   summarise(n = sum(n))
 ```
 
+All R^2 dataframe
+
+```{r}
+path.out <- paste0(path, "/outputs/r2_all_la.csv")
+
+r2.all <- dens.London %>% 
+  rename(London.LA = rsquared) %>% 
+  left_join(dens.distMet) %>% 
+  rename(cities.LA = rsquared) %>% 
+  left_join(dens.dist.retail) %>% 
+  rename(retail.LA = rsquared) %>% 
+  relocate(year, .before = London.LA) %>% 
+  arrange(year)
+
+write_csv(r2.all, path.out)
+```
