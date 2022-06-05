@@ -20,6 +20,7 @@ library(rprojroot)
 library(rgdal)
 library(sf)
 library(modelr)
+library(survival)
 
 options(scipen=10000)
 
@@ -43,7 +44,7 @@ Postcode lookup.
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
-  select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
   dplyr::rename(pc = pcds)
 #glimpse(lookup)
 # The problems refer to Welsh LAD names. Not a problem for the analysis.
@@ -73,13 +74,13 @@ df1112 <- read_csv(data.path2011_2012)
 
 df <- bind_rows(df9610, df1112) %>% 
   filter(
-    V1.domain < m,             # for multiple pc
-    #V1.domain == n,             # for n == 1
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
     year > 1995 & year <2013) %>%   
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, ladcd) %>%
-  summarise(n = n()) %>%            # for multiple pc  
-  #summarise(n = sum(V1.domain)) %>% # for n == 1 
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
 
@@ -94,6 +95,26 @@ df <- bind_rows(df9610, df1112) %>%
 # 
 # df %>% filter(substr(oa11cd, 1,1) =="W",
 #               year==2003)
+```
+
+## Spatial data
+
+```{r}
+# get LA for the UK
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+la <- spTransform(la, CRS("+init=epsg:4326"))
+
+la.f <- fortify(la, region = "LAD21CD")
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
 ```
 
 ## Help, not really used
@@ -173,6 +194,8 @@ rsquare(fit, df.country)
 
 df.country$prednls = predict(fit)
 
+path.out <- paste0(path, "/outputs/s_uk.png")
+
 df.country %>% 
   ggplot(aes(x = year, y = n) ) +
   geom_point() +
@@ -180,7 +203,11 @@ df.country %>%
   scale_x_continuous("year", labels = as.character(df.country$year), breaks = df.country$year) +
   geom_vline(xintercept = 2003) +
   ylab("N. of websites") +
-  ggtitle("Country")
+  ggtitle("S-curve, UK") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+ggsave(path.out)
+  
   #scale_x_date(breaks = df.test$year) 
 ```
 
@@ -193,7 +220,7 @@ simplify2array(all.la)
 
 for (i in all.la){
   data <- df %>% filter(ladcd==i) %>%
-    select(year, ladcd, n) 
+    dplyr::select(year, ladcd, n) 
     #lm(n~year, data = .)
     #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
   tryCatch(b.la <- tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
@@ -202,25 +229,32 @@ for (i in all.la){
 
 a.la %>% filter(term=="xmid") %>% 
   mutate(estimate = round(estimate, 0)) %>% 
-  select(estimate) %>% 
+  dplyr::select(estimate) %>% 
   summarise(r = range(estimate),
             median = median(estimate))
 
 a.la %>% filter(term=="xmid") %>% 
   mutate(estimate = round(estimate, 0)) %>% 
   filter(p.value < 0.01) %>%    # (227759 - 212782)/227759  # 6% not sig 
-  select(estimate) %>% 
+  dplyr::select(estimate) %>% 
   ggplot(aes(x=estimate)) + 
   geom_histogram(binwidth = 1) +
-  geom_vline(xintercept = 2003, colour = "red")
-  scale_x_continuous("year", labels = round(a$estimate, 0), breaks = round(a$estimate, 0)) 
+  geom_vline(xintercept = 2003, colour = "red") +
+  #scale_x_continuous("year", labels = round(a$estimate, 0), breaks = round(a$estimate, 0)) +
   #scale_x_discrete(labels = as.factor(a$estimate))
+  theme_minimal() +
+  ggtitle("Counts of Xmid per year") +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  ylab("LAs") + xlab("year")   
+  
+path.out <- paste0(path, "/outputs/xmid_f.png")
+ggsave(path.out)  
   
 a.la <- a.la %>% filter(term=="xmid") %>% 
   bind_cols(as.tibble(all.la)) %>% 
   mutate(estimate = round(estimate, 0)) %>% 
   filter(p.value < 0.01) %>%    # 376 / 376, all sig
-  select(ladcd, estimate)
+  dplyr::select(ladcd, estimate)
   #filter(estimate>2011)
 ```
 
@@ -233,7 +267,7 @@ simplify2array(all.la)
 
 for (i in all.la){
   data <- df %>% filter(ladcd==i) %>%
-    select(year, ladcd, n) 
+    dplyr::select(year, ladcd, n) 
     #lm(n~year, data = .)
     #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
   tryCatch(model <- (nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
@@ -252,7 +286,7 @@ a.la <- a.la %>% filter(term=="xmid") %>%
   #summarise(r = range(r2))
   filter(p.value < 0.01 & 
          r2 > 0.9) %>%    # 376 / 376, all sig, 330 r2 > 0.9
-  select(ladcd, estimate, r2, std.error) %>%
+  dplyr::select(ladcd, estimate, r2, std.error) %>%
   mutate(fast = ifelse(estimate < 2003, "fast", "slow")) 
 
 
@@ -277,13 +311,20 @@ p <- ggplot(pred %>% left_join(a.la) %>%
               filter(ladcd == i), aes(x = year, y = n, color = fast) ) +
   geom_point() +
   geom_line(aes(y = prednls), size = 1) +
-  scale_x_continuous("year", labels = as.character(df.test$year), breaks = df.test$year) +
-  geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% select(estimate) %>% first()) +
+  scale_x_continuous("year", labels = as.character(df$year), breaks = df$year) +
+  geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()) +
   ylab("N. of websites") + 
-  labs(title = paste0(la@data %>% filter(LAD21CD== i) %>% select(LAD21NM) %>% first(), ", ", i)) +
+  labs(color = "Website \ndiffusion speed") +
+  labs(title = paste0(la@data %>% filter(LAD21CD== i) %>% dplyr::select(LAD21NM) %>% first(), ", ", i)) +
   theme(legend.position=c(.9,.15)) +
   scale_color_manual(values = c("fast" = "purple",
-                                "slow"="orange")) 
+                                "slow"="orange")) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_vline(xintercept = 2003, colour="grey30", linetype="dashed") 
+
+  
+
 
 ggsave(p, filename = paste(path.out, i, ".png", sep = ""))
   
@@ -292,9 +333,19 @@ ggsave(p, filename = paste(path.out, i, ".png", sep = ""))
 
 ## Xmid frequency graph
 
-```{r}
-ggplot(a.la, aes(as.factor(round(estimate, 0)))) +
-  geom_bar(fill = "#0073C2FF")
+**TO DELETE**, done it above.
+
+```{r, eval=F}
+# path.out <- paste0(path, "/outputs/xmid_f.png")
+# 
+# ggplot(a.la, aes(as.factor(round(estimate, 0)))) +
+#   geom_bar(fill = "#0073C2FF") +
+#   theme_minimal() +
+#   ggtitle("Counts of Xmid per year") +
+#   theme(plot.title = element_text(hjust = 0.5)) +
+#   ylab("LAs") + xlab("year") 
+# 
+# ggsave(path.out)
 ```
 
 write the object with all the models
@@ -320,10 +371,9 @@ Time series formula will look like this:
 This is what @perkins2005international should be using.
 See p. 7 [here](https://cran.r-project.org/web/packages/survival/vignettes/timedep.pdf).
 
+using `library(survival)`
 
 ```{r}
-library(survival)
-
 test.surv.data <- a.la %>% mutate(status = 1) %>% 
   left_join(data.la, by = c("ladcd" = "LAD21CD")) %>% 
   left_join(df %>% filter(year == 2012), by = "ladcd")
@@ -334,26 +384,6 @@ summary(cf)
 ```
 
 ## Map the xmid
-
-Spatial data
-
-```{r}
-# get LA for the UK
-path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
-la <- readOGR(path.geo)
-# source: https://geoportal.statistics.gov.uk/
-
-# spatial transformations
-la <- spTransform(la, CRS("+init=epsg:4326"))
-
-la.f <- fortify(la, region = "LAD21CD")
-
-# cities
-cities <- maps::world.cities %>% 
-  filter(country.etc=="UK") %>% 
-  arrange(pop) %>% tail(10) 
-tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
-```
 
 ```{r}
 
@@ -371,15 +401,21 @@ ggplot(data = la.f, aes(x = long, y = lat)) +
   scale_fill_continuous(type = "viridis") +
   theme_void()
 
+path.out <- paste0(path, "/outputs/speed_pam.png")
 ggplot(data = la.f, aes(x = long, y = lat)) +
   geom_polygon(aes(group = group, fill = fast)) + #fill = fast, 
-  #theme_nothing(legend = TRUE) +
-  labs(title = "Clusters") +
-  geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
-    geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
-  #scale_fill_continuous(type = "viridis") +
-  theme_void()
+  scale_fill_manual(values = c("darkorchid3", "orange"), #darkmagenta, purple4
+                    na.value = "grey70") + 
 
+  #theme_nothing(legend = TRUE) +
+  labs(title = "Website diffusion speed in Local authorities") +
+  geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
+  geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
+  #scale_fill_continuous(type = "viridis") +
+  labs(fill='Diffusion') +
+  theme_void() +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 ```
 
 ```{r}

@@ -11,6 +11,12 @@ knit: (function(inputFile, encoding) {
   })
 ---
 
+I re-run the below using a `foreach` loop. It created a new object `a_` with c. 40k
+rows. Once I filter the old `a` object derived from the `for` loop I have c. 60k rows.
+I run `lm' and `coxph` using both and the results are not strong not easy to interpret.
+
+The `/data/temp/s_oa.csv` is based on the `for` loop.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -33,7 +39,7 @@ Postcode lookup.
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
-  select(pcds, oa11cd) %>% 
+  dplyr::select(pcds, oa11cd) %>% 
   dplyr::rename(pc = pcds)
 #glimpse(lookup)
 # The problems refer to Welsh LAD names. Not a problem for the analysis.
@@ -135,7 +141,7 @@ This is a self-starting model, which estimates the starting values.
 
 
 ```{r}
-df.test <- df %>% filter(oa11cd == "S00103828") 
+df.test <- df %>% filter(oa11cd == "E00138496") 
 
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
 summary(fit)
@@ -173,32 +179,75 @@ ggplot(df.country, aes(x = year, y = n) ) +
 ## Loop for S function estimation for OA
 
 ```{r}
-a <- as_tibble()
-all.oa <- unique(df$oa11cd)
-for (oa in all.oa){
-  data <- df %>% filter(oa11cd==oa) %>%
-    select(year, oa11cd, n) 
-    #lm(n~year, data = .)
-    #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
-  tryCatch(b <- tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
-  tryCatch(a <-rbind(a,b), error=function(e) NULL)
-}
+# a <- as_tibble()
+# all.oa <- unique(df$oa11cd)
+# #for (oa in all.oa){
+# a <- foreach(oa = all.oa, .combine = 'rbind',
+#              #.final =  function(x) setNames(x, names(all.oa)),
+#           .packages = c("tidyverse",
+#                                     "broom")) %dopar% {
+#   data <- df %>% filter(oa11cd==oa) %>%
+#     dplyr::select(year, oa11cd, n) 
+#     #lm(n~year, data = .)
+#     #tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = .)), , error=function(e) NULL)
+#   tryCatch(tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
+#   #tryCatch(a <-rbind(a,b), error=function(e) NULL)
+# }
 
-a %>% filter(term=="xmid") %>% 
+
+  
+
+# Setup cluster
+# https://www.blasbenito.com/post/02_parallelizing_loops_with_r/
+n.cores <- parallel::detectCores() - 1
+my.cluster <- parallel::makeCluster(
+  n.cores, 
+  type = "PSOCK"
+  )
+print(my.cluster)
+doParallel::registerDoParallel(cl = my.cluster)
+foreach::getDoParWorkers()
+
+
+a <- foreach(oa = all.oa, .combine = 'rbind', .packages = c("tidyverse",
+                           "broom")) %dopar% 
+  {
+    data <- df %>% filter(oa11cd==oa) %>%
+    dplyr::select(year, oa11cd, n) 
+    tryCatch(model <- tidy(nls(n ~ SSlogis(year, Asym, xmid, scal), data = data)), error=function(e) NULL)
+    
+    tryCatch(model <- model %>% dplyr::filter(term == "xmid"), error=function(e) NULL)
+    
+    c(oa, model)
+    }
+
+stopCluster(my.cluster)
+
+# drop the second duplicates  
+a_ <- as.data.frame(a) %>% 
+  rename(oa11cd = V1) %>% 
+  #mutate(help = duplicated(estimate))
+  distinct(estimate, std.error, statistic, p.value, .keep_all = TRUE) %>% 
+  unnest()
+
+
+a_ %>% #filter(term=="xmid") %>% 
   mutate(estimate = round(estimate, 0)) %>% 
-  select(estimate) %>% 
+  dplyr::select(estimate) %>% 
   summarise(r = range(estimate))
 
-a %>% filter(term=="xmid") %>% 
+a_ %>% #filter(term=="xmid") %>% 
   mutate(estimate = round(estimate, 0)) %>% 
   filter(p.value < 0.01) %>%    # (227759 - 212782)/227759  # 6% not sig 
-  select(estimate) %>% 
+  dplyr::select(estimate) %>% 
   ggplot(aes(x=estimate)) + 
   geom_histogram(binwidth = 1) +
   geom_vline(xintercept = 2003, colour = "red")
   scale_x_continuous("year", labels = round(a$estimate, 0), breaks = round(a$estimate, 0)) 
   #scale_x_discrete(labels = as.factor(a$estimate))
-  
+
+a_ %>% filter(estimate<1996)  
+
 a <- a %>% filter(term=="xmid") %>% 
     bind_cols(all.oa) %>% 
     mutate(estimate = round(estimate, 0)) %>% 
@@ -210,7 +259,7 @@ a <- a %>% filter(term=="xmid") %>%
 write the object with all the models
 
 ```{r}
-path.out <- paste0(path, "/data/temp/s.csv")
+path.out <- paste0(path, "/data/temp/s_oa.csv")
 write_csv(a, path.out)
 ```
 
@@ -297,14 +346,14 @@ oa.gb <- spTransform(oa.gb, CRS("+init=epsg:4326"))
 # ggplot2 maps
 oa.gb.f <- fortify(oa.gb, region = "id")
 
-oa.gb.f <- oa.gb.f %>% left_join(a, by = "id") %>% 
+oa.gb.f <- oa.gb.f %>% left_join(a_, by = c("id"="oa11cd")) %>% 
   mutate(fast = ifelse(estimate < 2003, "fast", "slow")) %>% 
   arrange(order)  # if i don't order merge.nuts.f loses order and the map has gaps
 
 
 # oa.gb.f %>% mutate(fast = ifelse(estimate < 2003, 1, 0)) %>% 
 #   arrange(order) %>% 
-ggplot(data = oa.gb.f %>% arrange(order), aes(x = long, y = lat)) +
+ggplot(data = oa.gb.f %>% arrange(order) %>% filter(estimate<2020 & estimate >1996), aes(x = long, y = lat)) +
   geom_polygon(aes(group = group, fill = estimate)) + #fill = fast, 
   #theme_nothing(legend = TRUE) +
   labs(title = "Clusters") +
@@ -324,16 +373,16 @@ oa.class@data %>% glimpse()
 pen.path <- paste0(path, "/data/raw/Output Area Classification/penportraits.csv")
 pen <- read.csv(pen.path, sep = "\t")
 
-oa.class.df <- a %>%  
+oa.class.df <- a_ %>%  
   mutate(fast = ifelse(estimate < 2003, "fast", "slow")) %>% 
-  left_join(oa.class@data, by = c("id"="OA_SA")) %>% 
-  select(1:10) %>% 
-  arrange(id) 
+  left_join(oa.class@data, by = c("oa11cd"="OA_SA")) %>% 
+  dplyr::select(1:14) %>% 
+  arrange(oa11cd) 
 
 length(unique(oa.class.df$GRP))
 
 oa.class.df %>% 
-  filter(fast == "slow") %>% 
+  filter(fast == "fast") %>% 
   group_by(SUBGRP) %>% 
   summarise(n=n()) %>% 
   arrange(-n) %>% 
@@ -342,7 +391,7 @@ oa.class.df %>%
          cum.n = cumsum(n),
          cum.freq = cumsum(n / sum(n)),
          cum.freq = round(cum.freq, 2)) %>% 
-  left_join(pen %>% select(code, name),
+  left_join(pen %>% dplyr::select(code, name),
             by = c("SUBGRP" = "code")) %>% 
   kable()
 
@@ -440,7 +489,7 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 # length(unique(test$oa11cd))
 
 # Join with distance and area
-oa.class.df <- oa.class.df %>% left_join(dist, by = c("id" = "oa11cd")) 
+oa.class.df <- oa.class.df %>% left_join(dist, by = c("oa11cd" = "oa11cd")) 
 sapply(df, function(x) sum(is.na(x)))
 ```
 
@@ -460,10 +509,10 @@ dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>%
 
 # Minimum distance 
 dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
-dist.retail <- dist.retail %>% select(oa11cd, dist.retail)
+dist.retail <- dist.retail %>% dplyr::select(oa11cd, dist.retail)
 
 # Join with complete panel
-oa.class.df <- oa.class.df %>% left_join(dist.retail, by = c("id" = "oa11cd")) 
+oa.class.df <- oa.class.df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd")) 
 
 sapply(oa.class.df, function(x) sum(is.na(x)))
 ```
@@ -473,7 +522,7 @@ Distance regressions
 ```{r}
 
 oa.class.df <- oa.class.df %>% left_join(df %>% group_by(oa11cd) %>% summarise(max.n = max(n, na.rm = T)), #filter(year==2012), 
-                          by = c("id"="oa11cd")) 
+                          by = c("oa11cd"="oa11cd")) 
 
 model.n <- lm(estimate ~ max.n, data = oa.class.df) #%>%filter(estimate>1996 & estimate <2012)
 summary(model.n)
@@ -481,9 +530,15 @@ nobs(model.n)
 
 
 model <- lm(estimate ~ log(London + 1) + log(dist + 1) + log(dist.retail + 1) + 
-              as.factor(SPRGRP) + log(POPULATION) + max.n, data = oa.class.df) #%>%filter(estimate>1996 & estimate <2012)
+              as.factor(SPRGRP) + log(POPULATION) + max.n, data = oa.class.df %>% filter(estimate>1996 & estimate <2012))
 summary(model)
 nobs(model)
+
+oa.class.df <- oa.class.df %>% mutate(status = 1)
+
+cf <- coxph(Surv((estimate-1996), status) ~ log(London + 1) + log(dist + 1) + log(dist.retail + 1) + 
+              as.factor(SPRGRP) + log(POPULATION) + max.n, data = oa.class.df %>% filter(estimate>1996 & estimate <2012)) #, weights = 1/(std.error)^2)
+summary(cf)
 
 oa.class.df <- oa.class.df %>% mutate(fast.f = recode(fast, "fast" = 1, 
                                           "slow" = 0)) %>% 
