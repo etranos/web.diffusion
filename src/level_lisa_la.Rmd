@@ -610,7 +610,7 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density, LA") +
+  ggtitle("Regression coefficients, distance to nearest retail centre on website density, LA") +
   theme(plot.title = element_text(hjust = 0.5)) +
   ggsave(path.out)
 
