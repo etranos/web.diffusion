@@ -112,6 +112,8 @@ not clearly defined. I think they are spatially lagged Xs.
     - web density to London, nearest city, nearest retail centre:
     the further away the lower the density over time until 2008, then the trend reverses `level_lisa_oa.Rmd`
 
+    
+
     website density function for n = 1 and m < 12 for OA and different urban centres
       - both for n=1 and n<12 the 0s screw the pattern.
       - R^2 decreases over time: website location is less dependent to the distance to urban centres
@@ -119,7 +121,7 @@ not clearly defined. I think they are spatially lagged Xs.
 
     - *todo* LA
 
-3. LISA at OA level for level and growth for n=1. use level n=1, present as GIF. `level_lisa_oa.Rmd`
+3. LISA at OA level for level and growth for n=1. use level n=1, present as GIF. `level_lisa_oa.Rmd`, **TODO: remap with ggplot2**
 
 4. S for LA
 
