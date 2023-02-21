@@ -19,6 +19,3 @@ per MSOA.
 The clusters are not really interpretable.
 No visible patterns regarding spatial dependency.
 Potential explanation: the use of **all* the data.
-
-
- 
