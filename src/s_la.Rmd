@@ -304,29 +304,39 @@ for (i in all.la){
 }
 
 # plots
-path.out <- paste0(path, "/outputs/lad_")
+path.out <- paste0(path, "/outputs/s_lad/lad_")
 
 for (i in all.la){
+  
+  xmid_la <- pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()
+  lines <- data.frame(
+    intercepts = c(2003, xmid_la[1]),
+    Xmid = c("UK", i)
+  )
+  
 p <- ggplot(pred %>% left_join(a.la) %>% 
               filter(ladcd == i), aes(x = year, y = n, color = fast) ) +
   geom_point() +
   geom_line(aes(y = prednls), size = 1) +
   scale_x_continuous("year", labels = as.character(df$year), breaks = df$year) +
-  geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()) +
+  #geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()) +
   ylab("N. of websites") + 
   labs(color = "Website \ndiffusion speed") +
   labs(title = paste0(la@data %>% filter(LAD21CD== i) %>% dplyr::select(LAD21NM) %>% first(), ", ", i)) +
   theme(legend.position=c(.9,.15)) +
   scale_color_manual(values = c("fast" = "purple",
-                                "slow"="orange")) +
+                                "slow"="orange"),
+                     limits = force) +
+  geom_vline(
+    data=lines,
+    aes(xintercept = intercepts, linetype=Xmid),
+    size=.5, key_glyph='path', colour="grey30"
+    ) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_vline(xintercept = 2003, colour="grey30", linetype="dashed") 
+  theme(plot.title = element_text(hjust = 0.5)) 
+  #geom_vline(xintercept = 2003, colour="grey30", linetype="dashed") 
 
-  
-
-
-ggsave(p, filename = paste(path.out, i, ".png", sep = ""))
+ggsave(p, filename = paste(path.out, i, ".png", sep = ""), bg="white")
   
 }
 ```
