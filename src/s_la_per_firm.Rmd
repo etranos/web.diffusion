@@ -33,7 +33,7 @@ path <- find_rstudio_root_file()
 - speed, other metrics? 
 - understand rsquare
 - model LAs
-- add SE for the line plots [link](https://stackoverflow.com/questions/26020142/adding-shade-to-r-lineplot-denotes-standard-error)
+- ~~add SE for the line plots~~ [link](https://stackoverflow.com/questions/26020142/adding-shade-to-r-lineplot-denotes-standard-error). No as we have the points in the plots, so SE is not needed
 
 ## Load data
 
@@ -105,7 +105,7 @@ firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?
          firms = OBS_VALUE)
 
 df <- df %>% left_join(firms) %>% 
-  mutate(n_by_firm = (n*1000)/firms) %>% # '000 websites/firm
+  mutate(n_by_firm = n/firms) %>% # N websites/firm
   #filter(!is.na(firms)) %>% 
   select(-n, -firms) %>% 
   rename(n = n_by_firm)
@@ -202,7 +202,7 @@ ggplot(df.test, aes(x = year, y = n) ) +
 
 ```{r}
 df.country <- df %>% group_by(year) %>% 
-  summarise(n = sum(n, na.rm = T))
+  summarise(n = mean(n, na.rm = T))
 
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
 summary(fit)
@@ -211,7 +211,7 @@ rsquare(fit, df.country)
 
 df.country$prednls = predict(fit)
 
-path.out <- paste0(path, "/outputs/s_uk.png")
+path.out <- paste0(path, "/outputs/s_uk_per_firm.png")
 
 df.country %>% 
   ggplot(aes(x = year, y = n) ) +
@@ -219,7 +219,7 @@ df.country %>%
   geom_line(aes(y = prednls), size = 1) +
   scale_x_continuous("year", labels = as.character(df.country$year), breaks = df.country$year) +
   geom_vline(xintercept = 2003) +
-  ylab("N. of websites") +
+  ylab("N. of websites / per firm") +
   ggtitle("S-curve, UK") +
   theme(plot.title = element_text(hjust = 0.5)) 
 
@@ -278,7 +278,9 @@ a.la <- a.la %>% filter(term=="xmid") %>%
 
 ```{r}
 a.la <- as_tibble()
-all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% simplify2array()
+all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% 
+  #top_n(n=2) %>% 
+  simplify2array()
 simplify2array(all.la)
 
 for (i in all.la){
@@ -320,29 +322,39 @@ for (i in all.la){
 }
 
 # plots
-path.out <- paste0(path, "/outputs/per_firm/lad_")
+path.out <- paste0(path, "/outputs/s_lad_per_firm/lad_")
 
 for (i in all.la){
+  
+  xmid_la <- pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()
+  lines <- data.frame(
+    intercepts = c(2003, xmid_la[1]),
+    Xmid = c("UK", i)
+  )
+  
 p <- ggplot(pred %>% left_join(a.la) %>% 
               filter(ladcd == i), aes(x = year, y = n, color = fast) ) +
   geom_point() +
   geom_line(aes(y = prednls), size = 1) +
   scale_x_continuous("year", labels = as.character(df$year), breaks = df$year) +
-  geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()) +
-  ylab("N. of websites") + 
+  #geom_vline(xintercept = pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()) +
+  ylab("N. of websites / per firm") + 
   labs(color = "Website \ndiffusion speed") +
   labs(title = paste0(la@data %>% filter(LAD21CD== i) %>% dplyr::select(LAD21NM) %>% first(), ", ", i)) +
   theme(legend.position=c(.9,.15)) +
   scale_color_manual(values = c("fast" = "purple",
-                                "slow"="orange")) +
+                                "slow"="orange"),
+                     limits = force) +
+  geom_vline(
+    data=lines,
+    aes(xintercept = intercepts, linetype=Xmid),
+    size=.5, key_glyph='path', colour="grey30"
+    ) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_vline(xintercept = 2003, colour="grey30", linetype="dashed") 
+  theme(plot.title = element_text(hjust = 0.5)) #+
+  #geom_vline(xintercept = 2003, colour="grey30", linetype="dashed") 
 
-  
-
-
-ggsave(p, filename = paste(path.out, i, ".png", sep = ""))
+ggsave(p, filename = paste(path.out, i, ".png", sep = ""), bg="white")
   
 }
 ```
