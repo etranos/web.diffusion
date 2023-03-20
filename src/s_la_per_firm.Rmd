@@ -83,6 +83,10 @@ df <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
+df <- df %>% filter(!is.na(ladcd)) %>% 
+  complete(ladcd, year) %>% 
+  replace(is.na(.), 0)
+
 # tests for Scotland
 # df %>% filter(substr(oa11cd, 1,1) =="S",
 #               year==2010) %>% summarise(mean(n, na.rm = T))
@@ -207,6 +211,8 @@ df.country <- df %>% group_by(year) %>%
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
 summary(fit)
 
+xmid.uk <- tidy(fit) %>% filter(term=="xmid") %>% select(estimate) %>% as.numeric()
+  
 rsquare(fit, df.country)
 
 df.country$prednls = predict(fit)
@@ -229,7 +235,7 @@ ggsave(path.out)
 
 ## Loop for S function estimation for Local Authorities
 
-```{r}
+```{r, eval=F}
 a.la <- as_tibble()
 all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% simplify2array()
 simplify2array(all.la)
@@ -305,7 +311,7 @@ a.la <- a.la %>% filter(term=="xmid") %>%
   filter(p.value < 0.01 & 
          r2 > 0.9) %>%    # 376 / 376, all sig, 330 r2 > 0.9
   dplyr::select(ladcd, estimate, r2, std.error) %>%
-  mutate(fast = ifelse(estimate < 2003, "fast", "slow")) 
+  mutate(fast = ifelse(estimate < xmid.uk, "fast", "slow")) # it was 2003
 
 
 # predictions 
@@ -328,7 +334,7 @@ for (i in all.la){
   
   xmid_la <- pred %>% left_join(a.la) %>% filter(ladcd == i) %>% dplyr::select(estimate) %>% first()
   lines <- data.frame(
-    intercepts = c(2003, xmid_la[1]),
+    intercepts = c(xmid.uk, xmid_la[1]), # it was 2003
     Xmid = c("UK", i)
   )
   
@@ -359,27 +365,10 @@ ggsave(p, filename = paste(path.out, i, ".png", sep = ""), bg="white")
 }
 ```
 
-## Xmid frequency graph
-
-**TO DELETE**, done it above.
-
-```{r, eval=F}
-# path.out <- paste0(path, "/outputs/xmid_f.png")
-# 
-# ggplot(a.la, aes(as.factor(round(estimate, 0)))) +
-#   geom_bar(fill = "#0073C2FF") +
-#   theme_minimal() +
-#   ggtitle("Counts of Xmid per year") +
-#   theme(plot.title = element_text(hjust = 0.5)) +
-#   ylab("LAs") + xlab("year") 
-# 
-# ggsave(path.out)
-```
-
 write the object with all the models
 
 ```{r eval=F}
-path.out <- paste0(path, "/data/temp/s_la.csv")
+path.out <- paste0(path, "/data/temp/s_la_per_firm.csv")
 write_csv(a.la, path.out)
 ```
 

@@ -83,6 +83,9 @@ df <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
+df <- df %>% filter(!is.na(ladcd)) %>% 
+  complete(ladcd, year) %>% 
+  replace(is.na(.), 0)
 
 # tests for Scotland
 # df %>% filter(substr(oa11cd, 1,1) =="S",
@@ -213,7 +216,7 @@ ggsave(path.out)
 
 ## Loop for S function estimation for Local Authorities
 
-```{r}
+```{r, eval = F}
 a.la <- as_tibble()
 all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% simplify2array()
 simplify2array(all.la)
