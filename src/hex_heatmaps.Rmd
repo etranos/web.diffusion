@@ -180,6 +180,28 @@ for (t in 1996:2012){
     ggtitle(t)
   ggsave(p, filename = paste(path.out, t, ".png", sep = ""))
 }
+
+# geo_sf solution. same as lisa, but squeese hexagons
+# gb %>% st_as_sf(crs = 27700) %>% 
+# ggplot() + 
+#     geom_sf(fill=NA, color = "black", size = 0.1, alpha = 0.8) + #geom_point(data = help.df, aes(x=X,y=Y))
+#     stat_binhex(data = help.df, aes(x=X,y=Y),bins=150) + 
+#     # geom_polygon(data = gb.df, aes(x=long, y = lat, group = group), #gb.df
+#     #              fill=NA, color = "black", size = 0.1, alpha = 0.8)+
+#     
+#     #coord_equal() +
+#     scale_fill_gradientn(colours=c('light gray','blue'),
+#                          name='Frequency',na.value=NA) + #, trans = "log10") +
+#     
+#     labs(x=NULL, y=NULL) +
+#     geom_point(data = cities, aes(x=long, y=lat), colour = "black", size = .1) + 
+#     geom_text(size = 2, check_overlap = F, nudge_y = .2, data = cities, aes(x=long, y=lat, label = name)) +
+#     #theme(legend.key.size = unit(0.05, "cm")) + # legend.key.width=unit(1, "cm"), 
+#     ggmap::theme_nothing(legend = T) +
+#     theme(legend.title=element_text(size=5.5), legend.text=element_text(size=4)) +
+#     #theme(legend.position=c(0.075,0.28))
+#     guides(fill = guide_colorbar(barwidth = 0.5, barheight = 2.5)) +
+#     ggtitle(t)
 ```
 ## hex heatmaps log transformed
 
