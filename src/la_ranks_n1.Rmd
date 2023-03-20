@@ -1,0 +1,258 @@
+---
+title: "LA ranks"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(broom)
+library(rprojroot)
+library(rgdal)
+library(sf)
+library(modelr)
+library(survival)
+library(ggbump)
+library(ggrepel)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## TODO
+
+- add 0s in the df and then calculate the ranks
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, ladcd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>% # for n == 1 
+  ungroup()
+
+df <- df %>% filter(!is.na(ladcd)) %>% 
+  complete(ladcd, year) %>% 
+  replace(is.na(.), 0)
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## Firms
+
+```{r}
+firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS10&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
+  select(GEOGRAPHY_CODE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
+  rename(ladcd = GEOGRAPHY_CODE,
+         firms = OBS_VALUE)
+
+df <- df %>% left_join(firms) %>% 
+  mutate(n_by_firm = n/firms) #%>% # N websites/firm
+  #filter(!is.na(firms)) %>% 
+  #select(-n, -firms) %>% 
+  #rename(n = n_by_firm)
+
+# df %>% filter(is.na(n_by_firm))
+# sapply(df %>% left_join(firms), function(x) sum(is.na(x)))
+```
+## Spatial data
+
+```{r}
+# get LA for the UK
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- readOGR(path.geo)
+
+la.names <- la@data %>% 
+  select(LAD21CD, LAD21NM) %>% 
+  rename(ladcd = LAD21CD,
+         ladnm = LAD21NM) 
+
+df <- df %>% left_join(la.names)
+# source: https://geoportal.statistics.gov.uk/
+```
+## Ranks websites per firm t and 2012 only
+
+```{r}
+t <- 1996
+
+out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only05.png")
+
+df %>% group_by(year) %>% 
+  mutate(rank = rank(desc(n_by_firm))) %>% # or n_by_firm
+  ungroup() %>% 
+  filter(year==t | year == 2012) %>% 
+  arrange(ladcd, year) %>% 
+  group_by(ladcd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-lag(rank))) %>% 
+  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .95, na.rm = T)) 
+  # t= 2000: q.95 = 199.5, q.9 = 168, q.1 = 7, q.05 = 3.75. **abs()**
+  # t= 1996: q.95 = 257.125, q.9 = 232.25, q.1 = 17.75, q.05 = 6.875. **abs()**
+
+  mutate(alpha = ifelse(abs(diff_1st) < 6.875, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
+  mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
+
+  ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
+  geom_bump(colour = "red") +
+  theme(legend.position="none") +
+  scale_y_reverse(labels = c(1, 100, 200, 300, 400)) +
+  # geom_text(#data = df %>% filter(year == 2012),
+  #           aes(x = Inf, label = label), size = 4, hjust = 0)  # x = 2012 + .1
+  geom_text_repel(aes(label = label),
+                  na.rm = TRUE, 
+                  size = 2,
+                  nudge_x = 2, nudge_y = 1,
+                  direction = "y", hjust = "left") 
+
+ggsave(out.path)
+```
+
+## Ranks websites 2000 and 2012 only
+
+```{r}
+out.path <- paste0(path, "/outputs/ranks/web_2000_2012_only9.png")
+
+df %>% group_by(year) %>% 
+  #mutate(rank = dense_rank(desc(n))) %>% # or n_by_firm
+  mutate(rank = rank(desc(n))) %>% # or n_by_firm
+
+  ungroup() %>% 
+  filter(year==2000 | year == 2012) %>% 
+  arrange(ladcd, year) %>% 
+  group_by(ladcd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-lag(rank))) %>% 
+  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .9, na.rm = T)) 
+  # q.95 = 87.75, q.9 = 71, q.1 = 3.5, q.05 = 2. **abs()** 
+  
+  mutate(alpha = ifelse(abs(diff_1st) > 71, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
+  mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
+  
+  ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
+  geom_bump(colour = "red") +
+  theme(legend.position="none") +
+  scale_y_reverse(labels = c(1, 100, 200, 300, 400)) +
+  # geom_text(#data = df %>% filter(year == 2012),
+  #           aes(x = Inf, label = label), size = 4, hjust = 0)  # x = 2012 + .1
+  geom_text_repel(aes(label = label),
+                  na.rm = TRUE, 
+                  size = 2,
+                  nudge_x = 2, nudge_y = 1,
+                  direction = "y", hjust = "left") 
+
+ggsave(out.path)
+
+```
+
+## Websites per year
+
+```{r}
+out.path <- paste0(path, "/outputs/ranks/web_per_year.png")
+
+df %>% group_by(year) %>% 
+  summarise(n = sum(n)) %>% 
+  ggplot(aes(x=year, y = n)) +
+  geom_bar(stat = "identity") +
+  ylab("N. websites")
+
+ggsave(out.path)
+
+```
+
+## Ranks websites per firm all period
+
+```{r}  
+out.path <- paste0(path, "/outputs/ranks/web_per_firm1996_2012_95.png")
+
+df %>% group_by(year) %>% 
+  mutate(rank = rank(desc(n_by_firm))) %>% # or n_by_firm
+  ungroup() %>% 
+  #filter(year==t | year == 2012) %>% 
+  arrange(ladcd, year) %>% 
+  group_by(ladcd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-lag(rank, n=16))) %>% 
+  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .95, na.rm = T)) 
+  # t= 2000: q.95 = , q.9 = , q.1 = , q.05 = . **abs()**
+  # t= 1996: q.95 = 257.125, q.9 = 232.25, q.1 = 17.75, q.05 = 6.875. **abs()**
+
+  mutate(alpha = ifelse(abs(diff_1st) > 257.125, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
+  mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
+
+  ggplot(aes(year, rank, group = ladcd, alpha=alpha, color = ladnm)) +
+  geom_bump() +
+  theme(legend.position="none") +
+  scale_y_reverse(labels = c(1, 100, 200, 300, 400)) +
+  # geom_text(#data = df %>% filter(year == 2012),
+  #           aes(x = Inf, label = label), size = 4, hjust = 0)  # x = 2012 + .1
+  geom_text_repel(aes(label = label),
+                  na.rm = TRUE, 
+                  size = 2,
+                  nudge_x = 2, nudge_y = 1,
+                  direction = "y", hjust = "left") 
+
+ggsave(out.path)
+```

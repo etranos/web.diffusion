@@ -1,0 +1,85 @@
+---
+title: "Untitled"
+author: "Emmanouil Tranos"
+date: "06/03/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+la <- readOGR("https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/LAD_Dec_2009_UGCB_GB_2022/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson")
+
+la.names <- la@data %>% 
+  select(lad09cd, lad09nm) %>% 
+  rename(ladcd = lad09cd,
+         ladnm = lad09nm) 
+
+df <- df %>% left_join(la.names)
+
+```
+Firms 2010 - 2022
+```{r, eval=F}
+firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
+  select(GEOGRAPHY_CODE, DATE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
+  rename(ladcd = GEOGRAPHY_CODE,
+         year = DATE,
+         firms = OBS_VALUE)
+
+firms %>% ggplot(aes(year, firms, group = ladcd)) +
+  geom_line()
+```
+Firms 2000 - 2012, old LA
+
+```{r}
+library(readxl)
+library(httr)
+url.firms <- "https://www.ons.gov.uk/file?uri=/businessindustryandtrade/business/activitysizeandlocation/adhocs/15580analysisofenterprisesintheukbylocalauthoritydistrict2004to2021/9980223.xls"
+
+GET(url.firms, write_disk(tf <- tempfile(fileext = ".xls")))
+
+test <- read_excel(tf, 11L:19L, range = "A12:B45", col_names = F)
+
+path <- read_excel(tf)
+path %>% 
+  excel_sheets() %>% 
+  set_names() %>% 
+  map(read_excel, path = path)
+
+
+sheets <- excel_sheets('data.xlsx')
+
+
+path.excel <- paste0(path, "/data/raw/9980223.xls")
+all.sheets <- path.excel %>% 
+  excel_sheets() %>% 
+  set_names() %>% 
+  map(read_excel, path = path.excel, range = "A12:B445", col_names = F) #%>% 
+
+f <- as_tibble()
+for (y in 11:19){
+  help <- all.sheets %>%   .[[y]] %>% #11:19
+  rename(help = '...1',
+         n = '...2') %>% 
+  separate(help, c("ladcd", "ladnm"), sep = " : ") %>% 
+  mutate(year = 2021-(y-2),
+         ladnm = str_squish(ladnm))
+  f <- rbind(f, help)
+}
+f %>%  ggplot(aes(year, n, group = ladnm, color = ladnm)) +
+  geom_line() +
+  theme(legend.position="none")
+
+
+f %>% filter(year == 2008) %>% arrange(desc(n))
+
+f %>% filter(ladnm == "Birmingham")
+
+help.f <- f %>% distinct(ladnm, .keep_all=T)
+
+la.names %>% mutate(ladnm = str_squish(ladnm)) %>% 
+ left_join(help.f, by = c("ladnm" = "ladnm")) %>% arrange(ladnm) %>% 
+  filter(is.na(n))
+```
