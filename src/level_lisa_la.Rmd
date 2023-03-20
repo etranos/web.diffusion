@@ -224,6 +224,13 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 }
+
+#ggplot map solution.
+# mun_merge_new %>% st_as_sf(crs = 27700) %>% #st_transform(4326) %>%
+#   ggplot()+
+#   geom_sf(aes(fill = as.factor(quadrant)))
+# ggsave("test_ggplot.png", path = path)
+
 ```
 
 ## lisa maps parallel
@@ -331,13 +338,8 @@ map <- tm_shape(mun_merge_new, projection = "+init=epsg:4326") + tm_fill(col = "
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ") +
 tmap_options(check.and.fix = TRUE)
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
-}
+                                     }
 
-#ggplot map solution.
-# mun_merge_new %>% st_as_sf(crs = 27700) %>% #st_transform(4326) %>%
-#   ggplot()+
-#   geom_sf(aes(fill = as.factor(quadrant)))
-# ggsave("test_ggplot.png", path = path)
 ```
 
 Moran I
