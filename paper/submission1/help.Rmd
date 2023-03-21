@@ -1,0 +1,29 @@
+---
+title: "help"
+author: "Emmanouil Tranos"
+date: "2023-03-10"
+output: html_document
+---
+
+## Key concepts
+
+Spatial diffusion processes
+
+Geographical diffusion is a synthesis of different processes. On the one hand, we can identify purely spatial or, in other words, contagious processes. Adjacency and, more broadly, distance are the key drivers of diffusion. 
+This perspective draws similarities with epidemics: innovation just like pathogens spreads because of contagion and, consequently, proximity and exposure [@hivner2003facilitating]. On the other hand, we can identify hierarchical processes. Instead of horizontal distance-based diffusion mechanisms, the top-down hierarchy of urban systems drives diffusion. In reality, the synthesis of these two processes represents how new technologies diffuse over space and time [@morrill2020spatial].
+
+These ideas were firstly introduced by Torsten Hägerstrand and his thesis entitled 'Innovation Diffusion as a Spatial Process' [@hagerstrand1968innovation]. Hägerstrand was the first one to identify diffusion as a geographical process. The starting point was the idea that diffusion is based on passing information through social networks, which themselves tend to be defined by geography. Hence, he identified the 'neighbourhood' effect of how information, and consequently, innovation diffuses. He used agricultural innovations to test and model his ideas using Monte Carlo simulations. Hägerstrand also incorporated the role of hierarchy and how some phenomena maybe firstly adopted in larger cities and then diffuse to second tier ones. This is a sequential instead of a simultaneous process, which resembles the 'lead-lag' spatial acceleration effect in market research [@bento2018time; @PERES201091]. Hägerstrand maybe more widely known for highlighting the role time plays in the diffusion of innovations: an early-pioneering period, a middle fast accelerating period and a final saturation period [@morrill2020spatial. 
+
+The temporal dimension was further explored by Everett Rogers and his seminal work on 'Diffusion of Innovations' [@rogers2010diffusion]. Rogers being a sociologist  his work focused not on the diffusion of innovations over space and time, but instead on the adoption of new technologies and innovations by individuals and the individual mechanisms that drive the decisions behind adoption. He identified five groups of individuals regarding their adoption speed: innovators, early adopters, early majority, late majority and laggards. Key mechanism of diffusion and adoption is always communication and how knowledge is transferred within a social system. Therefore, all approaches agree on the S-shaped diffusion and cumulative adoption pattern [@grubler1990rise].
+
+Schmidt's Law empirically illustrates a similar pattern. *Core* and ususally highly agglomerated regions is where new technologies are invented and commercially deployed [@grubler1990rise; grubler1990rise]. This is where the first adopters tend to be based. Then, technologies spread to the *rim* and eventually to the *periphery*. Although adoption pace might be higher when new technologies finally arrive to the periphery, the saturation levels there may never reach the ones in the core because of the lack of infrastructure or other necessary institutions [@leibowicz2016representing].
+
+@grubler1990rise effectively summarises the three key characteristics of the spatial diffusion process: (i) the cumulative level of adoption follows an S-shaped pattern just like purely temporal models; (ii) diffusion is shaped by a hierarchy effect in a form of a centrifugal force: from core to periphery; and (iii) diffusion is also shaped by distance and a neighbourhood effect and contaminate nearby locations.
+
+
+
+
+Space: absorptive capacity
+
+Evolutionary economic geography >> path dependency
+

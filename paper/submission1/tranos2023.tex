@@ -1,0 +1,596 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\PassOptionsToPackage{dvipsnames,svgnames,x11names}{xcolor}
+%
+\documentclass[
+  authoryear,
+  preprint,
+  3p]{elsarticle}
+
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\setcounter{secnumdepth}{5}
+% Make \paragraph and \subparagraph free-standing
+\ifx\paragraph\undefined\else
+  \let\oldparagraph\paragraph
+  \renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+  \let\oldsubparagraph\subparagraph
+  \renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+
+\makeatletter
+\makeatother
+\makeatletter
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\AtBeginDocument{%
+\ifdefined\contentsname
+  \renewcommand*\contentsname{Table of contents}
+\else
+  \newcommand\contentsname{Table of contents}
+\fi
+\ifdefined\listfigurename
+  \renewcommand*\listfigurename{List of Figures}
+\else
+  \newcommand\listfigurename{List of Figures}
+\fi
+\ifdefined\listtablename
+  \renewcommand*\listtablename{List of Tables}
+\else
+  \newcommand\listtablename{List of Tables}
+\fi
+\ifdefined\figurename
+  \renewcommand*\figurename{Figure}
+\else
+  \newcommand\figurename{Figure}
+\fi
+\ifdefined\tablename
+  \renewcommand*\tablename{Table}
+\else
+  \newcommand\tablename{Table}
+\fi
+}
+\@ifpackageloaded{float}{}{\usepackage{float}}
+\floatstyle{ruled}
+\@ifundefined{c@chapter}{\newfloat{codelisting}{h}{lop}}{\newfloat{codelisting}{h}{lop}[chapter]}
+\floatname{codelisting}{Listing}
+\newcommand*\listoflistings{\listof{codelisting}{List of Listings}}
+\makeatother
+\makeatletter
+\@ifpackageloaded{caption}{}{\usepackage{caption}}
+\@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
+\makeatother
+\makeatletter
+\@ifpackageloaded{tcolorbox}{}{\usepackage[many]{tcolorbox}}
+\makeatother
+\makeatletter
+\@ifundefined{shadecolor}{\definecolor{shadecolor}{rgb}{.97, .97, .97}}
+\makeatother
+\makeatletter
+\makeatother
+\journal{Journal Name}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage[]{natbib}
+\bibliographystyle{elsarticle-harv}
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Digital economy in the UK: a multi-scalar story of the diffusion of web technologies},
+  pdfauthor={Emmanouil Tranos},
+  pdfkeywords={keyword1, keyword2},
+  colorlinks=true,
+  linkcolor={blue},
+  filecolor={Maroon},
+  citecolor={Blue},
+  urlcolor={Blue},
+  pdfcreator={LaTeX via pandoc}}
+
+\setlength{\parindent}{6pt}
+\begin{document}
+
+\begin{frontmatter}
+\title{Digital economy in the UK: a multi-scalar story of the diffusion
+of web technologies}
+\author[1]{Emmanouil Tranos%
+\corref{cor1}%
+}
+ \ead{e.tranos@bristol.ac.uk} 
+
+\affiliation[1]{organization={University of Bristol and The Alan Turing
+Institute},postcode={UK},postcodesep={}}
+
+\cortext[cor1]{Corresponding author}
+
+        
+\begin{abstract}
+This paper maps the participation in the digital economy and its
+evolution in the UK over space and time. Most of the existing economic
+geography literature which dealt with the spatiality of the internet
+employed supply-side measures, such as infrastructural capacity, in
+order to understand the geography of the digital economy and its
+potential spatial economic effects. Useful as these approaches might
+have been, they cannot capture the micro-processes and the
+characteristics of the individual online behaviour. Using large volumes
+of archived and geolocated web content, this paper models the diffusion
+of web technologies over space and time in the UK. The data and
+geolocation strategy allow to capture these processes at a very granular
+spatial scale. The modelling approach, which is based on simple spatial
+analytical methods and on the estimation of diffusion curves at various
+scales, enables to depict the role of geography and other cognitive
+factors which drove the diffusion of web technologies. Although the
+focus is on a recent historical period -- 1996-2012 -- the results of
+the analysis depict diffusion mechanisms which can be very useful in
+understanding the evolutionary patterns of the adoption of other newer
+technologies.
+\end{abstract}
+
+
+
+
+
+\begin{keyword}
+    keyword1 \sep 
+    keyword2
+\end{keyword}
+\end{frontmatter}
+    \ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, breakable, sharp corners, frame hidden, interior hidden]}{\end{tcolorbox}}\fi
+
+\hypertarget{sec:1}{%
+\section{Introduction}\label{sec:1}}
+
+Geographers were always interested in how new technologies and
+innovations diffuse across space and, importantly, how such
+spatio-temporal processes can be modelled. The seminal contribution of
+\citet{hagerstrand1968innovation} is illustrative of this early
+interest. However, the torch of exploring and modelling such processes
+had been passed to other disciplines such as economics, business studies
+and sociology well before the `cultural turn' of economic geography
+\citep{perkins2005international}. A potential explanation of lack of
+studies exploring the diffusion of new and, more specifically, digital
+technologies across \emph{both} space and time can be attributed to the
+scarcity of relevant and granular enough data. As
+\citet{zook2022mapping} highlight, digital activities are hardly ever
+captured in official data.
+
+This paper aims to reinstate geographers' interest in how new and
+digital technologies diffuse over space and time. It adopts a geographic
+standpoint to explore and map the diffusion of web technologies in the
+UK over space and time. It does so by employing a novel source of big
+data which captures the active engagement with web technologies during
+the \(1996-2013\) period.
+
+The motivation for this paper lies in the fact that there are various
+stakeholders who are interested in knowing how new digital technologies
+diffused over space and time use this information to make predictions
+regarding the diffusion of related future technologies. As per
+\citet{meade2021modelling} a variety of actors have a direct interest in
+gaining such knowledge including network equipment suppliers; network
+operators, regulatory and local authorities. And despite the spatial
+heterogeneity of such diffusion mechanisms and the policy relevance,
+there are very limited attempts in the literature to analyse the
+diffusion of new digital technologies at a granular level.
+
+the paper answers an empirical question: how did a
+
+\citet{zook2022mapping} Because new digital activities are rarely---if
+ever---captured in official state data, researchers must rely on
+information gathered from alternative sources. With this in mind, the
+overarching aim of this article is outlining an approach for analyzing
+the ``new spaces and geographies'' of digital phenomena and practices.
+
+Classifying adopters of a technology along a time axis was pioneered by
+Rogers (1962), who categorized adopters into five groups as innovators,
+early adopters, early majority, late majority and laggards.
+
+An a priori approach groups similar countries into segments, where
+similarity is defined using economic, social, or political covariates.
+Examples include Hofstede (2001) and Lee (1990). An a posteriori
+analysis considers segments based on realized market behaviour, for
+example see Sood et al.~(2009). Some studies investigate changing
+segment membership over time, see Cannon and Yaprak (2011).
+
+\citet{fritsch2015new} Hägerstrand (1952, 1967) was the first scholar to
+intensively analyze spatial diffusion pro cesses. Based on the empirical
+observations of the regional spread of process innovations, he
+hypothesized that new technology is first implemented in the `center' --
+the large agglom erations -- and then moves `down' the spatial
+hierarchy, the last stop being the `periphery', i.e.~remote and sparsely
+populated regions. There are at least two factors that may explain this
+pattern: first, the transfer of tacit knowledge via face-to-face contact
+and second, the absorptive capacity of a region.
+
+\citet{bento2015spatial} The concept of absorptive capacity has also
+been applied in the TIS context in terms of the con-struction of
+capacity needed to transfer and implement a new technology in the
+receiving country (cf.Van Alphen, 2011), with repercussions for the
+nature of system functions
+
+\citet{bednarz2020pulled} larger local technological niches (at least
+from a demand perspective) are more likely to be formed in urban areas
+than in rural ones, which is in line with the work of Ha¨gerstrand
+(1965a,b). However, size is not the only regional characteristic that
+may matter in this context. Regions also differ in accumulated
+experiences and the presence of tacit knowledge with respect to
+products, as well as in actors' propensity share this knowledge among
+producers (Martin et al., 2019)
+
+To summarize the discussion, first, here the diffusion process is
+selfperpetuating as initial use stimulates further use. Second, it
+follows a disequilibrium path as the level of users is always lower than
+the number of potential users (Stoneman 2002).
+
+The criticisms are mainly based on the fact that although the approach
+gives an idea of aggregate (industry or household) behaviour, it does
+not focus on the individual's (firm or household) adoption process
+
+\citet{morrill2020spatial} Spatial diffusion is the process by which
+behavior or characteristics of the landscape change as a result of what
+happens elsewhere earlier. Spatial diffusion is the spread of the
+phenomenon, over space and timed, from limited origins
+
+Contagious diffusion=\textgreater{} spatial autocorelation
+
+expansion-type diffusion
+
+The work by the communication sociologist Everett Rogers (1962, 1971,
+1983) has emphasized the role of information, communication, formal and
+informal media, opinion leaders and social networks, and economic and
+psychological constraints on acceptance. Rogers's work stresses the
+decision mechanism of the potential adopter; the work of Rogers
+partitions the adopter's process of choosing to accept a new phenomenon
+or trait into five stages: stage 1--the potential adopter gains
+knowledge or awareness of an innovation; stage 2--persuasion is
+exercised to adopt; stage 3--a decision is made to adopt; stage 4--the
+decision to adopt is implemented; stage 5--the adopter confirms the
+decision to adopt. In Rogers's stage theory there may be a substantial
+time lag between when a potential adopter becomes aware of the new
+characteristic and when a decision is actually made to adopt.
+
+Hägerstrand considered diffusion to be a fundamental geographic process:
+Whatever the phenomenon being diffused might be, one may consider it in
+the context of a larger universal process of spatial diffusion.
+
+\citet{leibowicz2016representing} Diffusion is a spatial (Hagerstrand,
+1967) as well as a temporal process, and historical evidence confirms
+that technologies diffuse at different times, at different rates, and to
+different extents in different places, and can be significantly
+influenced by policies (Victor, 1993).
+
+Lastly, it can be globally optimal for innovative economies to deploy
+advanced technologies more than what is locally optimal if this enables
+faster diffusion in less advanced regions that could benefit from the
+technology.
+
+wilson201281 Early on in their lifecycle, new technologies are crude,
+imperfect, and expensive (Rosenberg, 1994). New energy technologies are
+attractive for their ability to perform a particular task or deliver a
+new or improved energy service (Fouquet, 2010). This is often
+circumscribed by a particular set of needs in a particular context: a
+market `niche'. End-users in niche markets are generally less sensitive
+to the effective price of the energy service provided or have a higher
+willingness to pay for its performance advantages (Fouquet, 2010). Thus
+initially, performance dominates cost competitiveness (Wilson and
+Grubler, 2011). Market niches afford some protection from competitive
+pressures, allowing technologies to be tested and improved in applied
+settings, reducing uncertainties with performance or market demand (Kemp
+et al., 1998). Costs may only fall substantively after an extended
+period of commercial experimentation, concurrent with the establishment
+of an industrial base and characteristic moves towards standardisation
+and mass production (Grubler, 1998). The influence of accumulating
+production experience on costs is captured by the concept of learning.
+
+grubler1990rise The scale of spatial innovation diffusion is similar to
+that of temporal diffusion models: hierarchically decomposed.
+
+\citet{grubler1990rise} Later Hagerstrand conceptualized physical
+``barrier'' effects like lakes or uninhabited areas, which, in addition
+to distance, act as further retarding effects on diffusion. These are
+formalized in the form of ``zero'' or ``half'' contact multiplicators on
+the (distance decaying) message flows.
+
+\citet{grubler1990rise} With respect to the formalization of the
+communication flows Hagerstrand defines a ``mean information field''
+(MIF), in which the probability of communication is a negative function
+of distance between individuals
+
+\citet{perkins2005international} Theoretical models disagree as to why
+firms adopt innovations at different times. Epidemic models emphasize
+information (Griliches 1957). Certain firms are hypothesized to adopt
+earlier because they come into contact with, and learn from, adopters of
+the new technology before others. Economic models, on the other hand,
+predominantly emphasize firm heterogeneity (Ireland and Stoneman 1986).
+Firms adopt technologies at different times because they differ with
+respect to various organizational and environmental variables
+influencing the economic returns from adoption (Blackman 1999).
+
+Either way, the strong assumption is that developing countries can
+acquire modern technology innovated in developed economies, often at a
+fraction of the original research and development (R\&D) costs, thereby
+leapfrogging many decades of technological progress (Teece 2000).
+
+The first involves a country's geographical location. Recent empirical
+work suggests that diffusion is `'geographically localized'' (Globerman,
+Kokko, and Sjo¨holm 2000; Keller 2002; Milner 2003) in that a technology
+diffuses faster in a country where it is already more widely diffused in
+neighboring countries. Underlying these regional effects are contagion
+and contact with prior users or producers of technology.
+
+\citet{ding2010modeling} Rogers (1995) characterized early adopters as
+knowledgeable risk takers. Griliches (1957) looked at the rate of return
+for early adopters and characterized them as profit maximizers. The
+geographer Hagerstrand (1967) was focusing on the character of early
+adopters in the transmittal process that produces follow-on participants
+in the process. Space was treated as a contiguity system with embedded
+characteristics producing barrier elements to the diffusion process.
+
+\citet{ding2010modeling} REVIEW ON Technological Diffusion
+
+\citet{perkins2011internet} Two main mechanisms are identified in the
+literature to explain diffusion: (1) epidemic-type dynamics whereby
+contact with previous adopters stimulates uptake as po tential adopters
+learn about a new innovation; and (2) economic-type mechanisms whereby
+potential users adopt a new innovation as it be comesmore profitable,
+useful, or valuable, with uptake characteristically spreading as costs
+be come lower, performance improves, or the po tential uses of the
+innovation grow over time.
+
+To this extent, our results contribute to a growing body of work that
+has sought to caution against claims about the supposed novelty of the
+Internet and the suggestion that it is somehow different.
+
+\citet{wilson201281} Logistic growth describes an initial period of
+gradual diffusion as a technology is introduced as a new commercial
+application, moving then through a rapid, exponential growth phase,
+before slowing and eventually saturating \citep{grubler1999dynamics}.
+The substitution of incumbent technologies by new competitors leads to
+subsequent decline and eventual obsolescence.
+
+\hypertarget{literature-review-sec2-maybe-skip-this}{%
+\section{Literature review \{\#sec2\} MAYBE SKIP
+THIS??}\label{literature-review-sec2-maybe-skip-this}}
+
+\citet{beardsell1999spatial} To characterize evolution of the computer
+industry, we examine the distribution of relative employment across
+cities in 1977 and how that distribution changes over time to 1992
+
+There is no tendency of relative size distributions of urban computer
+employment to collapse, go bimodal, or fully spread. Overall computers
+exhibit some turbulence, with dramatic big winners and losers among
+cities. In attracting or repelling an industry, urban heterogeneity is
+important. Large, well educated cities near San Jose have much greater
+chances of attracting high-tech employment and less of losing it
+
+\citet{bednarz2020pulled} spatial innovation diffusion By using Bayesian
+survival models with time-dependent data of wind turbine deployment and
+firm foundation for 402 German regions between the years 1970 and 2015,
+we show that the spatial evolution of the German wind energy industry
+was more strongly influenced by local demand-- pull than local
+supply--push processes.
+
+The industry's initial locations are distributed relatively arbitrarily
+and unpredictably, as their needs in terms of resources and skills are
+diverse and distinct from the older existing industries (Boschma and
+Lambooy, 1999). Consequently, emerging industries are characterized by
+relatively high degrees of freedom in terms of location. In later
+extensions of the concept, the assumption of the randomness of locations
+was revised with greater importance assigned to regional conditions
+(Boschma and Lambooy, 1999; Fornahl et al., 2012).
+
+\citet{perkins2005international} analyze whether the rate at which new
+producer technologies diffuse is significantly influenced by (1)
+latecomer advantage and (2) engagement with the global economy via trade
+and foreign investment
+
+Indeed, precisely because of these latecomer advantages, developing
+countries1 are believed to be well placed to catch up with developed
+ones (Gerschenkron 1962; Abramovitz 1986).
+
+\citet{fritsch2015new} analyze the spatial diffusion of laser technology
+research in West Germany from 1960, when this technology began, until
+2005.
+
+\citet{perkins2011internet}
+
+\citet{lengyel2020role} We see that the OSN spread almost exclusively
+from the original location (the capital Budapest, with an order of
+magnitude more inhabitants than the next size town) to various parts of
+the country in the early phase of the life-cycle. Later, diffusion
+became less mono-centric and other towns also emerged as spreaders. Our
+findings support the idea that spreading initially happens to large
+distances and becomes more local over time. This is illustrated and
+discussed later in Figure 2I.
+
+\citet{PAPAGIANNIDIS2015308}
+
+\citet{leibowicz2016representing} for energy There is no generally
+accepted theory that explains diffusion rate heterogeneity across
+technologies, but several factors are considered important. Greater unit
+scale and larger market size contribute to slower diffusion.
+Requirements for interrelated technologies or complex infrastructures
+also hinder the diffusion process (Grubler, 2012).
+
+Mobile phones benefited from early deployment in recreational boats and
+automobiles, where the traditional competitor was not a viable option.
+In the early stages of diffusion, performance is a more important driver
+of adoption than cost competitiveness. Typically, significant cost
+reductions only occur once the technology reaches a deployment level
+capable of supporting standardization and mass production (Wilson,
+2012).
+
+\citet{leibowicz2016representing} Empirical evidence supports the
+validity of Schmidt's Law over a wide range of technologies, time
+periods, and geographical contexts. A recent meta-analysis of technology
+up-scaling found that diffusion accelerated moving from the core to the
+rim and periphery for technologies as diverse as natural gas power, oil
+refineries, and automobiles (Wilson, 2009). One historical example that
+conforms particularly well to Schmidt's Law is the diffusion of coal
+power in Europe (Grubler, 2012). England emerged as the core region for
+coal power because it had legal and economic institutions that
+incentivized scientific pursuits, domestic coal reserves, and a clear
+industrial motivation to replace water power with coal. \ldots{}
+
+\citet{ding2010modeling} model the spatial diffusion of mobile
+telecommunications in China as well as its determinants. regional
+socioeconomic characteristics play an important role in determining the
+timing, speed, and level of mobile telecommunications diffusion in China
+
+\citet{bento2018time} explore What determines the duration of formative
+phases for energy innovations in different markets? We are interested
+both in initial markets (also: core, lead, first mover, early adopter)
+where formative phases prepare technologies for mass commercialization,
+and in follower markets (also: periphery, lag, late adopter) where
+accelerated formative phases may benefit from diffusion and spillovers.
+
+\hypertarget{sec3}{%
+\section{Materials and Methods}\label{sec3}}
+
+\citet{wilson201281} growth function description in p.~86
+
+from R: Asym/(1+exp((xmid-input)/scal)) using the terms from Wilson k/(1
++ e\^{}(t\_0 - t)/scal)
+
+Wilson: k(1 + e\^{}-b(t - t\_0)) So, scal = - 1/b
+
+The curve is symmetric* around t\_0
+
+\textbf{minimum R2 = 95\%}, see also \citet{grubler1990rise}
+
+The literature usually uses the saturation level as the asymptote. I am
+using the total number of websites as we cannot compute a rate.
+
+Moran's I as \citet{ding2010modeling} \textbf{TODO} for t\_0, diffusion
+speed
+
+\hypertarget{sec3.1}{%
+\subsection{Results}\label{sec3.1}}
+
+Hexagon density maps: reflect the spatial structure of Britain. Websites
+are associated in places where people live and work.
+
+\textbf{TODO} maps at the local authority level per firms and discuss
+patterns
+
+Neighbourhood effect: diffusion proceeds outwards from innovation
+centers, first ``hitting'' nearby rather than far-away locations
+(Grubler 1990)
+
+\begin{itemize}
+\item
+  Moran's I: for OA and LAD over time \textbf{TODO} add 0s
+\item
+  LISA maps: for OA and LAD over time More and less expected clusters.
+  Different scales show different results
+\item
+  Website density regressions: for OA and LAD over time \textbf{TODO}
+  add 0s Similar pattern
+\end{itemize}
+
+Hierarchy effect: from main centers to secondary ones -- central places
+
+\begin{itemize}
+\tightlist
+\item
+  Gini coefficient. Almost perfect polarisation of web adoption in the
+  early stages at a granular level More equally diffused at the Local
+  Authority level Plateau overtime
+\end{itemize}
+
+S-shaped diffusion curves
+
+\begin{itemize}
+\item
+  S for LADs per firm and OA. \textbf{TODO}: OA per firm? fix firms over
+  time.
+\item
+  Fast and slow LAs map. There is clustering
+\item
+  \textbf{TODo} check s\_uk\_firm\_11
+\item
+  ranks: there is stability and movement
+\end{itemize}
+
+\hypertarget{sec3.2}{%
+\subsection{3.2 Case study approach}\label{sec3.2}}
+
+\hypertarget{sec4}{%
+\section{Digital technologies and spatial structure: a global
+view}\label{sec4}}
+
+\hypertarget{sec5}{%
+\section{The impact of ICT on the US and the UK spatial
+structures}\label{sec5}}
+
+\hypertarget{sec6}{%
+\section{Discussion and conclusions}\label{sec6}}
+
+contrary to results from future studies regarding social media
+\citep{lengyel2020role}, web technologies did not exclusively spread
+from a central location.
+
+
+\renewcommand\refname{References}
+  \bibliography{bibliography}
+
+
+\end{document}
