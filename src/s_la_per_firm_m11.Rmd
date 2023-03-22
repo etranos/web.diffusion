@@ -326,7 +326,7 @@ for (i in all.la){
 }
 
 # plots
-path.out <- paste0(path, "/outputs/s_la_er_firm_m11/lad11_")
+path.out <- paste0(path, "/outputs/s_la_per_firm_m11/lad11_")
 
 for (i in all.la){
   

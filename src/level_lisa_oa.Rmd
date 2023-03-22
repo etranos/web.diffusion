@@ -169,8 +169,8 @@ gb <- spTransform(gb, CRS("+init=epsg:4326"))
 
 ```{r}
 
-path.out <- paste0(path, "/outputs/lisa_level_pc", n, "_oa") # for unique PC
-#path.out <- paste0(path, "/outputs/lisa_level_pc", m, "_oa")  # for multiple PC
+path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_oa") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_oa")  # for multiple PC
 
 morani <- data.frame()
 
@@ -260,14 +260,13 @@ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 Moran I
 
 ```{r}
-path.out <- paste0(path, "/outputs/morani_oa.csv")
+path.out <- paste0(path, "/outputs/lisa/morani_oa.csv")
 morani %>% as_tibble() %>% 
   rename('morani'=V1,
                    p = V2,
                    year = V3) %>% 
-  kable() #%>% 
-  #write_csv(path.out)
-
+  #kable() %>% 
+  write_csv(path.out)
 ```
 
 ## Gini
@@ -293,7 +292,7 @@ for (t in 1996:2012){
   gini.df <- rbind(gini.df, b)
 }
 
-path.out <- paste0(path, "/outputs/gini_oa.csv")
+path.out <- paste0(path, "/outputs/lisa/gini_oa.csv")
 gini.df %>% write_csv(path.out)
 ```
 
@@ -455,7 +454,7 @@ for (t in 1996:2012){
 
 names(dens.London)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_london_oa.png")
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_london_oa.png")
 ggplot(dens.London) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
@@ -466,7 +465,7 @@ ggsave(path.out)
 out.model <- out.model %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_london_oa.png")
+path.out <- paste0(path,"/outputs/lisa/b_dist_london_oa.png")
 ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
 #ggplot(out.model, aes(x=year, y = estimate)) +  
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
@@ -510,7 +509,7 @@ for (t in 1996:2012){
 
 names(dens.distMet)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_city_oa.png")
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_city_oa.png")
 ggplot(dens.distMet) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
@@ -521,7 +520,7 @@ ggsave(path.out)
 out.modelMet <- out.modelMet %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_city_oa.png")
+path.out <- paste0(path,"/outputs/lisa/b_dist_city_oa.png")
 ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
@@ -557,7 +556,7 @@ for (t in 1996:2012){
 
 names(dens.dist.retail)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_centre_oa.png")
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_centre_oa.png")
 ggplot(dens.dist.retail) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
@@ -568,7 +567,7 @@ ggsave(path.out)
 out.model.retail <- out.model.retail %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_centre_oa.png")
+path.out <- paste0(path,"/outputs/lisa/b_dist_centre_oa.png")
 ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
@@ -593,7 +592,7 @@ ggsave(path.out)
 All R^2 dataframe
 
 ```{r}
-path.out <- paste0(path, "/outputs/r2_all_oa.csv")
+path.out <- paste0(path, "/outputs/lisa/r2_all_oa.csv")
 
 r2.all <- dens.London %>% 
   rename(London = rsquared) %>% 

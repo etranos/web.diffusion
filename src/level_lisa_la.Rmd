@@ -360,7 +360,6 @@ morani %>% as_tibble() %>%
                    year = V3) %>% 
   #kable() %>% 
   write_csv(path.out)
-
 ```
 
 ## Gini
