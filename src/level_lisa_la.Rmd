@@ -235,7 +235,7 @@ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 
 ## lisa maps parallel
 
-```{r}
+```{r, eval=F}
 
 path.out <- paste0(path, "/outputs/lisa/lisa_level_pc_test", n, "_la") # for unique PC
 #path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_la")  # for multiple PC
