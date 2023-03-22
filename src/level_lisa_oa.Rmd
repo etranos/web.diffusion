@@ -239,7 +239,11 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
                                          palette = c("white","red","blue",
                                                      rgb(0,0,1,alpha=0.4),
                                                      rgb(1,0,0,alpha=0.4)), 
-                                         labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), 
+                                         labels = c("Not significant",
+                                                    "High-High",
+                                                    "Low-Low",
+                                                    "Low-High",
+                                                    "High-Low"), 
                                          title="LISA, websites per OA") + 
   tm_legend(text.size = 1) +
   #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
@@ -295,7 +299,7 @@ gini.df %>% write_csv(path.out)
 
 ## Getis-Ord
 
-```{r}
+```{r, eval = F}
 
 t= 1998
 local_g <- localG(OA.Census$Qualification, nb_lw)
@@ -438,7 +442,7 @@ dens.London <- data.frame()
 out.model <- data.frame()
 
 for (t in 1996:2012){
-  model <- lm(log(density+0.001) ~ log(London), data = df[df$year==t,])
+  model <- lm(log(density+0.001) ~ log(London), data = df[df$year==t,]) 
   r2 <- as.data.frame(summary(model)$r.squared)
   r2$year = t
   dens.London <- rbind(r2, dens.London)
@@ -456,8 +460,8 @@ ggplot(dens.London) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
   ggtitle("Regression fit, distance to London on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 
 out.model <- out.model %>% 
   mutate(year = 1996:2012)
@@ -472,11 +476,18 @@ ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
   ggtitle("Regression coefficients, distance to London on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
 
 r2.all <- dens.London %>% 
   rename(London = rsquared)
+
+# Help for OA area size. I double checked the largest: E00102963
+# It is correct, this is its size.
+# ggplot(df, aes(x=area)) +
+#     geom_histogram(binwidth=.5, colour="black", fill="white")
+# 
+# df %>% filter(area>50)
 ```
 
 Website density regressions to the nearest city
@@ -504,8 +515,8 @@ ggplot(dens.distMet) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
   ggtitle("Regression fit, distance to nearest city on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 
 out.modelMet <- out.modelMet %>% 
   mutate(year = 1996:2012)
@@ -519,8 +530,8 @@ ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
   ggtitle("Regression coefficients, distance to nearest city on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 
 r2.all <- r2.all %>% left_join(dens.distMet) %>% 
   rename(cities = rsquared)
@@ -533,7 +544,7 @@ dens.dist.retail <- data.frame()
 out.model.retail <- data.frame()
 
 for (t in 1996:2012){
-  model <- lm(log(density+0.001) ~ log(dist.retail+0.001), data = df[df$year==t,])
+  model <- lm(log(density+0.001) ~ log(dist.retail+0.001), data = df[df$year==t,]) 
   r2 <- as.data.frame(summary(model)$r.squared)
   r2$year = t
   dens.dist.retail <- rbind(r2, dens.dist.retail)
@@ -551,8 +562,8 @@ ggplot(dens.dist.retail) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
   ggtitle("Regression fit, distance to nearest retail centre on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 
 out.model.retail <- out.model.retail %>% 
   mutate(year = 1996:2012)
@@ -566,8 +577,8 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
   ggtitle("Regression coefficients, distance to nearest retail centre on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  ggsave(path.out)
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
 
 
 # library(pscl)
