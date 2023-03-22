@@ -82,13 +82,13 @@ path <- find_rstudio_root_file()
 - As in temporal diffusion models, an **S-shaped** pattern in the
 cumulative level of adoption 
 
-- A **hierarchy effect**: from main centers to secondary ones -- central places
+- A **hierarchy effect**: from main centres to secondary ones -- central places
 
-- A **neighborhood effect**: diffusion proceeds outwards from innovation centers, 
+- A **neighborhood effect**: diffusion proceeds outwards from innovation centres, 
 first "hitting" nearby rather than far-away locations [@grubler1990rise]
 
-@hagerstrand1965monte: from innovative centers (core) through a
-hierarchy of subcenters, to the periphery
+@hagerstrand1965monte: from innovative centres (core) through a
+hierarchy of sub-centres, to the periphery
 
 ## Internet geographies
 
@@ -551,28 +551,28 @@ knitr::include_graphics(path.image)
 
 
 ```{r Darlington, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000005.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000005.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Nottingham, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000018.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000018.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Reading, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000038.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000038.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r City_of_London, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E09000001.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000001.png")
 knitr::include_graphics(path.image)
 ```
 
@@ -582,49 +582,49 @@ knitr::include_graphics(path.image)
 
 
 ```{r Middlesbrough, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000002.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000002.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Leicester, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000016.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000016.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Bristol, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000023.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000023.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Plymouth, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E06000026.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000026.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Liverpool, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E08000012.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E08000012.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Hackney, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_E09000012.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000012.png")
 knitr::include_graphics(path.image)
 ```
 
 ---
 
 ```{r Edinburgh, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/lad_S12000036.png")
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_S12000036.png")
 knitr::include_graphics(path.image)
 ```
 

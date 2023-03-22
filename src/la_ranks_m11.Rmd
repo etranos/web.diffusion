@@ -32,7 +32,7 @@ path <- find_rstudio_root_file()
 
 ## TODO
 
-- add 0s in the df and then calculate the ranks
+- 
 
 ## Load data
 

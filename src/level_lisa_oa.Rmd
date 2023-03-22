@@ -240,7 +240,7 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
                                                      rgb(0,0,1,alpha=0.4),
                                                      rgb(1,0,0,alpha=0.4)), 
                                          labels = c("Not significant", "High-High","Low-Low","Low-High","High-Low"), 
-                                         title="LISA for level, OA") +
+                                         title="LISA, websites per OA") + 
   tm_legend(text.size = 1) +
   #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
   #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
