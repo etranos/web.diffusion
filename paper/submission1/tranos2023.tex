@@ -194,86 +194,56 @@ technologies.
     keyword2
 \end{keyword}
 \end{frontmatter}
-    \ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, enhanced, borderline west={3pt}{0pt}{shadecolor}, breakable, sharp corners, frame hidden, interior hidden]}{\end{tcolorbox}}\fi
+    \ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, boxrule=0pt, interior hidden, borderline west={3pt}{0pt}{shadecolor}, breakable, enhanced, frame hidden]}{\end{tcolorbox}}\fi
 
-\hypertarget{sec:1}{%
-\section{Introduction}\label{sec:1}}
+\hypertarget{sec1}{%
+\section{Introduction}\label{sec1}}
 
 Geographers were always interested in how new technologies and
 innovations diffuse across space and, importantly, how such
-spatio-temporal processes can be modelled. The seminal contribution of
-\citet{hagerstrand1968innovation} is illustrative of this early
+spatio-temporal processes can be modelled. After all, diffusion together
+with invention and innovation are considered the pillars of
+technological change \citep{das2022diffusion}. The seminal contribution
+of \citet{hagerstrand1968innovation} is illustrative of this early
 interest. However, the torch of exploring and modelling such processes
 had been passed to other disciplines such as economics, business studies
 and sociology well before the `cultural turn' of economic geography
-\citep{perkins2005international}. A potential explanation of lack of
-studies exploring the diffusion of new and, more specifically, digital
-technologies across \emph{both} space and time can be attributed to the
-scarcity of relevant and granular enough data. As
+\citep{perkins2005international}. A potential explanation of the lack of
+geographical studies exploring the diffusion of new and, more
+specifically, digital technologies across \emph{both} space and time can
+be attributed to the scarcity of relevant and granular enough data. As
 \citet{zook2022mapping} highlight, digital activities are hardly ever
 captured in official data.
 
-This paper aims to reinstate geographers' interest in how new and
-digital technologies diffuse over space and time. It adopts a geographic
-standpoint to explore and map the diffusion of web technologies in the
-UK over space and time. It does so by employing a novel source of big
-data which captures the active engagement with web technologies during
-the \(1996-2013\) period.
+This paper offers such a contribution: a geographical study illustrating
+how a new technology that is the web diffused over space and time in the
+UK at a high level of spatial granularity during the \(1996-2012\)
+period. It does so by employing a novel source of big data which
+captures the active engagement with web technologies during that period.
+By addressing this empirical question this paper exemplifies how the
+combination of data sources which escape the traditional social science
+domain and adequate research methods can offer new contributions
+regarding our understanding of technologies are diffused.
 
 The motivation for this paper lies in the fact that there are various
 stakeholders who are interested in knowing how new digital technologies
-diffused over space and time use this information to make predictions
-regarding the diffusion of related future technologies. As per
-\citet{meade2021modelling} a variety of actors have a direct interest in
-gaining such knowledge including network equipment suppliers; network
-operators, regulatory and local authorities. And despite the spatial
-heterogeneity of such diffusion mechanisms and the policy relevance,
-there are very limited attempts in the literature to analyse the
-diffusion of new digital technologies at a granular level.
-
-the paper answers an empirical question: how did a
-
-\citet{zook2022mapping} Because new digital activities are rarely---if
-ever---captured in official state data, researchers must rely on
-information gathered from alternative sources. With this in mind, the
-overarching aim of this article is outlining an approach for analyzing
-the ``new spaces and geographies'' of digital phenomena and practices.
-
-Classifying adopters of a technology along a time axis was pioneered by
-Rogers (1962), who categorized adopters into five groups as innovators,
-early adopters, early majority, late majority and laggards.
-
-An a priori approach groups similar countries into segments, where
-similarity is defined using economic, social, or political covariates.
-Examples include Hofstede (2001) and Lee (1990). An a posteriori
-analysis considers segments based on realized market behaviour, for
-example see Sood et al.~(2009). Some studies investigate changing
-segment membership over time, see Cannon and Yaprak (2011).
-
-\citet{fritsch2015new} Hägerstrand (1952, 1967) was the first scholar to
-intensively analyze spatial diffusion pro cesses. Based on the empirical
-observations of the regional spread of process innovations, he
-hypothesized that new technology is first implemented in the `center' --
-the large agglom erations -- and then moves `down' the spatial
-hierarchy, the last stop being the `periphery', i.e.~remote and sparsely
-populated regions. There are at least two factors that may explain this
-pattern: first, the transfer of tacit knowledge via face-to-face contact
-and second, the absorptive capacity of a region.
-
-\citet{bento2015spatial} The concept of absorptive capacity has also
-been applied in the TIS context in terms of the con-struction of
-capacity needed to transfer and implement a new technology in the
-receiving country (cf.Van Alphen, 2011), with repercussions for the
-nature of system functions
-
-\citet{bednarz2020pulled} larger local technological niches (at least
-from a demand perspective) are more likely to be formed in urban areas
-than in rural ones, which is in line with the work of Ha¨gerstrand
-(1965a,b). However, size is not the only regional characteristic that
-may matter in this context. Regions also differ in accumulated
-experiences and the presence of tacit knowledge with respect to
-products, as well as in actors' propensity share this knowledge among
-producers (Martin et al., 2019)
+diffused over space and time and use this information to make
+predictions regarding the diffusion of related \emph{future}
+technologies. As per \citet{leibowicz2016representing}, historical
+studies agree on the fact that ``technologies diffuse at different
+times, at different rates, and to different extents in different places,
+and can be significantly influenced by policies
+\citep{victor1993}''.@meade2021modelling highlight that a variety of
+actors have a direct interest in gaining such knowledge including
+network equipment suppliers; network operators, regulatory and local
+authorities. These processes and their effects very a lot between
+scales: although the diffusion of a new technology might not be optimal
+at a local level, it might be beneficial from a global perspective as it
+might enable faster diffusion to less advantaged places
+\citet{leibowicz2016representing}. Despite the spatial heterogeneity of
+such diffusion mechanisms and the policy relevance, there are very
+limited attempts in the literature to analyse the diffusion of new
+digital technologies at a detailed geographical level.
 
 To summarize the discussion, first, here the diffusion process is
 selfperpetuating as initial use stimulates further use. Second, it
@@ -289,38 +259,7 @@ behavior or characteristics of the landscape change as a result of what
 happens elsewhere earlier. Spatial diffusion is the spread of the
 phenomenon, over space and timed, from limited origins
 
-Contagious diffusion=\textgreater{} spatial autocorelation
-
-expansion-type diffusion
-
-The work by the communication sociologist Everett Rogers (1962, 1971,
-1983) has emphasized the role of information, communication, formal and
-informal media, opinion leaders and social networks, and economic and
-psychological constraints on acceptance. Rogers's work stresses the
-decision mechanism of the potential adopter; the work of Rogers
-partitions the adopter's process of choosing to accept a new phenomenon
-or trait into five stages: stage 1--the potential adopter gains
-knowledge or awareness of an innovation; stage 2--persuasion is
-exercised to adopt; stage 3--a decision is made to adopt; stage 4--the
-decision to adopt is implemented; stage 5--the adopter confirms the
-decision to adopt. In Rogers's stage theory there may be a substantial
-time lag between when a potential adopter becomes aware of the new
-characteristic and when a decision is actually made to adopt.
-
-Hägerstrand considered diffusion to be a fundamental geographic process:
-Whatever the phenomenon being diffused might be, one may consider it in
-the context of a larger universal process of spatial diffusion.
-
-\citet{leibowicz2016representing} Diffusion is a spatial (Hagerstrand,
-1967) as well as a temporal process, and historical evidence confirms
-that technologies diffuse at different times, at different rates, and to
-different extents in different places, and can be significantly
-influenced by policies (Victor, 1993).
-
-Lastly, it can be globally optimal for innovative economies to deploy
-advanced technologies more than what is locally optimal if this enables
-faster diffusion in less advanced regions that could benefit from the
-technology.
+Compare dissusion with adoption
 
 wilson201281 Early on in their lifecycle, new technologies are crude,
 imperfect, and expensive (Rosenberg, 1994). New energy technologies are
@@ -406,9 +345,10 @@ before slowing and eventually saturating \citep{grubler1999dynamics}.
 The substitution of incumbent technologies by new competitors leads to
 subsequent decline and eventual obsolescence.
 
-\hypertarget{literature-review-sec2-maybe-skip-this}{%
-\section{Literature review \{\#sec2\} MAYBE SKIP
-THIS??}\label{literature-review-sec2-maybe-skip-this}}
+\hypertarget{sec2}{%
+\section{Literature review}\label{sec2}}
+
+MAYBE SKIP THIS??
 
 \citet{beardsell1999spatial} To characterize evolution of the computer
 industry, we examine the distribution of relative employment across
@@ -590,7 +530,7 @@ from a central location.
 
 
 \renewcommand\refname{References}
-  \bibliography{bibliography}
+  \bibliography{./paper/submission1/bibliography}
 
 
 \end{document}

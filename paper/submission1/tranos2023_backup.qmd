@@ -22,7 +22,7 @@ keywords:
   - keyword1
   - keyword2
 date: last-modified
-bibliography: bibliography
+bibliography: bibliography.bib
 format:
   elsevier-pdf:
     keep-tex: true
@@ -30,7 +30,7 @@ format:
       name: Journal Name
       formatting: preprint
       model: 3p
-      cite-style: authoryear
+      cite-style: super
 editor: 
   markdown: 
     wrap: 72

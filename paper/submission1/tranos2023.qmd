@@ -22,7 +22,7 @@ keywords:
   - keyword1
   - keyword2
 date: last-modified
-bibliography: bibliography.bib
+bibliography: bibliography
 format:
   elsevier-pdf:
     keep-tex: true
@@ -30,221 +30,91 @@ format:
       name: Journal Name
       formatting: preprint
       model: 3p
-      cite-style: super
+      cite-style: authoryear
 editor: 
   markdown: 
     wrap: 72
 ---
 
-# Introduction {#sec:1}
+# Introduction {#sec1}
 
 Geographers were always interested in how new technologies and
 innovations diffuse across space and, importantly, how such
-spatio-temporal processes can be modelled. The seminal contribution of
+spatio-temporal processes can be modelled. After all, diffusion together 
+with invention and innovation are considered the pillars of 
+technological change [@das2022diffusion]. The seminal contribution of
 @hagerstrand1968innovation is illustrative of this early interest.
 However, the torch of exploring and modelling such processes had been
 passed to other disciplines such as economics, business studies and
 sociology well before the 'cultural turn' of economic geography
-[@perkins2005international]. A potential explanation of lack of studies
-exploring the diffusion of new and, more specifically, digital
-technologies across *both* space and time can be attributed to the
-scarcity of relevant and granular enough data. As @zook2022mapping
-highlight, digital activities are hardly ever captured in official data.
+[@perkins2005international]. A potential explanation of the lack of 
+geographical studies exploring the diffusion of new and, more 
+specifically, digital technologies across *both* space and time can be
+attributed to the scarcity of relevant and granular enough data. As 
+@zook2022mapping highlight, digital activities are hardly ever captured 
+in official data.
 
-This paper aims to reinstate geographers' interest in how new and
-digital technologies diffuse over space and time. It adopts a geographic
-standpoint to explore and map the diffusion of web technologies in the
-UK over space and time. It does so by employing a novel source of big
-data which captures the active engagement with web technologies during
-the $1996-2013$ period.
+This paper offers such a contribution: a geographical study illustrating 
+how a new technology that is the web diffused over space and time 
+in the UK at a high level of spatial granularity during the $1996-2012$ 
+period. It does so by employing a novel source of big data which 
+captures the active engagement with web technologies during that period.
+By addressing this empirical question this paper exemplifies how the 
+combination of data sources which escape the traditional social science
+domain and adequate research methods can offer new contributions 
+regarding our understanding of technologies are diffused.
 
 The motivation for this paper lies in the fact that there are various
 stakeholders who are interested in knowing how new digital technologies
-diffused over space and time use this information to make predictions
-regarding the diffusion of related future technologies. As per
-@meade2021modelling a variety of actors have a direct interest in
-gaining such knowledge including network equipment suppliers; network
-operators, regulatory and local authorities. And despite the spatial
-heterogeneity of such diffusion mechanisms and the policy relevance,
-there are very limited attempts in the literature to analyse the
-diffusion of new digital technologies at a granular level.
+diffused over space and time and use this information to make predictions
+regarding the diffusion of related *future* technologies.
+As per @leibowicz2016representing, historical studies agree on the fact that 
+"technologies diffuse at different times, at different rates, and to
+different extents in different places, and can be significantly
+influenced by policies [@victor1993]". @meade2021modelling highlight that 
+a variety of actors have a direct interest in gaining such knowledge 
+including network equipment suppliers; network operators, regulatory 
+and local authorities. 
+These processes and their effects very a lot between scales: although
+the diffusion of a new technology might not be optimal at a local level,
+it might be beneficial from a global perspective as it might enable 
+faster diffusion to less advantaged places @leibowicz2016representing. 
+Despite the spatial heterogeneity of such diffusion mechanisms and 
+the policy relevance, there are very limited attempts in the literature 
+to analyse the diffusion of new digital technologies at a detailed 
+geographical level. 
 
-the paper answers an empirical question: how did a
 
-@zook2022mapping Because new digital activities are rarely---if
-ever---captured in official state data, researchers must rely on
-information gathered from alternative sources. With this in mind, the
-overarching aim of this article is outlining an approach for analyzing
-the "new spaces and geographies" of digital phenomena and practices.
+<!-- diffusion and adoption -->
 
-<!-- motivation -->
+Technological diffusion, which is by definition an aggregated process, 
+can be discussed in parallel with individual adoption mechanisms.
+On the one hand, @rogers2010diffusion identifies early adopter of new 
+technologies as 'knowledgeable risk takers' and @griliches1957 as 'profit 
+maximisers' [@ding2010modeling]. Such individual agents are rewarded because 
+of their attitude towards new technologies and innovations. On the other hand,
+@perkins2011internet attribute diffusion to two processes: (i) epidemic-type 
+of mechanisms, which 
 
-Classifying adopters of a technology along a time axis was pioneered by
-Rogers (1962), who categorized adopters into five groups as innovators,
-early adopters, early majority, late majority and laggards.
-
-An a priori approach groups similar countries into segments, where
-similarity is defined using economic, social, or political covariates.
-Examples include Hofstede (2001) and Lee (1990). An a posteriori
-analysis considers segments based on realized market behaviour, for
-example see Sood et al. (2009). Some studies investigate changing
-segment membership over time, see Cannon and Yaprak (2011).
-
-@fritsch2015new Hägerstrand (1952, 1967) was the first scholar to
-intensively analyze spatial diffusion pro cesses. Based on the empirical
-observations of the regional spread of process innovations, he
-hypothesized that new technology is first implemented in the 'center' --
-the large agglom erations -- and then moves 'down' the spatial
-hierarchy, the last stop being the 'periphery', i.e. remote and sparsely
-populated regions. There are at least two factors that may explain this
-pattern: first, the transfer of tacit knowledge via face-to-face contact
-and second, the absorptive capacity of a region.
-
-<!-- key concepts -->
-
-@bento2015spatial The concept of absorptive capacity has also been
-applied in the TIS context in terms of the con-struction of capacity
-needed to transfer and implement a new technology in the receiving
-country (cf.Van Alphen, 2011), with repercussions for the nature of
-system functions
-
-@bednarz2020pulled larger local technological niches (at least from a
-demand perspective) are more likely to be formed in urban areas than in
-rural ones, which is in line with the work of Ha¨gerstrand (1965a,b).
-However, size is not the only regional characteristic that may matter in
-this context. Regions also differ in accumulated experiences and the
-presence of tacit knowledge with respect to products, as well as in
-actors' propensity share this knowledge among producers (Martin et al.,
-2019)
-
-<!-- @das2022diffusion -->
-
-<!-- Epidemic approach: The approach emphasizes that the adoption of a -->
-
-<!-- technology spreads like an infection among the potential adopters. By -->
-
-<!-- taking a homogeneous group of potential adopters as an assumption, it -->
-
-<!-- explains the adoption of any innovation. -->
-
-To summarize the discussion, first, here the diffusion process is
-selfperpetuating as initial use stimulates further use. Second, it
-follows a disequilibrium path as the level of users is always lower than
-the number of potential users (Stoneman 2002).
-
+Two main mechanisms are identified in the
+literature to explain diffusion: (1) epidemic-type dynamics whereby
+contact with previous adopters stimulates uptake as po tential adopters
+learn about a new innovation; and (2) economic-type mechanisms whereby
+potential users adopt a new innovation as it be comesmore profitable,
+useful, or valuable, with uptake characteristically spreading as costs
+be come lower, performance improves, or the po tential uses of the
+innovation grow over time.
 The criticisms are mainly based on the fact that although the approach
 gives an idea of aggregate (industry or household) behaviour, it does
 not focus on the individual's (firm or household) adoption process
 
-<!-- Rogers3, that divides adopters as: (I.) Innovators: first 2.5%, (II.) -->
+@morrill2020spatial understands spatial diffusion as the landscape 
+changes that spread across space because of changes that take place 
+elsewhere. 
 
-<!-- Early adopters: next 13.5%, (III.) Early Majority: following 34%, (IV.) -->
 
-<!-- Late Majority: next 34%, and the rest as (V.) Laggards -->
 
-@morrill2020spatial Spatial diffusion is the process by which behavior
-or characteristics of the landscape change as a result of what happens
-elsewhere earlier. Spatial diffusion is the spread of the phenomenon,
-over space and timed, from limited origins
-
-Contagious diffusion=\> spatial autocorelation
-
-expansion-type diffusion
-
-<!-- the three geographic diffusion processes are (1) purely contagious where -->
-
-<!-- distance or adjacency is the absolute controlling factor, (2) purely -->
-
-<!-- hierarchical where size or urban position in the central place hierarchy -->
-
-<!-- is the absolute controlling factor, or (3) where the location of change -->
-
-<!-- is purely random. These are the pure or ideal forms of the diffusion -->
-
-<!-- process; all real diffusion processes are the result of a combination of -->
-
-<!-- these extremes. -->
-
-The work by the communication sociologist Everett Rogers (1962, 1971,
-1983) has emphasized the role of information, communication, formal and
-informal media, opinion leaders and social networks, and economic and
-psychological constraints on acceptance. Rogers's work stresses the
-decision mechanism of the potential adopter; the work of Rogers
-partitions the adopter's process of choosing to accept a new phenomenon
-or trait into five stages: stage 1--the potential adopter gains
-knowledge or awareness of an innovation; stage 2--persuasion is
-exercised to adopt; stage 3--a decision is made to adopt; stage 4--the
-decision to adopt is implemented; stage 5--the adopter confirms the
-decision to adopt. In Rogers's stage theory there may be a substantial
-time lag between when a potential adopter becomes aware of the new
-characteristic and when a decision is actually made to adopt.
-
-Hägerstrand considered diffusion to be a fundamental geographic process:
-Whatever the phenomenon being diffused might be, one may consider it in
-the context of a larger universal process of spatial diffusion.
-
-<!-- @das2022diffusion [not good paper] Invention, innovation and diffusion -->
-
-<!-- are considered as the three pillars of the theory of technological -->
-
-<!-- change and Schumpeter is considered as the father of the study of -->
-
-<!-- diffusion -->
-
-@leibowicz2016representing Diffusion is a spatial (Hagerstrand, 1967) as
-well as a temporal process, and historical evidence confirms that
-technologies diffuse at different times, at different rates, and to
-different extents in different places, and can be significantly
-influenced by policies (Victor, 1993).
-
-<!-- @leibowicz2016representing -->
-
-<!-- An illustrative empirically based theory for technology -->
-
-<!-- diffusion across multiple regions is suggested by "Schmidt's Law" -->
-
-<!-- (Grubler, 1990). With respect to a specific technology, it divides -->
-
-<!-- regions into three groups: core, rim, and periphery. The core is where -->
-
-<!-- the technology is invented, subject to experimentation, and first -->
-
-<!-- deployed commercially. To develop the technology, the core must have -->
-
-<!-- both sufficient innovative ability and economic motivation to make the -->
-
-<!-- necessary resource commitment. As the technology spreads from the core -->
-
-<!-- to the rim and eventually to the periphery, later adopters have the -->
-
-<!-- advantage of benefiting from the experiences of earlier adopters via -->
-
-<!-- knowledge spillover effects (Verdolini and Galeotti, 2011). At this -->
-
-<!-- point, the technology has likely been refined and costs have likely -->
-
-<!-- declined significantly. Schmidt's Law claims that, as a result, -->
-
-<!-- diffusion proceeds at a faster rate in regions which adopt the -->
-
-<!-- technology later. However, diffusion tends to be less pervasive in -->
-
-<!-- regions where adoption is delayed, ultimately saturating at a lower -->
-
-<!-- extent than in regions where adoption occurred earlier. This is often -->
-
-<!-- attributed to a lack of proper institutions and infrastructures in later -->
-
-<!-- adopters, markets whichmay not be as favorable to a technology, or the -->
-
-<!-- availability of yet newer options that invite technological -->
-
-<!-- leapfrogging. -->
-
-Lastly, it can be globally optimal for innovative economies to deploy
-advanced technologies more than what is locally optimal if this enables
-faster diffusion in less advanced regions that could benefit from the
-technology.
+<!-- data and early engagement with the web -->
 
 wilson201281 Early on in their lifecycle, new technologies are crude,
 imperfect, and expensive (Rosenberg, 1994). New energy technologies are
@@ -264,72 +134,17 @@ of an industrial base and characteristic moves towards standardisation
 and mass production (Grubler, 1998). The influence of accumulating
 production experience on costs is captured by the concept of learning.
 
-<!-- @grubler1990rise Following the definition given by Rogers, 1983, -->
+@perkins2005international Theoretical models disagree as to why firms
+adopt innovations at different times. Epidemic models emphasize
+information (Griliches 1957). Certain firms are hypothesized to adopt
+earlier because they come into contact with, and learn from, adopters of
+the new technology before others. Economic models, on the other hand,
+predominantly emphasize firm heterogeneity (Ireland and Stoneman 1986).
+Firms adopt technologies at different times because they differ with
+respect to various organizational and environmental variables
+influencing the economic returns from adoption (Blackman 1999).
 
-<!-- diffusion is the process by which an innovation is communicated through -->
-
-<!-- certain communication channels over time among the members of a social -->
-
-<!-- system. An innovation may be an idea, object or practice which is -->
-
-<!-- perceived as new by an individual or another unit of adoption (e.g., an -->
-
-<!-- organization) . Communication via communication channels refers to how -->
-
-<!-- knowledge about an innovation is transferred between the members of a -->
-
-<!-- social system. Communication takes time, and is therefore an important -->
-
-<!-- aspect of innovation diffusion. In fact, all theoretical and empirical -->
-
-<!-- diffusion studies agree that an innovation does not instantly diffuse -->
-
-<!-- into a social system. Instead a typical time pattern of diffusion along -->
-
-<!-- a S-shaped trajectory seems to be the rule. The S-shaped pattern of -->
-
-<!-- diffusion appears to be a basic anthropologic phenomenon, as it is also -->
-
-<!-- confirmed by a large number of studies· of primitive preindustrial -->
-
-<!-- societies. -->
-
-grubler1990rise The scale of spatial innovation diffusion is similar to
-that of temporal diffusion models: hierarchically decomposed.
-
-<!-- grubler1990rise -->
-
-<!-- Spatial innovation diffusion in Hagerstrand's model consists of three -->
-
-<!-- stages. Stage 1: Local concentrations of initial acceptances (initial -->
-
-<!-- agglomeration) . Stage 2: Radial dissemination outward from the initial -->
-
-<!-- agglomeration, accompanied by the rise of secondary agglomerations. -->
-
-<!-- Stage 3: The condensing and saturation stage, in which filling-in occurs -->
-
-<!-- and diffusion eventually ceases. -->
-
-<!-- grubler1990rise -->
-
-<!-- Thus, three main characteristics define the spatial diffusion process: -->
-
-<!-- (1) As in temporal diffusion models, an S-shaped pattern in the -->
-
-<!-- cumulative level of adoption. (2) A "hierarchy effect" by which -->
-
-<!-- diffusion proceeds from initial centers to secondary ones. Within the -->
-
-<!-- context of urban systems (central places) this implies a hierarchical -->
-
-<!-- spread of an innovation from larger to smaller centers, and from the -->
-
-<!-- centers to the surrounding hinterland. (3) A "neighborhood effect" Le., -->
-
-<!-- diffusion proceeds outwards from innovation centers, first "hitting" -->
-
-<!-- (Brown, 1981) nearby rather than far-away locations. -->
+<!-- methods -->
 
 @grubler1990rise Later Hagerstrand conceptualized physical "barrier"
 effects like lakes or uninhabited areas, which, in addition to distance,
@@ -342,66 +157,9 @@ flows Hagerstrand defines a "mean information field" (MIF), in which the
 probability of communication is a negative function of distance between
 individuals
 
-@perkins2005international Theoretical models disagree as to why firms
-adopt innovations at different times. Epidemic models emphasize
-information (Griliches 1957). Certain firms are hypothesized to adopt
-earlier because they come into contact with, and learn from, adopters of
-the new technology before others. Economic models, on the other hand,
-predominantly emphasize firm heterogeneity (Ireland and Stoneman 1986).
-Firms adopt technologies at different times because they differ with
-respect to various organizational and environmental variables
-influencing the economic returns from adoption (Blackman 1999).
 
-Either way, the strong assumption is that developing countries can
-acquire modern technology innovated in developed economies, often at a
-fraction of the original research and development (R&D) costs, thereby
-leapfrogging many decades of technological progress (Teece 2000).
 
-The first involves a country's geographical location. Recent empirical
-work suggests that diffusion is ''geographically localized'' (Globerman,
-Kokko, and Sjo¨holm 2000; Keller 2002; Milner 2003) in that a technology
-diffuses faster in a country where it is already more widely diffused in
-neighboring countries. Underlying these regional effects are contagion
-and contact with prior users or producers of technology.
 
-@ding2010modeling Rogers (1995) characterized early adopters as
-knowledgeable risk takers. Griliches (1957) looked at the rate of return
-for early adopters and characterized them as profit maximizers. The
-geographer Hagerstrand (1967) was focusing on the character of early
-adopters in the transmittal process that produces follow-on participants
-in the process. Space was treated as a contiguity system with embedded
-characteristics producing barrier elements to the diffusion process.
-
-@ding2010modeling REVIEW ON Technological Diffusion
-
-<!-- Hagerstrand (1968) was the first to demonstrate that diffusion typically -->
-
-<!-- starts from innovative centers ('core´) and disseminates, through a -->
-
-<!-- hierarchy of subcenters, to the periphery. This process is sequential -->
-
-<!-- rather than simultaneous, and tends to accelerate from core to -->
-
-<!-- periphery, where diffusion reaches a lower intensity than in the core -->
-
-<!-- (Hagerstrand, 1968; Grubler, 1990; Morrill, 2005). A similar effect of -->
-
-<!-- spatial acceleration has been identified in marketing research and is -->
-
-<!-- known as the "lead-lag effect" (Peres et al., 2010). -->
-
-@perkins2011internet Two main mechanisms are identified in the
-literature to explain diffusion: (1) epidemic-type dynamics whereby
-contact with previous adopters stimulates uptake as po tential adopters
-learn about a new innovation; and (2) economic-type mechanisms whereby
-potential users adopt a new innovation as it be comesmore profitable,
-useful, or valuable, with uptake characteristically spreading as costs
-be come lower, performance improves, or the po tential uses of the
-innovation grow over time.
-
-To this extent, our results contribute to a growing body of work that
-has sought to caution against claims about the supposed novelty of the
-Internet and the suggestion that it is somehow different.
 
 <!-- methods -->
 
@@ -412,7 +170,9 @@ and eventually saturating [@grubler1999dynamics]. The substitution of
 incumbent technologies by new competitors leads to subsequent decline
 and eventual obsolescence.
 
-# Literature review {#sec2} MAYBE SKIP THIS??
+# Literature review {#sec2}
+
+MAYBE SKIP THIS??
 
 <!-- previous studies -->
 
@@ -507,6 +267,19 @@ initial markets (also: core, lead, first mover, early adopter) where
 formative phases prepare technologies for mass commercialization, and in
 follower markets (also: periphery, lag, late adopter) where accelerated
 formative phases may benefit from diffusion and spillovers.
+
+@perkins2005internationalEither way, the strong assumption is that developing countries can
+acquire modern technology innovated in developed economies, often at a
+fraction of the original research and development (R&D) costs, thereby
+leapfrogging many decades of technological progress (Teece 2000).
+
+@perkins2005international The first involves a country's geographical location. Recent empirical
+work suggests that diffusion is ''geographically localized'' (Globerman,
+Kokko, and Sjo¨holm 2000; Keller 2002; Milner 2003) in that a technology
+diffuses faster in a country where it is already more widely diffused in
+neighboring countries. Underlying these regional effects are contagion
+and contact with prior users or producers of technology.
+
 
 # Materials and Methods {#sec3}
 
