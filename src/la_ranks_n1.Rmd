@@ -138,7 +138,7 @@ df <- df %>% left_join(la.names)
 # change percentile in out.path and mutate(alpha = ifelse(abs(diff_1st)
 t <- 2000
 
-out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only05.png")
+out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only95.png")
 
 df %>% group_by(year) %>% 
   mutate(rank = rank(desc(n_by_firm))) %>% # or n_by_firm
@@ -152,7 +152,7 @@ df %>% group_by(year) %>%
   # t= 2000: q.95 = 199.5, q.9 = 168, q.1 = 7, q.05 = 3.75. **abs()**
   # t= 1996: q.95 = 257.125, q.9 = 232.25, q.1 = 17.75, q.05 = 6.875. **abs()**
 
-  mutate(alpha = ifelse(abs(diff_1st) < 3.75, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(abs(diff_1st) > 199.5, .8, 0.1)) %>% 
   mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
   mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
 

@@ -1,5 +1,5 @@
 ---
-title: "diffusion, websites with 1 pc"
+title: "wpz"
 date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 output: 
   html_document:
@@ -11,26 +11,29 @@ knit: (function(inputFile, encoding) {
   })
 ---
 
+Runs all the analysis for the Workplace Zones.
+
+WPZ sources:
+
+- [info](https://www.ons.gov.uk/methodology/geography/geographicalproducts/areaclassifications/2011workplacebasedareaclassification)
+
+- [lookup OA to WPZ](https://geoportal.statistics.gov.uk/datasets/ons::output-area-to-workplace-zone-to-local-authority-district-december-2011-lookup-in-england-and-wales-1/explore)
+
+- [Ireland](https://www.nisra.gov.uk/support/geography/northern-ireland-workplace-zones)
+
+- [Scotland](https://www.data.gov.uk/dataset/02718f33-a1e7-4447-8e04-d305a950c19e/census-2011-workplace-zones)
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
+library(broom)
 library(rprojroot)
 library(rgdal)
-library(rgeos)
-library(spdep)
-library(tmap)
-library(maptools)
-library(knitr)
-library(REAT)
-library(tidygeocoder)
-library(geosphere)
-library(broom)
-library(foreach)
-library(raster)
-library(plm)
-library(lmtest)
-
+library(sf)
+library(modelr)
+library(survival)
 options(scipen=10000)
 
 # This is the project path
@@ -46,12 +49,23 @@ Postcode lookup.
 ```{r}
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
-  dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::select(pcds, oa11cd) %>% #, lsoa11cd, msoa11cd, ladcd, ladnm
   dplyr::rename(pc = pcds)
-#glimpse(lookup)
-# The problems refer to Welsh LAD names. Not a problem for the analysis.
-#sapply(lookup, function(x) sum(is.na(x)))
-# 10332 missing msoa11cd
+
+path.lookup <- paste0(path,"/data/raw/Output_Area_to_Workplace_Zone_to_Local_Authority_District_(December_2011)_Lookup_in_England_and_Wales.csv")
+lookup2 <- read_csv(path.lookup) %>% 
+  dplyr::select(OA11CD, WZ11CD) %>% 
+  rename(oa11cd = OA11CD)
+
+lookup <- lookup %>% left_join(lookup2) %>% 
+  filter(!is.na(WZ11CD)) #%>% 
+  #mutate(help = substring(oa11cd, 1, 1)) %>% 
+  #filter(is.na(help))
+  #distinct(WZ11CD)
+
+rm(lookup2)
+
+# 53,578 unique WZ. OK according to the spatial object, but should be 60,709 according the the WPZ description
 ```
 
 The internet archive $1996$-$2010$ data is saved on /hdd.
@@ -80,13 +94,13 @@ df <- bind_rows(df9610, df1112) %>%
     V1.domain == n,             # for n == 1
     year > 1995 & year <2013) %>%   
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
-  group_by(year, ladcd) %>%
+  group_by(year, WZ11CD) %>%
   #summarise(n = n()) %>%            # for multiple pc  
   summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
-df <- df %>% filter(!is.na(ladcd)) %>% 
-  complete(ladcd, year) %>% 
+df <- df %>% filter(!is.na(WZ11CD)) %>% 
+  complete(WZ11CD, year) %>% 
   replace(is.na(.), 0)
 
 # tests for Scotland
@@ -104,11 +118,20 @@ df <- df %>% filter(!is.na(ladcd)) %>%
 
 ## Firms
 
-```{r, eval=F}
-firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS10&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
-  dplyr::select(GEOGRAPHY_CODE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
-  rename(ladcd = GEOGRAPHY_CODE,
-         firms = OBS_VALUE)
+```{r}
+# from business census
+path.firms <- paste0(path, "/data/raw/business_census2012.csv")
+firms <- read_csv(path.firms) %>% #distinct(companystatus) 
+  filter(!is.na(postcode),
+         companystatus == "Active") %>% 
+  dplyr::select(postcode) %>% 
+  rename(pc = postcode) %>% 
+  left_join(lookup) %>% 
+  group_by(WZ11CD) %>% 
+  summarise(firms = n())
+
+# firms %>% filter(is.na(oa11cd)) %>% distinct(pc)
+# 200k rows and 73k unique postcodes are missing
 
 df <- df %>% left_join(firms) %>% 
   mutate(n_by_firm = n/firms) %>% # N websites/firm
@@ -118,45 +141,53 @@ df <- df %>% left_join(firms) %>%
 
 # df %>% filter(is.na(n_by_firm))
 # sapply(df %>% left_join(firms), function(x) sum(is.na(x)))
+
 ```
 
 ## spatial data
 
 ```{r}
 # get LA for the UK
-path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
-la <- readOGR(path.geo)
+path.geo <- paste0(path, "/data/raw/Workplace_Zones_Dec_2011_GCB_in_England_and_Wales_2022_4617806297229452276.geojson")
+wpz <- readOGR(path.geo)
 # source: https://geoportal.statistics.gov.uk/
 
 # spatial transformations
-la <- spTransform(la, CRS("+init=epsg:4326"))
+wpz <- spTransform(la, CRS("+init=epsg:4326"))
 
-la.f <- fortify(la, region = "LAD21CD")
+wpz.f <- fortify(wpz, region = "LAD21CD")
 
 # cities
 cities <- maps::world.cities %>% 
   filter(country.etc=="UK") %>% 
   arrange(pop) %>% tail(10) 
 tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+# get GB
+path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+gb <- readOGR(path.gb)
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+
 ```
 
 ## lisa maps
 
 ```{r}
 
-path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_la") # for unique PC
-#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_la")  # for multiple PC
+path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_wpz") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_wpz")  # for multiple PC
 
 morani <- data.frame()
 
 #spatial weight matrix
 sf_use_s2(FALSE)
-nb <- poly2nb(la)
+nb <- poly2nb(wpz)
 listw <- nb2listw(nb, style = "W", zero.policy = T)
 
 for (t in 1996:2012){
-test <- la
-test@data <- test@data %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>% 
+test <- wpz
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("wz11cd"="WZ11CD")) %>% 
   mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
          year = ifelse(is.na(year), t, year))
   
@@ -199,7 +230,7 @@ lmoran <- lmoran%>%
 #  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
 #  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
   
-mun_merge_new<- merge(test, lmoran, by="LAD21CD")
+mun_merge_new<- merge(test, lmoran, by="wz11cd")
 
 # R p value map
 breaks = c(0, 1, 2, 3, 4, 5) 
@@ -219,13 +250,13 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
                                                     "Low-Low",
                                                     "Low-High",
                                                     "High-Low"), 
-                                         title="LISA, websites per firm in a LA") +
+                                         title="LISA, websites per firm in a workplace zone") +
   tm_legend(text.size = 1) +
   #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
   #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
   #tm_borders(alpha=.1) +
   tm_borders(lwd = 0) +
-  tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
+  tm_shape(gb, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
   tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
@@ -243,8 +274,8 @@ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 
 ```{r, eval=F}
 
-path.out <- paste0(path, "/outputs/lisa/lisa_level_pc_test", n, "_la") # for unique PC
-#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_la")  # for multiple PC
+path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_wpz") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_wpz")  # for multiple PC
 
 #setup cluster
 #https://www.blasbenito.com/post/02_parallelizing_loops_with_r/
@@ -261,7 +292,7 @@ morani <- data.frame()
 
 #spatial weight matrix
 sf_use_s2(FALSE)
-nb <- poly2nb(la)
+nb <- poly2nb(wpz)
 listw <- nb2listw(nb, style = "W", zero.policy = T)
 
 #for (t in 1996:2012){
@@ -273,8 +304,8 @@ foreach(t = 1996:2012, .packages = c("tidyverse",
                                      "maptools",
                                      "knitr",
                                      "broom")) %dopar% {
-test <- la
-test@data <- test@data %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>% 
+test <- wpz
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("wz11cd"="WZ11CD")) %>% 
   mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
          year = ifelse(is.na(year), t, year))
   
@@ -317,7 +348,7 @@ lmoran <- lmoran%>%
 #  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
 #  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
   
-mun_merge_new<- merge(test, lmoran, by="LAD21CD")
+mun_merge_new<- merge(test, lmoran, by="wz11cd")
 
 # R p value map
 breaks = c(0, 1, 2, 3, 4, 5) 
@@ -337,13 +368,13 @@ map <- tm_shape(mun_merge_new, projection = "+init=epsg:4326") + tm_fill(col = "
                                                     "Low-Low",
                                                     "Low-High",
                                                     "High-Low"), 
-                                         title="LISA, websites per firm in a LA") +
+                                         title="LISA, websites per firm in a workplace zone") +
   tm_legend(text.size = 1) +
   #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
   #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
   #tm_borders(alpha=.1) +
   tm_borders(lwd = 0) +
-  tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
+  tm_shape(wpz, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
   tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ") +
 tmap_options(check.and.fix = TRUE)
@@ -352,10 +383,10 @@ tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 
 ```
 
-## Moran I
+Moran I
 
 ```{r}
-path.out <- paste0(path, "/outputs/lisa/morani_la.csv")
+path.out <- paste0(path, "/outputs/lisa/morani_wpz.csv")
 morani %>% as_tibble() %>% 
   rename('morani'=V1,
                    p = V2,
@@ -405,10 +436,10 @@ Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-bound
 
 ```{r}
 # LA centroids
-la.c <- gCentroid(la, byid=TRUE)@coords %>% 
+wpz.c <- gCentroid(wpz, byid=TRUE)@coords %>% 
   as.data.frame() %>%
-  bind_cols(la@data) %>% 
-  dplyr::select(LAD21CD, x, y) %>% 
+  bind_cols(wpz@data) %>% 
+  dplyr::select(wz11cd, x, y) %>% 
   remove_rownames()
 
 # cities
@@ -446,16 +477,16 @@ retail.major.cetres <- retail.major.cetres.help %>%
 Distance to cities
 
 ```{r}
-dist <- distm(cbind(la.c$x, la.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- distm(cbind(wpz.c$x, wpz.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
 dist <- round((dist/1000),2) %>% 
   as_tibble()  
 
 city.names <- city.names %>% stringr::str_remove(", UK")
 names(dist) <- city.names 
 
-dist <- dist %>% bind_cols(la.c$LAD21CD) %>% 
-  rename(ladcd = last_col()) %>% 
-  relocate(ladcd)
+dist <- dist %>% bind_cols(wpz.c$wz11cd) %>% 
+  rename(wz11cd = last_col()) %>% 
+  relocate(wz11cd)
 
 # dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
 # dist$distMet <- apply(dist[,2:11], 1, min)
@@ -484,11 +515,11 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 # length(unique(test$oa11cd))
 
 # calculate area
-la$SHAPE_Area <- area(la) #/ 1000000
+wpz$SHAPE_Area <- area(wpz) #/ 1000000
 
 # Join with distance and area
-df <- df %>% left_join(dist, by = c("ladcd" = "ladcd")) %>% 
-  left_join(la@data, by = c("ladcd" = "LAD21CD")) %>% 
+df <- df %>% left_join(dist, by = c("WZ11CD" = "wz11cd")) %>% 
+  left_join(wpz@data, by = c("WZ11CD" = "wz11cd")) %>% 
   rename(area = SHAPE_Area) %>% 
   relocate(area, .after = n) %>% 
   mutate(area = area / 1000000,
@@ -500,129 +531,53 @@ sapply(df, function(x) sum(is.na(x)))
 Distance to retail centres
 
 ```{r}
-dist.retail <- distm(cbind(la.c$x, la.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- distm(cbind(wpz.c$x, wpz.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
 dist.retail <- round((dist.retail/1000),2) %>% 
   as_tibble()  
 
 # retail.names <- retail.major.cetres$RC_Name
 # names(dist.retail) <- retail.names 
 
-dist.retail <- dist.retail %>% bind_cols(la.c$LAD21CD) %>% 
-  rename(LAD21CD = last_col()) %>% 
-  relocate(LAD21CD)
+dist.retail <- dist.retail %>% bind_cols(wpz.c$wz11cd) %>% 
+  rename(wz11cd = last_col()) %>% 
+  relocate(wz11cd)
 
 # Minimum distance 
 dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
-dist.retail <- dist.retail %>% dplyr::select(LAD21CD, dist.retail)
+dist.retail <- dist.retail %>% dplyr::select(wz11cd, dist.retail)
 
 # Join with complete panel
-df <- df %>% left_join(dist.retail, by = c("ladcd" = "LAD21CD")) 
+df <- df %>% left_join(dist.retail, by = c("WZ11CD" = "wz11cd")) 
 
 sapply(df, function(x) sum(is.na(x)))
 ```
 
-## Panel regressions
+Classification
 
 ```{r}
-# London
-model <- plm(log(n+0.001) ~ log(London+.001)*as.factor(year), 
-             data = df,
-             index = c("ladcd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
 
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
+library(readxl)
+library(httr)
+url.classes <- "https://www.ons.gov.uk/file?uri=/methodology/geography/geographicalproducts/areaclassifications/2011workplacebasedareaclassification/classificationofworkplacezonesfortheukdatasets/wzassignmentsfinal.xlsx"
 
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
+GET(url.classes, write_disk(tf <- tempfile(fileext = ".xlsx", tmpdir = paste0(path, "/data/temp"))))
 
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_london_la.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to London on website counts, LA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
+classes.wpz <- read_excel(tf, sheet = 1) %>% 
+  rename(WZ11CD= 'Workplace Zone Code',
+         supergroup = 'Supergroup Code',
+         group = 'Group Code')
 
-# Cities
-model <- plm(log(n+0.001) ~ log(dist+.001)*as.factor(year), 
-             data = df,
-             index = c("ladcd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
-
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
-
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
-
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_cities_la.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to Cities on website counts, LA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
-
-# Retail centres
-model <- plm(log(n+0.001) ~ log(dist.retail+.001)*as.factor(year), 
-             data = df,
-             index = c("ladcd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
-
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
-
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
-
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_retail_la.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to Retail Centres on website counts, LA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
+df <- df %>% left_join(classes.wpz)
 ```
 
-## Website density regressions to London
+Website density regressions to London
 
 ```{r}
 dens.London <- data.frame()
 out.model <- data.frame()
 
 for (t in 1996:2012){
-  model <- lm(log(n+0.001) ~ log(London), data = df[df$year==t,]) #density
+  model <- lm(log(n+0.001) ~ log(London) + as.factor(group), data = df[df$year==t,]) #density
   r2 <- as.data.frame(summary(model)$r.squared)
   r2$year = t
   dens.London <- rbind(r2, dens.London)
@@ -635,18 +590,18 @@ for (t in 1996:2012){
 
 names(dens.London)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_london_la.png")
+path.out <- paste0(path,"/outputs/rsq_dist_london_wpz.png")
 ggplot(dens.London) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to London on website density, LA") +
+  ggtitle("Regression fit, distance to London on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5))
 ggsave(path.out)
 
 out.model <- out.model %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_london_la.png")
+path.out <- paste0(path,"/outputs/b_dist_london_wpz.png")
 ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
 #ggplot(out.model, aes(x=year, y = estimate)) +  
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
@@ -655,12 +610,12 @@ ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to London on website density, LA") +
+  ggtitle("Regression coefficients, distance to London on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5)) 
 ggsave(path.out)
 ```
 
-## Website density regressions to the nearest city
+Website density regressions to the nearest city
 
 ```{r}
 dens.distMet <- data.frame()
@@ -680,18 +635,18 @@ for (t in 1996:2012){
 
 names(dens.distMet)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_city_la.png")
+path.out <- paste0(path,"/outputs/rsq_dist_city_wpz.png")
 ggplot(dens.distMet) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest city on website density, LA") +
+  ggtitle("Regression fit, distance to nearest city on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5)) 
 ggsave(path.out)
 
 out.modelMet <- out.modelMet %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_city_la.png")
+path.out <- paste0(path,"/outputs/b_dist_city_wpz.png")
 ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
@@ -699,12 +654,12 @@ ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density, LA") +
+  ggtitle("Regression coefficients, distance to nearest city on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5)) 
 ggsave(path.out)
 ```
 
-## Website density regressions to the nearest retail centre
+Website density regressions to the nearest retail centre
 
 ```{r}
 dens.dist.retail <- data.frame()
@@ -724,18 +679,18 @@ for (t in 1996:2012){
 
 names(dens.dist.retail)[1] <- "rsquared"
 
-path.out <- paste0(path,"/outputs/rsq_dist_centre_la.png")
+path.out <- paste0(path,"/outputs/rsq_dist_centre_wpz.png")
 ggplot(dens.dist.retail) +
   geom_line(aes(x=year, y = rsquared)) +
   ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest retail centre on website density, LA") +
+  ggtitle("Regression fit, distance to nearest retail centre on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5)) 
 ggsave(path.out)
 
 out.model.retail <- out.model.retail %>% 
   mutate(year = 1996:2012)
 
-path.out <- paste0(path,"/outputs/b_dist_centre_la.png")
+path.out <- paste0(path,"/outputs/b_dist_centre_wpz.png")
 ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
            geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
                        width = 0.2,size  = 1,
@@ -743,7 +698,7 @@ ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
   #geom_hline(yintercept = 0, color = "red", size = 1) +
   geom_point() + coord_flip() +
   ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest retail centre on website density, LA") +
+  ggtitle("Regression coefficients, distance to nearest retail centre on website density, Workplace Zone") +
   theme(plot.title = element_text(hjust = 0.5)) 
 ggsave(path.out)
 
@@ -761,15 +716,15 @@ ggsave(path.out)
 All R^2 dataframe
 
 ```{r}
-path.out <- paste0(path, "/outputs/r2_all_la.csv")
+path.out <- paste0(path, "/outputs/r2_all_wpz.csv")
 
 r2.all <- dens.London %>% 
-  rename(London.LA = rsquared) %>% 
+  rename(London.wpz = rsquared) %>% 
   left_join(dens.distMet) %>% 
-  rename(cities.LA = rsquared) %>% 
+  rename(cities.wpz = rsquared) %>% 
   left_join(dens.dist.retail) %>% 
-  rename(retail.LA = rsquared) %>% 
-  relocate(year, .before = London.LA) %>% 
+  rename(retail.wpz = rsquared) %>% 
+  relocate(year, .before = London.wpz) %>% 
   arrange(year)
 
 write_csv(r2.all, path.out)

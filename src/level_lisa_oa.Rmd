@@ -26,6 +26,8 @@ library(REAT)
 library(tidygeocoder)
 library(geosphere)
 library(broom)
+library(plm)
+library(lmtest)
 
 options(scipen=10000)
 
@@ -434,7 +436,101 @@ df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd"))
 sapply(df, function(x) sum(is.na(x)))
 ```
 
-Website density regressions to London
+## Panel regressions
+
+```{r}
+# London
+model <- plm(log(n+0.001) ~ log(London+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_london_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to London on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+
+# Cities
+model <- plm(log(n+0.001) ~ log(dist+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_cities_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficienst: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to Cities on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+
+# Retail centres
+model <- plm(log(n+0.001) ~ log(dist.retail+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_retail_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to Retail Centres on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+```
+
+## Website density regressions to London, cross-section
 
 ```{r}
 dens.London <- data.frame()
@@ -489,7 +585,7 @@ r2.all <- dens.London %>%
 # df %>% filter(area>50)
 ```
 
-Website density regressions to the nearest city
+## Website density regressions to the nearest city, cross-section
 
 ```{r}
 dens.distMet <- data.frame()
@@ -536,7 +632,7 @@ r2.all <- r2.all %>% left_join(dens.distMet) %>%
   rename(cities = rsquared)
 ```
 
-Website density regressions to the nearest retail centre
+## Website density regressions to the nearest retail centre, cross-section
 
 ```{r}
 dens.dist.retail <- data.frame()

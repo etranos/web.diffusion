@@ -21,6 +21,14 @@ library(rgdal)
 library(sf)
 library(modelr)
 library(survival)
+library(rgeos)
+library(spdep)
+library(rgdal)
+library(tidygeocoder)
+library(geosphere)
+library(raster)
+library(rms)
+library(stargazer)
 
 options(scipen=10000)
 
@@ -371,6 +379,171 @@ write the object with all the models
 path.out <- paste0(path, "/data/temp/s_la_per_firm.csv")
 write_csv(a.la, path.out)
 ```
+
+## Explain fast/slow
+
+### load data
+
+```{r}
+a.la <- read_csv(path.out)
+
+library(readxl)
+library(httr)
+url.classes <- "https://www.ons.gov.uk/file?uri=/methodology/geography/geographicalproducts/areaclassifications/2011areaclassifications/datasets/clustermembershipv2.xls"
+
+GET(url.classes, write_disk(tf <- tempfile(fileext = ".xls", tmpdir = paste0(path, "/data/temp"))))
+
+classes.la <- read_excel(tf, sheet = 3, range = "A10:I399") %>% 
+  rename(ladcd = Code,
+         supergroup = 'Supergroup Code',
+         group = 'Group Code',
+         subgroup = 'Subgroup Code')
+
+a.la <- a.la %>% left_join(classes.la) %>% 
+  mutate(fast.binary = if_else(fast == "fast", 1, 0))
+sapply(a.la, function(x) sum(is.na(x))) # 16 mising
+
+```
+
+### Distances
+
+
+First set up the destinations. Origins are all the LA.
+
+Major cities from [source](https://www.citypopulation.de/en/uk/cities/).
+Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-boundaries)
+
+```{r}
+# LA centroids
+la.c <- gCentroid(la, byid=TRUE)@coords %>% 
+  as.data.frame() %>%
+  bind_cols(la@data) %>% 
+  dplyr::select(LAD21CD, x, y) %>% 
+  remove_rownames()
+
+# cities
+city.names <- c("London, UK", 
+"Birmingham, UK",
+"Glasgow, UK",
+"Liverpool, UK",
+"Bristol, UK",
+"Manchester, UK",
+"Sheffield, UK",
+"Leeds, UK",
+"Edinburgh, UK",
+"Leicester, UK")	
+
+cities <- geo(city.names, no_query = F, method = "arcgis")
+
+# retail centres
+geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
+retail <-readOGR(geo.path) 
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id") #%>%
+
+retail.major.cetres <- retail.major.cetres.help %>% 
+  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+  st_transform(4326) %>%
+  st_coordinates() %>%
+  as_tibble() %>% 
+  bind_cols(retail.major.cetres.help$id) %>% 
+  rename(id = '...3') %>% 
+  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+```
+
+Distance to cities
+
+```{r}
+dist <- distm(cbind(la.c$x, la.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- round((dist/1000),2) %>% 
+  as_tibble()  
+
+city.names <- city.names %>% stringr::str_remove(", UK")
+names(dist) <- city.names 
+
+dist <- dist %>% bind_cols(la.c$LAD21CD) %>% 
+  rename(ladcd = last_col()) %>% 
+  relocate(ladcd)
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+dist <- transform(dist, dist = do.call(pmin, dist[-1]))
+
+
+
+# NOT USED AS IT SCREWS UP THE REGRESSIONS
+# Complete panel, N = 3871903, 17 year * 227759 OA
+# df <- df %>% bind_rows(dist %>% select(oa11cd)) %>% 
+#   mutate(year = ifelse(is.na(year),1000, year),
+#          country = substring(oa11cd, 1, 1)) %>% 
+#   filter(country != "L" & country != "M" & country != "N") %>% 
+#   filter(!is.na(country)) %>% 
+#   complete(year, oa11cd, fill = list(n = 0)) %>% 
+#   filter(year!=1000,
+#          !is.na(oa11cd)) %>% 
+#   select(-country)
+
+
+
+# tests
+# test$country <- substring(test$oa11cd, 1, 1)
+# unique(test$country)
+# length(unique(test$oa11cd))
+
+# calculate area
+la$SHAPE_Area <- area(la) #/ 1000000
+
+# Join with distance and area
+a.la <- a.la %>% left_join(dist, by = c("ladcd" = "ladcd")) 
+sapply(a.la, function(x) sum(is.na(x)))
+```
+
+Distance to retail centres
+
+```{r}
+dist.retail <- distm(cbind(la.c$x, la.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- round((dist.retail/1000),2) %>% 
+  as_tibble()  
+
+# retail.names <- retail.major.cetres$RC_Name
+# names(dist.retail) <- retail.names 
+
+dist.retail <- dist.retail %>% bind_cols(la.c$LAD21CD) %>% 
+  rename(LAD21CD = last_col()) %>% 
+  relocate(LAD21CD)
+
+# Minimum distance 
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
+dist.retail <- dist.retail %>% dplyr::select(LAD21CD, dist.retail)
+
+# Join with complete panel
+a.la <- a.la %>% left_join(dist.retail, by = c("ladcd" = "LAD21CD")) 
+
+sapply(a.la, function(x) sum(is.na(x)))
+```
+
+
+### Regressions
+
+**TODO** add distance, see what classes mean, try lm
+
+```{r}
+
+model <- glm(fast.binary ~ log(London + 0.001) + log(dist + 0.001) + log(dist.retail + 0.001) + as.factor(subgroup), family=binomial (link='logit'), data = a.la)
+summary(model)
+stargazer(model, type = 'text')
+```
+
+For Nagelkerke R2
+
+```{r}
+model2 <- lrm(fast.binary ~ log(London + 0.001) + log(dist + 0.001) + log(dist.retail + 0.001) + subgroup, data = a.la)
+print(model2)
+```
+
 
 ## Survival
 
