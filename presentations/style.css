@@ -6,3 +6,11 @@ h2.author { /* Header 4 - and the author and data headers use this too  */
 .reduced{
    font-size: 0.5em;
 }
+
+.reveal section img {
+  margin: 15px 0px;
+  background: rgba(255, 255, 255, 0.12);
+  border: none;
+  box-shadow: none; 
+  }
+Sh
