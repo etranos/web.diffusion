@@ -1,0 +1,76 @@
+---
+title: "Untitled"
+author: "Emmanouil Tranos"
+date: "17/04/2023"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(caret)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+```{r}
+df.model <- df %>% complete(year, oa11cd, fill = list(n = 0)) %>% 
+  arrange(oa11cd, year) %>% 
+  left_join(dist, by = c("oa11cd" = "oa11cd")) %>% 
+  left_join(dist.retail, by = c("oa11cd" = "oa11cd")) %>% 
+  filter(!is.na(London)) %>% 
+  dplyr::select(year, oa11cd, n, London, dist, dist.retail) %>% 
+  left_join(classes.oa %>% dplyr::select(id, subgroup), by = c("oa11cd" = "id")) %>% 
+  mutate(subgroup == as.factor(subgroup))
+
+sapply(df.model, function(x) sum(is.na(x))) # mising NI
+```
+
+```{r}
+
+train <- df.model %>% filter(year>2011)# | year==2009)
+test  <- df.model %>% filter(year == 2012)
+
+train_x <- train %>% dplyr::select(London, dist, dist.retail) #subgroup
+train_x = scale(train_x)[,]
+train_y = train %>% dplyr::select(n) %>% as.matrix()
+
+test_x <- test %>% dplyr::select(London, dist, dist.retail) #subgroup
+test_x = scale(test_x)[,]
+test_y = test %>% dplyr::select(n) %>% as.matrix()
+
+knnmodel = knnreg(train_x, train_y)
+
+str(knnmodel)
+
+pred_y = predict(knnmodel, data.frame(test_x))
+
+print(data.frame(test_y, pred_y))
+
+mse = mean((test_y - pred_y)^2)
+mae = caret::MAE(test_y, pred_y)
+rmse = caret::RMSE(test_y, pred_y)
+#rsqr = 
+
+x = 1:length(test_y)
+
+# plot(x, test_y, col = "red", type = "l", lwd=2,
+#      main = "Boston housing test data prediction")
+# lines(x, pred_y, col = "blue", lwd=2)
+# legend("topright",  legend = c("original-medv", "predicted-medv"), 
+#        fill = c("red", "blue"), col = 2:3,  adj = c(0, 0.6))
+# grid()
+
+test_y %>% as_tibble() %>% ggplot() +
+  geom_line(aes(x = x, y = test_y), col = "red", lwd=.5) +
+  geom_line(aes(x = x, y = pred_y), col = "blue", lwd=.5)
+
+test_y %>% as_tibble() %>% ggplot() +
+  geom_point(aes(x = test_y, y = pred_y))
+
+```

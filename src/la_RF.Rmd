@@ -1,0 +1,659 @@
+---
+title: "Random Forests"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(rgeos)
+library(sf)
+library(spdep)
+#library(tmap)
+#library(maptools)
+library(knitr)
+library(REAT)
+library(tidygeocoder)
+library(geosphere)
+library(broom)
+#library(foreach)
+library(doParallel)
+library(raster)
+library(plm)
+#library(lmtest)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, ladcd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>% # for n == 1 
+  ungroup()
+
+df <- df %>% filter(!is.na(ladcd)) %>% 
+  complete(ladcd, year) %>% 
+  replace(is.na(.), 0)
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## Firms
+
+```{r, eval=F}
+firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS10&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
+  dplyr::select(GEOGRAPHY_CODE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
+  rename(ladcd = GEOGRAPHY_CODE,
+         firms = OBS_VALUE)
+
+df <- df %>% left_join(firms) %>% 
+  mutate(n_by_firm = n/firms) %>% # N websites/firm
+  #filter(!is.na(firms)) %>% 
+  dplyr::select(-n, -firms) %>% 
+  rename(n = n_by_firm)
+
+# df %>% filter(is.na(n_by_firm))
+# sapply(df %>% left_join(firms), function(x) sum(is.na(x)))
+```
+
+## spatial data
+
+```{r}
+# get LA for the UK
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+la <- spTransform(la, CRS("+init=epsg:4326"))
+
+#la.f <- fortify(la, region = "LAD21CD")
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+cities.sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+```
+
+## Distances to cities and retail centres
+
+First set up the destinations. Origins are all the LA.
+
+Major cities from [source](https://www.citypopulation.de/en/uk/cities/).
+Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-boundaries)
+
+```{r}
+# LA centroids
+la.c <- gCentroid(la, byid=TRUE)@coords %>% 
+  as.data.frame() %>%
+  bind_cols(la@data) %>% 
+  dplyr::select(LAD21CD, x, y) %>% 
+  remove_rownames()
+
+# cities
+city.names <- c("London, UK", 
+"Birmingham, UK",
+"Glasgow, UK",
+"Liverpool, UK",
+"Bristol, UK",
+"Manchester, UK",
+"Sheffield, UK",
+"Leeds, UK",
+"Edinburgh, UK",
+"Leicester, UK")	
+
+cities <- geo(city.names, no_query = F, method = "arcgis")
+
+# retail centres
+geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
+retail <-readOGR(geo.path) 
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id") #%>%
+
+retail.major.cetres <- retail.major.cetres.help %>% 
+  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+  st_transform(4326) %>%
+  st_coordinates() %>%
+  as_tibble() %>% 
+  bind_cols(retail.major.cetres.help$id) %>% 
+  rename(id = '...3') %>% 
+  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+```
+
+Distance to cities
+
+```{r}
+dist <- distm(cbind(la.c$x, la.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- round((dist/1000),2) %>% 
+  as_tibble()  
+
+city.names <- city.names %>% stringr::str_remove(", UK")
+names(dist) <- city.names 
+
+dist <- dist %>% bind_cols(la.c$LAD21CD) %>% 
+  rename(ladcd = last_col()) %>% 
+  relocate(ladcd)
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+dist <- transform(dist, dist = do.call(pmin, dist[-1]))
+
+
+
+# NOT USED AS IT SCREWS UP THE REGRESSIONS
+# Complete panel, N = 3871903, 17 year * 227759 OA
+# df <- df %>% bind_rows(dist %>% select(oa11cd)) %>% 
+#   mutate(year = ifelse(is.na(year),1000, year),
+#          country = substring(oa11cd, 1, 1)) %>% 
+#   filter(country != "L" & country != "M" & country != "N") %>% 
+#   filter(!is.na(country)) %>% 
+#   complete(year, oa11cd, fill = list(n = 0)) %>% 
+#   filter(year!=1000,
+#          !is.na(oa11cd)) %>% 
+#   select(-country)
+
+
+
+# tests
+# test$country <- substring(test$oa11cd, 1, 1)
+# unique(test$country)
+# length(unique(test$oa11cd))
+
+# calculate area
+la$SHAPE_Area <- area(la) #/ 1000000
+
+# Join with distance and area
+df <- df %>% left_join(dist, by = c("ladcd" = "ladcd")) %>% 
+  left_join(la@data, by = c("ladcd" = "LAD21CD")) %>% 
+  rename(area = SHAPE_Area) %>% 
+  relocate(area, .after = n) %>% 
+  mutate(area = area / 1000000,
+         density = n / area) %>% 
+  relocate(density, .after = area)
+sapply(df, function(x) sum(is.na(x)))
+```
+
+Distance to retail centres
+
+```{r}
+dist.retail <- distm(cbind(la.c$x, la.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- round((dist.retail/1000),2) %>% 
+  as_tibble()  
+
+# retail.names <- retail.major.cetres$RC_Name
+# names(dist.retail) <- retail.names 
+
+dist.retail <- dist.retail %>% bind_cols(la.c$LAD21CD) %>% 
+  rename(LAD21CD = last_col()) %>% 
+  relocate(LAD21CD)
+
+# Minimum distance 
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
+dist.retail <- dist.retail %>% dplyr::select(LAD21CD, dist.retail)
+
+# Join with complete panel
+df <- df %>% left_join(dist.retail, by = c("ladcd" = "LAD21CD")) 
+
+sapply(df, function(x) sum(is.na(x)))
+```
+
+## Spatial panel
+
+```{r}
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(la, queen = T, snap = 1)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+test <- la
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
+         year = ifelse(is.na(year), t, year))
+
+# Load required libraries
+library(spdep)
+library(splm)
+
+# Assuming you have a dataset named 'data' containing your variables: Y, W, Wc, and X
+
+# Create spatial lag matrices
+W <- mat2listw(W, style="W")
+Wc <- mat2listw(Wc, style="W")
+
+# Estimate spatial panel model
+spatial_panel_model <- spml(n ~ density + London + dist + dist.retail, 
+                            listw=listw,
+                            data=df %>% filter(!is.na(n)), 
+                            index = c("ladcd", "year"),
+                            effect = "individual",
+                            #method = "BFGS", # eigen
+                            model= "random", 
+                            lag=TRUE, 
+                            na.action = na.omit) #na.fail, 
+                            #zero.policy = NULL)
+
+m.spreml <- spreml(n ~ density + London + dist + dist.retail, 
+                            w=listw,
+                            data=df %>% filter(!is.na(n)), 
+                            index = c("ladcd", "year"),
+                            effect = "individual",
+                            #method = "BFGS", # eigen
+                            lag=TRUE, 
+                            na.action = na.omit) #na.fail, 
+                            #zero.policy = NULL)
+
+
+# Print summary of the model
+summary(m.spreml)
+```
+
+calculate k neighbours and find out why can't have spatial FE. Hierarchical?
+
+```{r}
+#install.packages('SDPDmod')
+library(SDPDmod)
+
+#spatial weights matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(la, queen = T, snap = 1)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+#spatial weight matrix
+binary_matrix <- nb2mat(nb, style = "B", zero.policy = TRUE)
+class(binary_matrix)
+w.binary <- rownor(binary_matrix)
+isrownor(w.binary)
+w.binary <- rownor(binary_matrix)
+isrownor(w.binary)
+
+#spatial weights matrix
+library("sf")
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la.sf <- st_read(path.geo)
+W_2n <- mOrdNbr(sf_pol = la.sf, m = 2) ## second order neighbors
+W_knn <- mNearestN(distMat = gN3dist, m = 5) ## 5 nearest neighbors
+
+#spatial weights matrix
+sf_use_s2(FALSE)
+la.c <- st_centroid(la.sf)
+kn <- knearneigh(la.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
+knn_binary_matrix <- nb2mat(knn, style = "W", zero.policy = TRUE)
+isrownor(knn_binary_matrix)
+
+mod2<-SDPDm(formula = n ~ density,# + London,# + dist + dist.retail, 
+            #W = w.binary,
+            #W = binary_matrix,
+            #W = knn_binary_matrix,
+            W = knn_binary_matrix,
+            data=df %>% drop_na(),
+            index = c("ladcd", "year"),
+            model = "sar", 
+            effect = "twoways",
+            dynamic = T,
+            LYtrans = TRUE, #it affects coefficients, need to read about it
+            tlaginfo = list(ind = NULL, tl = T, stl = T),
+            )
+summary(mod2)
+
+# if distances are included, effect = year. 
+# Rho is positive and sig, AR is positive and sig, BUT Wn(t-1) is negative and sig
+```
+
+## df for RF
+
+```{r}
+# London = Islington 
+sf_use_s2(FALSE)
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
+  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
+
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
+  mutate(cities = c("Leicester",
+                    "Bristol",
+                    "Manchester",
+                    "Liverpool",
+                    "Sheffield",
+                    "Birmingham",
+                    "Leeds",
+                    "London",
+                    "Edinburgh",
+                    "Glasgow"))
+  
+
+dist$dist.city.name <- names(dist)[apply(dist[,1:9], MARGIN = 1, FUN = which.min)]
+help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>% 
+  rename(nearest.city.LAD21CD = LAD21CD) %>% 
+  dplyr::select(ladcd, nearest.city.LAD21CD)
+
+knn.l <- nb2listw(knn)
+
+df <- df %>% drop_na() %>% group_by(year) %>% 
+  mutate(n.slag = lag.listw(knn.l, n)) %>% 
+  group_by(ladcd) %>% 
+  mutate(n.l.slag = dplyr::lag(n.slag, n=1, order_by=year),
+         n.lag = dplyr::lag(n, n=1, order_by = year)) %>% 
+  left_join(help2, by = c("ladcd" = "ladcd")) 
+
+df <- df %>% left_join(df %>% dplyr::select(ladcd,year, n) %>% 
+                         rename(n.nearest.city = n), 
+                       by = c("nearest.city.LAD21CD" = "ladcd",
+                              "year" = "year")) %>% 
+  dplyr::select(-c(LAD21NMW, OBJECTID, BNG_E, BNG_N, LONG, LAT, SHAPE_Length)) %>% 
+  relocate(LAD21NM, .after = ladcd)
+
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup)%>% dplyr::select(LAD21CD, RGN21CD)
+
+df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
+  relocate(RGN21CD, .after=year)
+```
+
+## RF
+
+### train on all but one regions
+
+```{r}
+library(caret)
+library(randomForest)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# London region: E12000007
+# training dataset
+tr.df <- df %>% ungroup() %>% filter(RGN21CD!="E12000007"|
+                                     RGN21CD!="E12000008")
+
+set.seed(71)
+m.test <- train(n ~ density + area + dist + dist.retail + London +
+                  n.slag + year + n.nearest.city, #n.l.slag
+                data = tr.df,
+                trControl = tc,
+                method = "rf", 
+                importance = TRUE,
+                na.action = na.omit)
+summary(m.test)
+plot(m.test)
+m.test
+print(m.test)
+
+varimp_mars <- varImp(m)
+plot(varimp_mars, main="Variable Importance")
+```
+
+### test on the hold out regions
+ 
+Wales region is missing!!!
+
+```{r}
+pred <- predict(m, df %>% ungroup() %>% filter(RGN21CD=="E12000008"), na.action = na.pass)
+length(pred)
+
+df %>% ungroup() %>% filter(RGN21CD=="E12000008") %>% filter(if_any(everything(), is.na))
+
+pred <- cbind(pred %>% as_tibble(), df %>% ungroup() %>% filter(RGN21CD=="E12000008"))
+postResample(pred = pred$value, obs = pred$n) ## 0.99
+```
+
+## time slices
+
+```{r}
+help <- df %>% createTimeSlices(initialWindow = 5,
+                        horizon = 1,
+                        fixedWindow = F)
+
+#Adding t-1 lag for n
+
+set.seed(71)
+m.test.time <- train(n ~ area + dist + dist.retail + London + #density
+             n.lag + n.slag + n.l.slag + n.nearest.city + year,
+           data = df %>% filter(year==1997 | year == 1998),
+           trControl = tc,
+           method = "rf", 
+           importance = TRUE,
+           na.action = na.omit)
+summary(m.test.time)
+plot(m.test.time)
+m.test.time
+
+varimp_mars <- varImp(m.test)
+plot(varimp_mars, main="Variable Importance")
+
+pred <- predict(m.test, df %>% ungroup() %>% filter(year==1999), na.action = na.pass)
+length(pred)
+
+pred <- cbind(pred %>% as_tibble(), df %>% ungroup() %>% filter(year==1999))
+postResample(pred = pred$value, obs = pred$n) ## 0.60 
+```
+
+## RF rolling
+
+### train the model in a loop
+
+TODO: 
+
+- [x] read more about trainColntrol
+- [ ] other variables, check regressions, N/S?
+- [x] reproducible
+- [ ] n vs. log(n/n.lag), %>% mutate(n.lag = n.lag + 0.00001, n = n + 0.00001, way to bring S?
+- [ ] ceter or scale with preProcess??
+- [ ] direction of relationship, or cor()
+- [ ]importance over time
+- [ ] spatial sampling
+- [ ] OA
+
+```{r}
+# Train on t & t + 1
+
+# Make the parallelisation reproducible using https://stackoverflow.com/questions/13403427/fully-reproducible-parallel-models-using-caret. 
+# See also https://stackoverflow.com/questions/27944558/set-seed-parallel-random-forest-in-caret-for-reproducible-result
+
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
+
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8)
+
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   seeds = seeds,
+                   allowParallel = T,
+                   savePredictions = 'final')
+
+detectCores()
+cl <- makePSOCKcluster(14)
+registerDoParallel(cl)
+
+# run the model for every 2 years
+start.time <- Sys.time()
+years <- 1997:2012
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.all <- train(n ~ area + dist + dist.retail + London + 
+                     n.lag + n.slag + n.l.slag + n.nearest.city + year,
+                     data = df %>% filter(year==t | year==tplus1),
+                     trControl = tc,
+                     method = "rf", 
+                     importance = TRUE)
+  assign(paste0("model.all",as.character(t + 1)), model.all)
+}
+
+stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
+
+# The loop creates: 1998 (train on 1997-1998) - 2013 (train on 2012)
+# I need: 1998 (train on 1997-1998) - 2011 (train on 2010-2011)
+```
+
+### Resamples for plots
+
+```{r}
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all\\d"))
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
+
+# TODO: fix the year labels
+```
+
+### Variable importance
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+### test
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+# for a reference point
+df %>% group_by(year) %>%
+  summarise(min = min(n), max=max(n),
+            mean = mean(n), median = median(n)) %>%
+  round(2) %>% kable()
+```
+
+```{r}
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainned in year t to predict io of year t + 1
+years <- (1998:2011)
+pred.by.year.all <- data.frame(matrix(NA,nrow=374, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",t)], df[df$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.all <- cbind(pred.by.year.all, pred)
+}
+
+#change column names to match with total
+names(pred.by.year.all) <- 1999:2012
+
+# wide to long
+pred.by.year.all <- gather(pred.by.year.all,key = year,value = predictions,1:14)
+
+# drop 2000 and select variables form total
+df.no1997_1 <- df %>% 
+  filter(year!=1996 & year!=1997 & year!=1998) %>% 
+  dplyr::select(ladcd, year, n)
+
+# column bind prediction and data  
+pred.by.year.all <- cbind(pred.by.year.all, df.no1997_1 %>% arrange(year, ladcd)) #DOUBLE CHECK ARRANGE
+
+# pred.by.year to list by year
+pred.by.year.all.list <- split(pred.by.year.all, pred.by.year.all$year)
+
+# calculate metrics for every year
+rf.year.all.metrics <- lapply(pred.by.year.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$n))
+rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.year.all$year <- NULL
+
+ggplot(data = pred.by.year.all,aes(x = n, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```
+

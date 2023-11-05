@@ -138,7 +138,7 @@ la.f <- fortify(la, region = "LAD21CD")
 cities <- maps::world.cities %>% 
   filter(country.etc=="UK") %>% 
   arrange(pop) %>% tail(10) 
-tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+cities.sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
 ```
 
 ## lisa maps
@@ -208,7 +208,7 @@ breaks = c(0, 1, 2, 3, 4, 5)
 cities <- maps::world.cities %>% 
   filter(country.etc=="UK") %>% 
   arrange(pop) %>% tail(10) 
-tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+cities.sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
 
 
 map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks, 
@@ -227,7 +227,7 @@ map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks,
   #tm_borders(alpha=.1) +
   tm_borders(lwd = 0) +
   tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
-  tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
+  tm_shape(cities.sf) + tm_dots() + tm_text("name", size = .5) +
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
 }
@@ -326,7 +326,7 @@ breaks = c(0, 1, 2, 3, 4, 5)
 cities <- maps::world.cities %>% 
   filter(country.etc=="UK") %>% 
   arrange(pop) %>% tail(10) 
-tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+cities.sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
 
 
 map <- tm_shape(mun_merge_new, projection = "+init=epsg:4326") + tm_fill(col = "quadrant", breaks = breaks, 
@@ -345,7 +345,7 @@ map <- tm_shape(mun_merge_new, projection = "+init=epsg:4326") + tm_fill(col = "
   #tm_borders(alpha=.1) +
   tm_borders(lwd = 0) +
   tm_shape(la, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
-  tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
+  tm_shape(cities.sf) + tm_dots() + tm_text("name", size = .5) +
   tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ") +
 tmap_options(check.and.fix = TRUE)
 tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
@@ -775,3 +775,248 @@ r2.all <- dens.London %>%
 
 write_csv(r2.all, path.out)
 ```
+
+## Spatial panel
+
+```{r}
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(la, queen = T, snap = 1)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+test <- la
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
+         year = ifelse(is.na(year), t, year))
+
+# Load required libraries
+library(spdep)
+library(splm)
+
+# Assuming you have a dataset named 'data' containing your variables: Y, W, Wc, and X
+
+# Create spatial lag matrices
+W <- mat2listw(W, style="W")
+Wc <- mat2listw(Wc, style="W")
+
+# Estimate spatial panel model
+spatial_panel_model <- spml(n ~ density + London + dist + dist.retail, 
+                            listw=listw,
+                            data=df %>% filter(!is.na(n)), 
+                            index = c("ladcd", "year"),
+                            effect = "individual",
+                            #method = "BFGS", # eigen
+                            model= "random", 
+                            lag=TRUE, 
+                            na.action = na.omit) #na.fail, 
+                            #zero.policy = NULL)
+
+m.spreml <- spreml(n ~ density + London + dist + dist.retail, 
+                            w=listw,
+                            data=df %>% filter(!is.na(n)), 
+                            index = c("ladcd", "year"),
+                            effect = "individual",
+                            #method = "BFGS", # eigen
+                            lag=TRUE, 
+                            na.action = na.omit) #na.fail, 
+                            #zero.policy = NULL)
+
+
+# Print summary of the model
+summary(m.spreml)
+```
+
+calculate k neighbours and find out why can't have spatial FE. Hierarchical?
+
+```{r}
+#install.packages('SDPDmod')
+library(SDPDmod)
+
+#spatial weights matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(la, queen = T, snap = 1)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+#spatial weight matrix
+binary_matrix <- nb2mat(nb, style = "B", zero.policy = TRUE)
+class(binary_matrix)
+w.binary <- rownor(binary_matrix)
+isrownor(w.binary)
+w.binary <- rownor(binary_matrix)
+isrownor(w.binary)
+
+#spatial weights matrix
+library("sf")
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la.sf <- st_read(path.geo)
+W_2n <- mOrdNbr(sf_pol = la.sf, m = 2) ## second order neighbors
+W_knn <- mNearestN(distMat = gN3dist, m = 5) ## 5 nearest neighbors
+
+#spatial weights matrix
+sf_use_s2(FALSE)
+la.c <- st_centroid(la.sf)
+kn <- knearneigh(la.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
+knn_binary_matrix <- nb2mat(knn, style = "W", zero.policy = TRUE)
+isrownor(knn_binary_matrix)
+
+mod2<-SDPDm(formula = n ~ density,# + London,# + dist + dist.retail, 
+            #W = w.binary,
+            #W = binary_matrix,
+            #W = knn_binary_matrix,
+            W = knn_binary_matrix,
+            data=df %>% drop_na(),
+            index = c("ladcd", "year"),
+            model = "sar", 
+            effect = "twoways",
+            dynamic = T,
+            LYtrans = TRUE, #it affects coefficients, need to read about it
+            tlaginfo = list(ind = NULL, tl = T, stl = T),
+            )
+summary(mod2)
+
+# if distances are included, effect = year. 
+# Rho is positive and sig, AR is positive and sig, BUT Wn(t-1) is negative and sig
+```
+## df for RF
+
+```{r}
+
+# London = Islington 
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
+  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
+
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
+  mutate(cities = c("Leicester",
+                    "Bristol",
+                    "Manchester",
+                    "Liverpool",
+                    "Sheffield",
+                    "Birmingham",
+                    "Leeds",
+                    "London",
+                    "Edinburgh",
+                    "Glasgow"))
+  
+
+dist$dist.city.name <- names(dist)[apply(dist[,1:9], MARGIN = 1, FUN = which.min)]
+help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>% 
+  rename(nearest.city.LAD21CD = LAD21CD) %>% 
+  dplyr::select(ladcd, nearest.city.LAD21CD)
+
+knn.l <- nb2listw(knn)
+
+df <- df %>% drop_na() %>% group_by(year) %>% 
+  mutate(n.slag = lag.listw(knn.l, n)) %>% 
+  group_by(ladcd) %>% 
+  mutate(n.l.slag = dplyr::lag(n.slag, n=1, order_by=year)) %>% 
+  left_join(help2, by = c("ladcd" = "ladcd")) 
+
+df <- df %>% left_join(df %>% dplyr::select(ladcd,year, n) %>% 
+                         rename(n.nearest.city = n), 
+                       by = c("nearest.city.LAD21CD" = "ladcd",
+                              "year" = "year")) %>% 
+  dplyr::select(-c(LAD21NMW, OBJECTID, BNG_E, BNG_N, LONG, LAT, SHAPE_Length)) %>% 
+  relocate(LAD21NM, .after = ladcd)
+
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup)%>% dplyr::select(LAD21CD, RGN21CD)
+
+df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
+  relocate(RGN21CD, .after=year)
+```
+
+## RF
+
+### train
+
+```{r}
+library(caret)
+library(randomForest)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   savePredictions = 'final')
+
+# London region: E12000007
+# training dataset
+tr.df <- df %>% ungroup() %>% filter(RGN21CD!="E12000007"|
+                                     RGN21CD!="E12000008")
+
+set.seed(71)
+m <- train(n ~ density + area + dist + dist.retail + London +
+             n.slag + year + n.nearest.city, #n.l.slag
+           data = tr.df,
+           trControl = tc,
+           method = "rf", 
+           importance = TRUE,
+           na.action = na.omit)
+summary(m)
+plot(m)
+m
+
+varimp_mars <- varImp(m)
+plot(varimp_mars, main="Variable Importance")
+```
+
+### test
+
+```{r}
+pred <- predict(m, df %>% ungroup() %>% filter(RGN21CD=="E12000008"), na.action = na.pass)
+length(pred)
+
+df %>% ungroup() %>% filter(RGN21CD=="E12000008") %>% filter(if_any(everything(), is.na))
+
+pred <- cbind(pred %>% as_tibble(), df %>% ungroup() %>% filter(RGN21CD=="E12000008"))
+postResample(pred = pred$value, obs = pred$n) ## 0.99
+```
+## Firms
+
+```{r}
+firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS10&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
+  dplyr::select(GEOGRAPHY_CODE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
+  rename(ladcd = GEOGRAPHY_CODE,
+         firms = OBS_VALUE)
+
+df <- df %>% left_join(firms) %>% 
+  mutate(n_by_firm = n/firms) %>% # N websites/firm
+  #filter(!is.na(firms)) %>% 
+  dplyr::select(-n, -firms) %>% 
+  rename(n = n_by_firm)
+
+# df %>% filter(is.na(n_by_firm))
+# sapply(df %>% left_join(firms), function(x) sum(is.na(x)))
+```
+
+## time slices
+
+```{r}
+hepl <- df %>% createTimeSlices(initialWindow = 5,
+                        horizon = 1,
+                        fixedWindow = F)
+
+#Adding t-1 lag for n
+
+set.seed(71)
+m.test <- train(n ~ area + dist + dist.retail + London + #density
+             n.slag + year + n.nearest.city + n.l.slag,
+           data = df %>% filter(year < 1998),
+           trControl = tc,
+           method = "rf", 
+           importance = TRUE,
+           na.action = na.omit)
+summary(m.test)
+plot(m.test)
+m.test
+
+varimp_mars <- varImp(m.test)
+plot(varimp_mars, main="Variable Importance")
+
+pred <- predict(m.test, df %>% ungroup() %>% filter(year==1998), na.action = na.pass)
+length(pred)
+
+pred <- cbind(pred %>% as_tibble(), df %>% ungroup() %>% filter(year==1998))
+postResample(pred = pred$value, obs = pred$n) ## 0.99
+```
+
