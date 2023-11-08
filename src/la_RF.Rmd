@@ -88,6 +88,7 @@ df <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
+## REPLACE WITH 0.1 INSTEAD OF OF 0 FOR THE GROWTH
 df <- df %>% filter(!is.na(ladcd)) %>% 
   complete(ladcd, year) %>% 
   replace(is.na(.), 0)
@@ -107,7 +108,7 @@ df <- df %>% filter(!is.na(ladcd)) %>%
 
 ## Firms
 
-```{r, eval=F}
+```{r, eval=T}
 firms <- read_csv("https://www.nomisweb.co.uk/api/v01/dataset/NM_142_1.data.csv?geography=1811939329...1811939332,1811939334...1811939336,1811939338...1811939428,1811939436...1811939442,1811939768,1811939769,1811939443...1811939497,1811939499...1811939501,1811939503,1811939505...1811939507,1811939509...1811939517,1811939519,1811939520,1811939524...1811939570,1811939575...1811939599,1811939601...1811939628,1811939630...1811939634,1811939636...1811939647,1811939649,1811939655...1811939664,1811939667...1811939680,1811939682,1811939683,1811939685,1811939687...1811939704,1811939707,1811939708,1811939710,1811939712...1811939717,1811939719,1811939720,1811939722...1811939730,1811939757...1811939767&date=latestMINUS10&industry=37748736&employment_sizeband=0&legal_status=0&measures=20100") %>% 
   dplyr::select(GEOGRAPHY_CODE, OBS_VALUE) %>% #GEOGRAPHY_NAME, 
   rename(ladcd = GEOGRAPHY_CODE,
@@ -414,10 +415,20 @@ df <- df %>% left_join(df %>% dplyr::select(ladcd,year, n) %>%
   relocate(LAD21NM, .after = ladcd)
 
 path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
-lookup.region <- read_csv(path.lookup)%>% dplyr::select(LAD21CD, RGN21CD)
+lookup.region <- read_csv(path.lookup) %>% dplyr::select(LAD21CD, RGN21CD)
 
 df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
   relocate(RGN21CD, .after=year)
+
+# North/South
+#lookup.region %>% distinct(RGN21NM, .keep_all = T)
+south <- c("E12000007", "E12000008", "E12000009" )
+df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
+
+# For growth:
+#df <- df %>% mutate(growth = log(n/n.lag))
+
+sapply(df, function(x) sum(is.na(x)))
 ```
 
 ## RF
@@ -507,13 +518,14 @@ postResample(pred = pred$value, obs = pred$n) ## 0.60
 TODO: 
 
 - [x] read more about trainColntrol
-- [ ] other variables, check regressions, N/S?
+- [ ] other variables, LA Classification, check regressions, 
+- [x] N/S
 - [x] reproducible
 - [ ] n vs. log(n/n.lag), %>% mutate(n.lag = n.lag + 0.00001, n = n + 0.00001, way to bring S?
-- [ ] ceter or scale with preProcess??
+- [1] center or scale with preProcess??
 - [ ] direction of relationship, or cor()
-- [ ]importance over time
-- [ ] spatial sampling
+- [x] importance over time
+- [2] spatial sampling
 - [ ] OA
 
 ```{r}
@@ -526,7 +538,7 @@ TODO:
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 9) # 9 after adding South
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -549,11 +561,15 @@ years <- 1997:2012
 for (t in years){
   tplus1 <- t + 1
   set.seed(71)
-  model.all <- train(n ~ area + dist + dist.retail + London + 
-                     n.lag + n.slag + n.l.slag + n.nearest.city + year,
-                     data = df %>% filter(year==t | year==tplus1),
+  model.all <- train(n ~ area + dist + dist.retail + London + south + #growth ~ 
+                      n.slag + n.l.slag + n.nearest.city + year, #n.lag +
+                     data = df %>% filter(year==t | year==tplus1), #%>% 
+                       # mutate(growth = ifelse(growth == -Inf | growth == Inf, NA, growth)) %>% 
+                       # mutate(growth = ifelse(is.na(growth), 0, growth)), 
+                     #%>% mutate(growth = ifelse(growth== -Inf | growth == Inf, NA, growth))
                      trControl = tc,
-                     method = "rf", 
+                     method = "rf", #"rpart", # rf lm
+                     na.action = na.omit,
                      importance = TRUE)
   assign(paste0("model.all",as.character(t + 1)), model.all)
 }
@@ -562,6 +578,9 @@ stopCluster(cl)
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 time.taken
+
+# df %>% filter(growth == Inf) 
+# log(n/n.lag)
 
 # The loop creates: 1998 (train on 1997-1998) - 2013 (train on 2012)
 # I need: 1998 (train on 1997-1998) - 2011 (train on 2010-2011)
@@ -593,9 +612,35 @@ bwplot(fit.model.all.res, scales=scales)
 lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
 ```
 
+```{r}
+help <- lapply(fit.model.all, function(x) varImp(x)) 
+help <- lapply(help, function(x) x[[1]])
+help <- do.call("rbind", help)
+
+importance <- help %>% rownames_to_column() %>% 
+  mutate(feature = gsub("model.all[0-9]+.", "", rowname),
+         year = gsub(".*?([0-9]+).*", "\\1", rowname)) %>% 
+  rename(importance = Overall) %>% 
+  relocate(importance, .after = year) %>% 
+  dplyr::select(-rowname)
+
+importance %>% ggplot() +
+  geom_line(aes(x=year, y = importance, color = feature, group = feature), size = 1) +
+  scale_color_discrete(name = "Features") +
+  #scale_linetype_manual(name = "Website density regressions111") 
+  ylab("Importance") + 
+  ggtitle("Feature importance") +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
 ### test
 
 ```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+# growth or n
 
 # for a reference point
 df %>% group_by(year) %>%
@@ -630,7 +675,7 @@ pred.by.year.all <- gather(pred.by.year.all,key = year,value = predictions,1:14)
 # drop 2000 and select variables form total
 df.no1997_1 <- df %>% 
   filter(year!=1996 & year!=1997 & year!=1998) %>% 
-  dplyr::select(ladcd, year, n)
+  dplyr::select(ladcd, year, n) # CHANGE n WITH growth
 
 # column bind prediction and data  
 pred.by.year.all <- cbind(pred.by.year.all, df.no1997_1 %>% arrange(year, ladcd)) #DOUBLE CHECK ARRANGE
@@ -640,7 +685,7 @@ pred.by.year.all.list <- split(pred.by.year.all, pred.by.year.all$year)
 
 # calculate metrics for every year
 rf.year.all.metrics <- lapply(pred.by.year.all.list, function(x) postResample(pred = x$predictions,
-                                                                     obs = x$n))
+                                                                     obs = x$n))  # CHANGE n WITH growth
 rf.year.all.metrics %>% as.data.frame() %>%
   round(2) %>%
   kable()
