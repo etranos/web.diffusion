@@ -522,10 +522,11 @@ TODO:
 - [x] N/S
 - [x] reproducible
 - [ ] n vs. log(n/n.lag), %>% mutate(n.lag = n.lag + 0.00001, n = n + 0.00001, way to bring S?
-- [1] center or scale with preProcess??
+- [x] center or scale with preProcess?? preProc = c("center", "scale") makes no difference
 - [ ] direction of relationship, or cor()
 - [x] importance over time
-- [2] spatial sampling
+- [x] spatial sampling
+- [ ] hierarchy: ranking correlation and line graphs 
 - [ ] OA
 
 ```{r}
@@ -570,8 +571,8 @@ for (t in years){
                      trControl = tc,
                      method = "rf", #"rpart", # rf lm
                      na.action = na.omit,
+                     preProc = c("center", "scale"),
                      importance = TRUE)
-  assign(paste0("model.all",as.character(t + 1)), model.all)
 }
 
 stopCluster(cl)
@@ -702,3 +703,184 @@ ggplot(data = pred.by.year.all,aes(x = n, y = predictions)) +
   ggtitle("Predicted vs. actual trade by year")
 ```
 
+## RF spatial 
+
+```{r}
+df <- df %>% mutate(help = substr(ladcd, start = 1, stop = 2)) %>% 
+  mutate(RGN21CD = ifelse(is.na(RGN21CD), help, RGN21CD)) %>% 
+  ungroup() %>% 
+  dplyr::select(-help)
+
+df <- df %>% dplyr::select(-n.lag)
+
+```
+
+### train
+
+```{r}
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
+
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 9) # 9 after adding South
+
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   #seeds = seeds,
+                   allowParallel = T,
+                   savePredictions = 'final')
+
+detectCores()
+cl <- makePSOCKcluster(14)
+registerDoParallel(cl)
+
+# run the model for every 2 years
+start.time <- Sys.time()
+regions <- df %>% distinct(RGN21CD)
+regions <- as.vector(regions$RGN21CD)
+
+for (i in regions){
+  set.seed(71)
+  model.all <- train(n ~ area + dist + dist.retail + London + south + #growth ~ 
+                      n.slag + n.nearest.city + year, #n.lag +  + n.l.slag
+                     data = df %>% filter(RGN21CD==i), trControl = tc,
+                     method = "xgbTree", # rf "rpart", # rf lm
+                     na.action = na.omit,
+                     #preProc = c("center", "scale"),
+                     importance = TRUE)
+  assign(paste0("model.all",as.character(i)), model.all)
+}
+
+stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
+
+# df %>% filter(growth == Inf) 
+# log(n/n.lag)
+
+# The loop creates: 1998 (train on 1997-1998) - 2013 (train on 2012)
+# I need: 1998 (train on 1997-1998) - 2011 (train on 2010-2011)
+```
+
+### Resamples for plots
+
+```{r}
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.allE|^model.allN|^model.allW|^model.allS"))
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
+
+# TODO: fix the year labels
+```
+
+### Variable importance
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+```{r}
+help <- lapply(fit.model.all, function(x) varImp(x)) 
+help <- lapply(help, function(x) x[[1]])
+help <- do.call("rbind", help)
+
+importance <- help %>% rownames_to_column() %>% 
+  mutate(feature = gsub("model.all[0-9]+.", "", rowname),
+         year = gsub(".*?([0-9]+).*", "\\1", rowname)) %>% 
+  rename(importance = Overall) %>% 
+  relocate(importance, .after = year) %>% 
+  dplyr::select(-rowname)
+
+importance %>% ggplot() +
+  geom_line(aes(x=year, y = importance, color = feature, group = feature), size = 1) +
+  scale_color_discrete(name = "Features") +
+  #scale_linetype_manual(name = "Website density regressions111") 
+  ylab("Importance") + 
+  ggtitle("Feature importance") +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+### test
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+# growth or n
+
+# for a reference point
+df %>% group_by(year) %>%
+  summarise(min = min(n), max=max(n),
+            mean = mean(n), median = median(n)) %>%
+  round(2) %>% kable()
+```
+
+```{r}
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainned in year t to predict io of year t + 1
+#pred.by.year.all <- data.frame(matrix(NA,nrow=336, ncol = 0))
+for (i in regions){
+  for (j in regions[!regions == i]){
+    pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",i)], df[df$RGN21CD==j,])
+    pred <- as.data.frame(pred)
+    rownames(pred) <- c()
+    assign(paste0("region.predict.model.", i, ".on.", j), pred)
+    #pred.by.year.all <- rbind(pred.by.year.all, pred)
+  }
+}
+
+df.predictions <- data.frame()
+for (i in regions){
+  for (j in regions[!regions == i]){
+    d <- paste0("region.predict.model.", i, ".on.", j)
+    d <- cbind(get(d), df %>% filter(RGN21CD==j)) #%>% arrange(year, ladcd)
+    d <- d[,c(5, 2, 4, 6, 1)]
+    colnames(d)[5] <- "predictions"
+    d <- d %>% mutate(trained.on = i)
+    df.predictions <- rbind(d, df.predictions)
+  }
+}
+
+df.predictions <- df.predictions %>% mutate(test.train = paste0(RGN21CD, ".", trained.on))
+
+
+# pred.by.year to list by year
+pred.by.region.all.list <- split(df.predictions, df.predictions$test.train) #correct length = 132 = 12*11
+
+# calculate metrics for every year
+rf.year.all.metrics <- lapply(pred.by.region.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$n))  # CHANGE n WITH growth
+rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
+
+# there are 2 columns named year, so I drop one
+pred.by.region.all$year <- NULL
+
+ggplot(data = df.predictions, aes(x = n, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ test.train, ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
+```
