@@ -1,5 +1,5 @@
 ---
-title: "Random Forests"
+title: "Random Forests, LAs"
 date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 output: 
   html_document:
@@ -38,7 +38,6 @@ options(scipen=10000)
 # This is the project path
 path <- find_rstudio_root_file()
 ```
-
 
 ## Load data
 
@@ -271,7 +270,7 @@ sapply(df, function(x) sum(is.na(x)))
 
 ## Spatial panel
 
-```{r}
+```{r, eval=F}
 #spatial weight matrix
 sf_use_s2(FALSE)
 nb <- poly2nb(la, queen = T, snap = 1)
@@ -321,7 +320,7 @@ summary(m.spreml)
 
 calculate k neighbours and find out why can't have spatial FE. Hierarchical?
 
-```{r}
+```{r, eval=F}
 #install.packages('SDPDmod')
 library(SDPDmod)
 
@@ -377,6 +376,10 @@ summary(mod2)
 ```{r}
 # London = Islington 
 sf_use_s2(FALSE)
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la.sf <- st_read(path.geo)
+
+
 help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
   left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
 
@@ -398,6 +401,10 @@ help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>%
   rename(nearest.city.LAD21CD = LAD21CD) %>% 
   dplyr::select(ladcd, nearest.city.LAD21CD)
 
+sf_use_s2(FALSE)
+la.c <- st_centroid(la.sf)
+kn <- knearneigh(la.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
 
 df <- df %>% drop_na() %>% group_by(year) %>% 
@@ -730,7 +737,7 @@ seeds[[11]]<-sample.int(1000, 1)
 # CV
 tc <- trainControl(method = "cv",
                    number = 10,
-                   #seeds = seeds,
+                   seeds = seeds,
                    allowParallel = T,
                    savePredictions = 'final')
 
@@ -748,7 +755,7 @@ for (i in regions){
   model.all <- train(n ~ area + dist + dist.retail + London + south + #growth ~ 
                       n.slag + n.nearest.city + year, #n.lag +  + n.l.slag
                      data = df %>% filter(RGN21CD==i), trControl = tc,
-                     method = "xgbTree", # rf "rpart", # rf lm
+                     method = "rf", # xgbTree "rpart", # rf lm
                      na.action = na.omit,
                      #preProc = c("center", "scale"),
                      importance = TRUE)
@@ -833,24 +840,16 @@ df %>% group_by(year) %>%
 ```{r}
 ## Test on t + 2
 
-# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
-# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+# train on one region, test on all the rest
 
-# use the model trainned in year t to predict io of year t + 1
-#pred.by.year.all <- data.frame(matrix(NA,nrow=336, ncol = 0))
+df.predictions <- data.frame()
 for (i in regions){
   for (j in regions[!regions == i]){
     pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",i)], df[df$RGN21CD==j,])
     pred <- as.data.frame(pred)
     rownames(pred) <- c()
     assign(paste0("region.predict.model.", i, ".on.", j), pred)
-    #pred.by.year.all <- rbind(pred.by.year.all, pred)
-  }
-}
-
-df.predictions <- data.frame()
-for (i in regions){
-  for (j in regions[!regions == i]){
+    
     d <- paste0("region.predict.model.", i, ".on.", j)
     d <- cbind(get(d), df %>% filter(RGN21CD==j)) #%>% arrange(year, ladcd)
     d <- d[,c(5, 2, 4, 6, 1)]
@@ -862,20 +861,39 @@ for (i in regions){
 
 df.predictions <- df.predictions %>% mutate(test.train = paste0(RGN21CD, ".", trained.on))
 
-
-# pred.by.year to list by year
+# split to list by region pair
 pred.by.region.all.list <- split(df.predictions, df.predictions$test.train) #correct length = 132 = 12*11
 
-# calculate metrics for every year
+# calculate metrics for every region pair 
 rf.year.all.metrics <- lapply(pred.by.region.all.list, function(x) postResample(pred = x$predictions,
                                                                      obs = x$n))  # CHANGE n WITH growth
-rf.year.all.metrics %>% as.data.frame() %>%
-  round(2) %>%
-  kable()
 
-# there are 2 columns named year, so I drop one
-pred.by.region.all$year <- NULL
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% 
+  dplyr::select(RGN21CD, RGN21NM) %>% 
+  distinct() %>% 
+  add_row(RGN21CD = c("S1", "N0", "W0"), RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
+rf.year.all.metrics %>% 
+  as.data.frame() %>%
+  add_rownames(var = "metrics") %>% 
+  pivot_longer(!metrics, names_to = "train.test") %>% 
+  pivot_wider(names_from = metrics, values_from = value) %>% 
+  separate(train.test, c("train", "test"), remove = F) %>% 
+  left_join(lookup.region, by = c("train" = "RGN21CD")) %>% 
+  rename(train.region=RGN21NM) %>% 
+  left_join(lookup.region, by = c("test" = "RGN21CD")) %>% 
+  rename(test.region=RGN21NM) %>% 
+  arrange(Rsquared)
+  #summarise(r = range(Rsquared))
+  #round(2) %>%
+  #kable()
+```
+
+### test plots
+
+```{r}
+#plots
 ggplot(data = df.predictions, aes(x = n, y = predictions)) +
   geom_point(colour = "blue") +
   geom_abline(intercept = 0, slope = 1, colour = "red") +
@@ -884,3 +902,15 @@ ggplot(data = df.predictions, aes(x = n, y = predictions)) +
   #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
   ggtitle("Predicted vs. actual trade by year")
 ```
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,780 @@
+---
+title: "Random Forests", OAs
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(rgdal)
+library(rgeos)
+library(sf)
+library(spdep)
+#library(tmap)
+#library(maptools)
+library(knitr)
+library(REAT)
+library(tidygeocoder)
+library(geosphere)
+library(broom)
+#library(foreach)
+library(doParallel)
+library(raster)
+library(plm)
+#library(lmtest)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>%  # for n == 1 
+  ungroup()
+
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## spatial data
+
+```{r}
+# get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- readOGR(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+oa.ew <- spTransform(oa.ew, CRS("+init=epsg:4326"))
+
+# keep in the data slot only the ONS Output Area id, renaming it as 'id'
+oa.ew <- oa.ew[, c('OA11CD', 'Shape__Area')]
+colnames(oa.ew@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.ew <- spChFIDs(oa.ew, as.character(oa.ew$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.ew)
+
+# # get OA for Scotland
+# path.geo.sc <- paste0(path, "/data/raw/SG_DataZoneBdry_2011")
+# oa.sc <- readOGR(dsn=path.geo.sc, layer = "SG_DataZone_Bdry_2011")
+# # source: https://data.gov.uk/dataset/ab9f1f20-3b7f-4efa-9bd2-239acf63b540/data-zone-boundaries-2011
+# 
+# # spatial transformations
+# oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+# 
+# # Scotland (follows same steps as EW, see notes above)
+# oa.sc <- oa.sc[, 'DataZone']
+# colnames(oa.sc@data) <- c('id')
+# 
+# # reassign the polygon IDs
+# oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+# 
+# # check the CRS has changed correctly, and the data slot has shrink to only the ID
+# summary(oa.sc)
+
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- readOGR(dsn=path.geo.sc, layer = "OutputArea2011_MHW")
+# source: https://www.nrscotland.gov.uk/statistics-and-data/geography/our-products/census-datasets/2011-census/2011-boundaries
+
+# spatial transformations
+oa.sc <- spTransform(oa.sc, CRS("+init=epsg:4326"))
+
+# Scotland (follows same steps as EW, see notes above)
+oa.sc <- oa.sc[, c('code', 'SHAPE_1_Ar')]
+colnames(oa.sc@data) <- c('id', 'area')
+
+# reassign the polygon IDs
+oa.sc <- spChFIDs(oa.sc, as.character(oa.sc$id))
+
+# check the CRS has changed correctly, and the data slot has shrink to only the ID
+summary(oa.sc)
+
+# build oa for GB
+oa.gb <- maptools::spRbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+
+# oa.gb$geometry <- oa.gb$geometry %>%
+#   s2::s2_rebuild() %>%
+#   sf::st_as_sfc()
+
+# get GB
+path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+gb <- readOGR(path.gb)
+# spatial transformations
+gb <- spTransform(gb, CRS("+init=epsg:4326"))
+```
+
+## df for RF
+
+```{r}
+# London = Islington 
+oa.sf <- st_as_sf(oa.gb)
+
+
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
+  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
+
+help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
+  mutate(cities = c("Leicester",
+                    "Bristol",
+                    "Manchester",
+                    "Liverpool",
+                    "Sheffield",
+                    "Birmingham",
+                    "Leeds",
+                    "London",
+                    "Edinburgh",
+                    "Glasgow"))
+  
+
+dist$dist.city.name <- names(dist)[apply(dist[,1:9], MARGIN = 1, FUN = which.min)]
+help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>% 
+  rename(nearest.city.LAD21CD = LAD21CD) %>% 
+  dplyr::select(ladcd, nearest.city.LAD21CD)
+
+sf_use_s2(FALSE)
+la.c <- st_centroid(la.sf)
+kn <- knearneigh(la.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
+knn.l <- nb2listw(knn)
+
+df <- df %>% drop_na() %>% group_by(year) %>% 
+  mutate(n.slag = lag.listw(knn.l, n)) %>% 
+  group_by(ladcd) %>% 
+  mutate(n.l.slag = dplyr::lag(n.slag, n=1, order_by=year),
+         n.lag = dplyr::lag(n, n=1, order_by = year)) %>% 
+  left_join(help2, by = c("ladcd" = "ladcd")) 
+
+df <- df %>% left_join(df %>% dplyr::select(ladcd,year, n) %>% 
+                         rename(n.nearest.city = n), 
+                       by = c("nearest.city.LAD21CD" = "ladcd",
+                              "year" = "year")) %>% 
+  dplyr::select(-c(LAD21NMW, OBJECTID, BNG_E, BNG_N, LONG, LAT, SHAPE_Length)) %>% 
+  relocate(LAD21NM, .after = ladcd)
+
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% dplyr::select(LAD21CD, RGN21CD)
+
+df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
+  relocate(RGN21CD, .after=year)
+
+# North/South
+#lookup.region %>% distinct(RGN21NM, .keep_all = T)
+south <- c("E12000007", "E12000008", "E12000009" )
+df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
+
+# For growth:
+#df <- df %>% mutate(growth = log(n/n.lag))
+
+sapply(df, function(x) sum(is.na(x)))
+```
+
+## lisa maps
+
+```{r}
+
+sf_use_s2(FALSE)
+la.c <- st_centroid(la.sf)
+kn <- knearneigh(la.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
+knn.l <- nb2listw(knn)
+
+
+path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_oa") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_oa")  # for multiple PC
+
+morani <- data.frame()
+
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(oa.gb)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+for (t in 1996:2012){
+test <- oa.gb
+test@data <- test@data %>% left_join(df[df$year==t,], by = c("id"="oa11cd")) %>% 
+  mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
+         year = ifelse(is.na(year), t, year))
+  
+#spatial weight matrix
+#moved out of the loop
+
+#Moran's I
+globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
+a <- cbind(globalMoran$estimate[[1]],globalMoran$p.value, t[1])
+morani <- rbind(a, morani)
+
+#LISA
+lmoran<- cbind(test@data, localmoran(test$n, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
+#lmoran
+
+# centers the local Moran's around the mean
+lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
+lmoran$lag.n<-  lag.listw(listw,lmoran$n, NAOK = TRUE)
+
+# centers the variable of interest around its mean
+
+lmoran$ns <- lmoran$n - mean(lmoran$n, na.rm = TRUE) 
+lmoran$lag.n <- lmoran$lag.n - mean(lmoran$lag.n, na.rm = TRUE) 
+
+signif <- 0.05
+#lmoran
+
+lmoran <- lmoran%>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n > 0, 1, 0)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n < 0, 2, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns<0 & lag.n > 0, 3, quadrant)) %>% 
+  mutate(quadrant= ifelse(ns>0 & lag.n < 0, 4, quadrant)) %>%   
+  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
+  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+
+
+#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
+# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
+#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
+#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
+  
+mun_merge_new<- merge(test, lmoran, by="id")
+
+# R p value map
+breaks = c(0, 1, 2, 3, 4, 5) 
+
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+
+map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks, 
+                                         palette = c("white","red","blue",
+                                                     rgb(0,0,1,alpha=0.4),
+                                                     rgb(1,0,0,alpha=0.4)), 
+                                         labels = c("Not significant",
+                                                    "High-High",
+                                                    "Low-Low",
+                                                    "Low-High",
+                                                    "High-Low"), 
+                                         title="LISA, websites per OA") + 
+  tm_legend(text.size = 1) +
+  #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
+  #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
+  #tm_borders(alpha=.1) +
+  tm_borders(lwd = 0) +
+  tm_shape(gb, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
+  tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
+  tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
+tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
+}
+```
+
+Moran I
+
+```{r}
+path.out <- paste0(path, "/outputs/lisa/morani_oa.csv")
+morani %>% as_tibble() %>% 
+  rename('morani'=V1,
+                   p = V2,
+                   year = V3) %>% 
+  #kable() %>% 
+  write_csv(path.out)
+```
+
+## Gini
+
+```{r}
+
+# add OAs with 0s
+df.with0s <- df %>% mutate(country = substring(oa11cd, 1, 1)) %>%
+  filter(country != "L" & country != "M" & country != "N") %>%
+  filter(!is.na(country)) %>%
+  complete(year, oa11cd, fill = list(n = 0)) %>%
+  filter(year!=1000,
+         !is.na(oa11cd)) %>%
+  dplyr::select(-country)
+
+
+gini.df <- data.frame()
+
+for (t in 1996:2012){
+    a <- df.with0s %>% filter(year==t)
+  b <- as.data.frame(gini(a$n))
+  b$year = t
+  gini.df <- rbind(gini.df, b)
+}
+
+path.out <- paste0(path, "/outputs/lisa/gini_oa.csv")
+gini.df %>% write_csv(path.out)
+```
+
+## Getis-Ord
+
+```{r, eval = F}
+
+t= 1998
+local_g <- localG(OA.Census$Qualification, nb_lw)
+local_g <- localG(df[df$year==t,]$n, listw)
+
+local_g <- cbind(OA.Census, as.matrix(local_g))
+names(local_g)[6] <- "gstat"
+
+```
+
+## Distances to cities and retail centres
+
+First set up the destinations. Origins are all the OA.
+
+Major cities from [source](https://www.citypopulation.de/en/uk/cities/).
+Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-boundaries)
+
+```{r}
+# oa centroids
+# oa.gb.c <- (rgeos::gCentroid(oa.gb, byid=TRUE))@coords %>% as.data.frame()
+# oa.gb.c$id <- row.names(oa.gb.c)  #as_tibble(rownames = NA) %>% 
+#   mutate(id = row.names())
+oa.gb.c <- gCentroid(oa.gb, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id")
+
+# cities
+city.names <- c("London, UK", 
+"Birmingham, UK",
+"Glasgow, UK",
+"Liverpool, UK",
+"Bristol, UK",
+"Manchester, UK",
+"Sheffield, UK",
+"Leeds, UK",
+"Edinburgh, UK",
+"Leicester, UK")	
+
+cities <- geo(city.names, no_query = F, method = "arcgis")
+
+# retail centres
+geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
+retail <-readOGR(geo.path) 
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id") #%>%
+
+retail.major.cetres <- retail.major.cetres.help %>% 
+  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+  st_transform(4326) %>%
+  st_coordinates() %>%
+  as_tibble() %>% 
+  bind_cols(retail.major.cetres.help$id) %>% 
+  rename(id = '...3') %>% 
+  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+```
+
+Distance to cities
+
+```{r}
+dist <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- round((dist/1000),2) %>% 
+  as_tibble()  
+
+city.names <- city.names %>% stringr::str_remove(", UK")
+names(dist) <- city.names 
+
+dist <- dist %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+dist <- transform(dist, dist = do.call(pmin, dist[-1]))
+
+
+
+# NOT USED AS IT SCREWS UP THE REGRESSIONS
+# Complete panel, N = 3871903, 17 year * 227759 OA
+# df <- df %>% bind_rows(dist %>% dplyr::select(oa11cd)) %>%
+#   mutate(year = ifelse(is.na(year),1000, year),
+#          country = substring(oa11cd, 1, 1)) %>%
+#   filter(country != "L" & country != "M" & country != "N") %>%
+#   filter(!is.na(country)) %>%
+#   complete(year, oa11cd, fill = list(n = 0)) %>%
+#   filter(year!=1000,
+#          !is.na(oa11cd)) %>%
+#   dplyr::select(-country)
+
+
+
+# tests
+# test$country <- substring(test$oa11cd, 1, 1)
+# unique(test$country)
+# length(unique(test$oa11cd))
+
+# calculate area
+oa.gb$area <- area(oa.gb) #/ 1000000
+
+# Join with distance and area
+df <- df %>% left_join(dist, by = c("oa11cd" = "oa11cd")) %>% 
+  left_join(oa.gb@data, by = c("oa11cd" = "id")) %>% 
+  relocate(area, .after = n) %>% 
+  mutate(area = area / 1000000,
+         density = n / area) %>% 
+  relocate(density, .after = area)
+sapply(df, function(x) sum(is.na(x)))
+```
+
+Distance to retail centres
+
+```{r}
+dist.retail <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- round((dist.retail/1000),2) %>% 
+  as_tibble()  
+
+# retail.names <- retail.major.cetres$RC_Name
+# names(dist.retail) <- retail.names 
+
+dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>% 
+  rename(oa11cd = last_col()) %>% 
+  relocate(oa11cd)
+
+# Minimum distance 
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
+dist.retail <- dist.retail %>% dplyr::select(oa11cd, dist.retail)
+
+# Join with complete panel
+df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd")) 
+
+sapply(df, function(x) sum(is.na(x)))
+```
+
+## Panel regressions
+
+```{r}
+# London
+model <- plm(log(n+0.001) ~ log(London+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_london_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to London on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+
+# Cities
+model <- plm(log(n+0.001) ~ log(dist+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_cities_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficienst: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to Cities on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+
+# Retail centres
+model <- plm(log(n+0.001) ~ log(dist.retail+.001)*as.factor(year), 
+             data = df,
+             index = c("oa11cd", "year"),
+             model = "within",
+             effect = "twoways")
+summary(model)
+
+est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
+int <- confint(est)
+
+out.model <- bind_cols(tidy(est), 
+                       as_tibble(int)) %>% 
+  mutate_if(is.numeric, round, 2) %>% 
+  mutate(year = 1997:2012) %>% 
+  rename(conf.low = '2.5 %',
+         conf.high = '97.5 %')
+
+path.out <- paste0(path,"/outputs/lisa/b_panel_dist_retail_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                    width = 0.2,size  = 1,
+                    position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
+  ggtitle("Regression coefficients: distance to Retail Centres on website counts, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+```
+
+## Website density regressions to London, cross-section
+
+```{r}
+dens.London <- data.frame()
+out.model <- data.frame()
+
+for (t in 1996:2012){
+  model <- lm(log(density+0.001) ~ log(London), data = df[df$year==t,]) 
+  r2 <- as.data.frame(summary(model)$r.squared)
+  r2$year = t
+  dens.London <- rbind(r2, dens.London)
+  
+  out.model_ <- tidy(model, conf.int = TRUE) %>% 
+    slice(2) %>% 
+    mutate_if(is.numeric, round, 2)
+  out.model <- rbind(out.model_, out.model)
+}
+
+names(dens.London)[1] <- "rsquared"
+
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_london_oa.png")
+ggplot(dens.London) +
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to London on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
+
+out.model <- out.model %>% 
+  mutate(year = 1996:2012)
+
+path.out <- paste0(path,"/outputs/lisa/b_dist_london_oa.png")
+ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
+#ggplot(out.model, aes(x=year, y = estimate)) +  
+           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                       width = 0.2,size  = 1,
+                       position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to London on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5))
+ggsave(path.out)
+
+r2.all <- dens.London %>% 
+  rename(London = rsquared)
+
+# Help for OA area size. I double checked the largest: E00102963
+# It is correct, this is its size.
+# ggplot(df, aes(x=area)) +
+#     geom_histogram(binwidth=.5, colour="black", fill="white")
+# 
+# df %>% filter(area>50)
+```
+
+## Website density regressions to the nearest city, cross-section
+
+```{r}
+dens.distMet <- data.frame()
+out.modelMet <- data.frame()
+
+for (t in 1996:2012){
+  model <- lm(log(density+0.001) ~ log(dist), data = df[df$year==t,])
+  r2 <- as.data.frame(summary(model)$r.squared)
+  r2$year = t
+  dens.distMet <- rbind(r2, dens.distMet)
+  
+  out.model_ <- tidy(model, conf.int = TRUE) %>% 
+    slice(2) %>% 
+    mutate_if(is.numeric, round, 2)
+  out.modelMet <- rbind(out.model_, out.modelMet)
+}
+
+names(dens.distMet)[1] <- "rsquared"
+
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_city_oa.png")
+ggplot(dens.distMet) +
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to nearest city on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
+
+out.modelMet <- out.modelMet %>% 
+  mutate(year = 1996:2012)
+
+path.out <- paste0(path,"/outputs/lisa/b_dist_city_oa.png")
+ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
+           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                       width = 0.2,size  = 1,
+                       position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to nearest city on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
+
+r2.all <- r2.all %>% left_join(dens.distMet) %>% 
+  rename(cities = rsquared)
+```
+
+## Website density regressions to the nearest retail centre, cross-section
+
+```{r}
+dens.dist.retail <- data.frame()
+out.model.retail <- data.frame()
+
+for (t in 1996:2012){
+  model <- lm(log(density+0.001) ~ log(dist.retail+0.001), data = df[df$year==t,]) 
+  r2 <- as.data.frame(summary(model)$r.squared)
+  r2$year = t
+  dens.dist.retail <- rbind(r2, dens.dist.retail)
+  
+  out.model_ <- tidy(model, conf.int = TRUE) %>% 
+    slice(2) %>% 
+    mutate_if(is.numeric, round, 2)
+  out.model.retail <- rbind(out.model_, out.model.retail)
+}
+
+names(dens.dist.retail)[1] <- "rsquared"
+
+path.out <- paste0(path,"/outputs/lisa/rsq_dist_centre_oa.png")
+ggplot(dens.dist.retail) +
+  geom_line(aes(x=year, y = rsquared)) +
+  ylab("Rsquared") + 
+  ggtitle("Regression fit, distance to nearest retail centre on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
+
+out.model.retail <- out.model.retail %>% 
+  mutate(year = 1996:2012)
+
+path.out <- paste0(path,"/outputs/lisa/b_dist_centre_oa.png")
+ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
+           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
+                       width = 0.2,size  = 1,
+                       position = "dodge", color="turquoise4") +
+  #geom_hline(yintercept = 0, color = "red", size = 1) +
+  geom_point() + coord_flip() +
+  ylab("distance coefficient") + xlab("") + 
+  ggtitle("Regression coefficients, distance to nearest retail centre on website density, OA") +
+  theme(plot.title = element_text(hjust = 0.5)) 
+ggsave(path.out)
+
+
+# library(pscl)
+# m1 <- zeroinfl((n) ~ log(dist.retail+0.001),
+#   data = df[df$year==t,], dist = "negbin", EM = TRUE)
+# summary(m1)
+# 
+# df %>% filter(year == 1996) %>% 
+#   group_by(group = cut(n, breaks = c(0, 1, 2, 10, 100, 1000, 10000), include.lowest = T, right = F)) %>%  #seq(0, max(n), 100))) %>%
+#   summarise(n = sum(n))
+```
+All R^2 dataframe
+
+```{r}
+path.out <- paste0(path, "/outputs/lisa/r2_all_oa.csv")
+
+r2.all <- dens.London %>% 
+  rename(London = rsquared) %>% 
+  left_join(dens.distMet) %>% 
+  rename(cities = rsquared) %>% 
+  left_join(dens.dist.retail) %>% 
+  rename(retail = rsquared) %>% 
+  relocate(year, .before = London) %>% 
+  arrange(year)
+
+write_csv(r2.all, path.out)
+```
