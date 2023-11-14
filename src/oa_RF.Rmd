@@ -345,7 +345,7 @@ kn <- knearneigh(oa.c, k = 5)
 knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
 
-df <- df %>% drop_na() %>% 
+df <- df %>% #drop_na() %>% 
   group_by(year) %>% 
   mutate(n.slag = lag.listw(knn.l, n)) %>% 
   group_by(oa11cd) %>% 
