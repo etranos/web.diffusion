@@ -87,6 +87,7 @@ df <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% # for n == 1 
   ungroup()
 
+# Complete panel
 ## REPLACE WITH 0.1 INSTEAD OF OF 0 FOR THE GROWTH
 df <- df %>% filter(!is.na(ladcd)) %>% 
   complete(ladcd, year) %>% 
@@ -395,6 +396,8 @@ help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LA
                     "Edinburgh",
                     "Glasgow"))
   
+
+#########CHECK 1:9################
 
 dist$dist.city.name <- names(dist)[apply(dist[,1:9], MARGIN = 1, FUN = which.min)]
 help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>% 
