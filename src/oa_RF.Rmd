@@ -32,6 +32,8 @@ library(doParallel)
 library(raster)
 library(plm)
 #library(lmtest)
+library(caret)
+library(randomForest)
 
 options(scipen=10000)
 
@@ -87,7 +89,7 @@ df <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>%  # for n == 1 
   ungroup()
 
-# Complete panel
+# Partially complete panel as not all OAs have a website in at least ine year
 df <- df %>% filter(!is.na(oa11cd)) %>% 
   complete(oa11cd, year) %>% 
   replace(is.na(.), 0)
@@ -176,6 +178,24 @@ gb <- readOGR(path.gb)
 gb <- spTransform(gb, CRS("+init=epsg:4326"))
 ```
 
+## Full panel
+
+```{r}
+oa.sf <- st_as_sf(oa.gb)
+
+oa.full <- replicate(17, oa.sf %>% as_tibble(), simplify = FALSE) %>%
+  bind_rows(.id = 'id_') %>% 
+  rename(year = id_) %>% 
+  mutate(year = as.numeric(year) + 1995) %>% 
+  dplyr::select(id, year)
+
+df <- oa.full %>% left_join(df, by = c("id" = "oa11cd", "year" = "year")) %>% 
+  replace(is.na(.), 0)
+
+sapply(df, function(x) sum(is.na(x)))
+rm(oa.full)
+```
+
 ## Distances to cities and retail centres
 
 First set up the destinations. Origins are all the OA.
@@ -243,8 +263,6 @@ dist <- dist %>% bind_cols(oa.gb.c$id) %>%
 
 dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 
-
-
 # NOT USED AS IT SCREWS UP THE REGRESSIONS
 # Complete panel, N = 3871903, 17 year * 227759 OA
 # df <- df %>% bind_rows(dist %>% dplyr::select(oa11cd)) %>%
@@ -257,8 +275,6 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 #          !is.na(oa11cd)) %>%
 #   dplyr::select(-country)
 
-
-
 # tests
 # test$country <- substring(test$oa11cd, 1, 1)
 # unique(test$country)
@@ -268,7 +284,8 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 oa.gb$area <- area(oa.gb) #/ 1000000
 
 # Join with distance and area
-df <- df %>% left_join(dist, by = c("oa11cd" = "oa11cd")) %>% 
+df <- df %>% left_join(dist, by = c("id" = "oa11cd")) %>% 
+  rename(oa11cd=id) %>% 
   left_join(oa.gb@data, by = c("oa11cd" = "id")) %>% 
   relocate(area, .after = n) %>% 
   mutate(area = area / 1000000,
@@ -306,16 +323,14 @@ sapply(df, function(x) sum(is.na(x)))
 
 ```{r}
 ## THIS DROPS L999999... AND NI, WHICH NEEDS TO BE FIXED
-df <- df %>% filter(!is.na(area)) 
-
+#df <- df %>% filter(!is.na(area)) 
 
 # London = Islington 
-oa.sf <- st_as_sf(oa.gb)
 cities.sf <- st_as_sf(cities, coords = c("long", "lat"))
 cities.sf <- st_set_crs(cities.sf, 4326)
 
-help1 <- st_filter(oa.sf, cities.sf) %>% as_tibble %>% dplyr::select(id) %>% 
-  left_join(df, by = c("id"="oa11cd")) %>% dplyr::select(id, year, n)
+# help1 <- st_filter(oa.sf, cities.sf) %>% as_tibble %>% dplyr::select(id) %>% 
+#   left_join(df, by = c("id"="oa11cd")) %>% dplyr::select(id, year, n)
 
 sf_use_s2(FALSE)
 help1 <- st_filter( oa.sf, cities.sf) %>% as_tibble %>% dplyr::select(id) %>% 
@@ -333,19 +348,22 @@ help1 <- st_filter( oa.sf, cities.sf) %>% as_tibble %>% dplyr::select(id) %>%
 # too slow
 #dist$dist.city.name <- names(dist)[apply(dist[,2:11], MARGIN = 1, FUN = which.min)]
 
+# This efficiently returns the name of the column with the shortest distance
 dist <- dist %>% mutate(dist.city.name = names(.)[max.col(.[2:11]*-1)+1L])
 
 help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>% 
   rename(nearest.city.oa11cd = id) %>% 
   dplyr::select(oa11cd, nearest.city.oa11cd)
 
+#####save this#####
 sf_use_s2(FALSE)
 oa.c <- st_centroid(oa.sf)
 kn <- knearneigh(oa.c, k = 5)
 knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
+##################
 
-df <- df %>% #drop_na() %>% 
+df <- df %>% 
   group_by(year) %>% 
   mutate(n.slag = lag.listw(knn.l, n)) %>% 
   group_by(oa11cd) %>% 
@@ -353,23 +371,34 @@ df <- df %>% #drop_na() %>%
          n.lag = dplyr::lag(n, n=1, order_by = year)) %>% 
   left_join(help2, by = c("oa11cd" = "oa11cd")) 
 
-df <- df %>% left_join(df %>% dplyr::select(ladcd,year, n) %>% 
+df <- df %>% left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
                          rename(n.nearest.city = n), 
-                       by = c("nearest.city.LAD21CD" = "ladcd",
-                              "year" = "year")) %>% 
-  dplyr::select(-c(LAD21NMW, OBJECTID, BNG_E, BNG_N, LONG, LAT, SHAPE_Length)) %>% 
-  relocate(LAD21NM, .after = ladcd)
+                       by = c("nearest.city.oa11cd" = "oa11cd",
+                              "year" = "year")) 
 
-path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
-lookup.region <- read_csv(path.lookup) %>% dplyr::select(LAD21CD, RGN21CD)
+# Lookup: OA to regions
+path.lookup <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% dplyr::select(OA11CD, RGN11CD, RGN11NM)
 
-df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
-  relocate(RGN21CD, .after=year)
+df <- df %>% left_join(lookup.region, by = c("oa11cd" = "OA11CD")) %>% 
+  relocate(c(RGN11NM, RGN11CD), .after=year) %>% 
+  mutate(help = substring(oa11cd, 1, 1),
+         RGN11CD = ifelse(help=="E", RGN11CD,
+                         ifelse(help=="W", "Wales",
+                                ifelse(help == "S", "Scotland", NA))),
+         RGN11NM = ifelse(help=="E", RGN11NM,
+                         ifelse(help=="W", "Wales",
+                                ifelse(help == "S", "Scotland", NA)))) %>% 
+  dplyr::select(-help)
+
+# df %>% ungroup() %>% distinct(RGN11NM)
+# sapply(df, function(x) sum(is.na(x)))
+
 
 # North/South
 #lookup.region %>% distinct(RGN21NM, .keep_all = T)
-south <- c("E12000007", "E12000008", "E12000009" )
-df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
+south <- c("London", "South West", "South West", "East of England")
+df <- df %>% mutate(south = ifelse(RGN11NM %in% south, 1, 0))
 
 # For growth:
 #df <- df %>% mutate(growth = log(n/n.lag))
@@ -377,419 +406,252 @@ df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
 sapply(df, function(x) sum(is.na(x)))
 ```
 
-## lisa maps
+## RF
+
+### train on all but one regions
 
 ```{r}
-
-sf_use_s2(FALSE)
-la.c <- st_centroid(la.sf)
-kn <- knearneigh(la.c, k = 5)
-knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
-knn.l <- nb2listw(knn)
-
-
-path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", n, "_oa") # for unique PC
-#path.out <- paste0(path, "/outputs/lisa/lisa_level_pc", m, "_oa")  # for multiple PC
-
-morani <- data.frame()
-
-#spatial weight matrix
-sf_use_s2(FALSE)
-nb <- poly2nb(oa.gb)
-listw <- nb2listw(nb, style = "W", zero.policy = T)
-
-for (t in 1996:2012){
-test <- oa.gb
-test@data <- test@data %>% left_join(df[df$year==t,], by = c("id"="oa11cd")) %>% 
-  mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
-         year = ifelse(is.na(year), t, year))
-  
-#spatial weight matrix
-#moved out of the loop
-
-#Moran's I
-globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
-a <- cbind(globalMoran$estimate[[1]],globalMoran$p.value, t[1])
-morani <- rbind(a, morani)
-
-#LISA
-lmoran<- cbind(test@data, localmoran(test$n, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude))
-#lmoran
-
-# centers the local Moran's around the mean
-lmoran$Ii <- lmoran$Ii - mean(lmoran$Ii, na.rm = TRUE) 
-lmoran$lag.n<-  lag.listw(listw,lmoran$n, NAOK = TRUE)
-
-# centers the variable of interest around its mean
-
-lmoran$ns <- lmoran$n - mean(lmoran$n, na.rm = TRUE) 
-lmoran$lag.n <- lmoran$lag.n - mean(lmoran$lag.n, na.rm = TRUE) 
-
-signif <- 0.05
-#lmoran
-
-lmoran <- lmoran%>% 
-  mutate(quadrant= ifelse(ns>0 & lag.n > 0, 1, 0)) %>% 
-  mutate(quadrant= ifelse(ns<0 & lag.n < 0, 2, quadrant)) %>% 
-  mutate(quadrant= ifelse(ns<0 & lag.n > 0, 3, quadrant)) %>% 
-  mutate(quadrant= ifelse(ns>0 & lag.n < 0, 4, quadrant)) %>%   
-  #mutate(quadrant= ifelse(lmoran$`Pr(z > 0)` > signif, 0, quadrant)) #%>% 
-  mutate(quadrant= ifelse(lmoran$`Pr(z != E(Ii))` > signif, 0, quadrant)) #%>% 
+out.path <- paste0(path, "/data/temp/oa_rf.RData")
+# save.image(file = out.path)
+start.time <- Sys.time()
+load(out.path)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
 
 
-#   mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st > 0, 1, 0)) %>% 
-# mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st < 0, 2, quadrant2)) %>% 
-#   mutate(quadrant2= ifelse(ANC_st<0 & lagANC_st > 0, 3, quadrant2)) %>% 
-#  mutate(quadrant2= ifelse(ANC_st>0 & lagANC_st < 0, 4, quadrant2)) %>% 
-#  mutate(quadrant2= ifelse(lmoran$LISA_PANC > signif, 0, quadrant2))
-  
-mun_merge_new<- merge(test, lmoran, by="id")
-
-# R p value map
-breaks = c(0, 1, 2, 3, 4, 5) 
-
-cities <- maps::world.cities %>% 
-  filter(country.etc=="UK") %>% 
-  arrange(pop) %>% tail(10) 
-tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
-
-
-map <- tm_shape(mun_merge_new) + tm_fill(col = "quadrant", breaks = breaks, 
-                                         palette = c("white","red","blue",
-                                                     rgb(0,0,1,alpha=0.4),
-                                                     rgb(1,0,0,alpha=0.4)), 
-                                         labels = c("Not significant",
-                                                    "High-High",
-                                                    "Low-Low",
-                                                    "Low-High",
-                                                    "High-Low"), 
-                                         title="LISA, websites per OA") + 
-  tm_legend(text.size = 1) +
-  #tm_scale_bar(position = c("LEFT", "BOTTOM"),text.size = 1.0)+
-  #tm_compass(type = "8star",   position = c("RIGHT", "BOTTOM"),      show.labels = 2,   text.size = 0.5)+
-  #tm_borders(alpha=.1) +
-  tm_borders(lwd = 0) +
-  tm_shape(gb, simplify = .2) + tm_borders(alpha=1, lwd = .7) +
-  tm_shape(tif_sf) + tm_dots() + tm_text("name", size = .5) +
-  tm_layout( frame = FALSE,  title = t) #"LISA with the R p-values ")
-tmap_save(map, filename = paste(path.out, t, ".png", sep = ""))
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
 }
+unregister_dopar()
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10, #10,
+                   allowParallel = T,
+                   savePredictions = 'final')
+
+# London region: E12000007
+
+# detectCores()
+# cl <- makePSOCKcluster(14)
+# registerDoParallel(cl)
+
+# train
+start.time <- Sys.time()
+
+set.seed(71)
+m.test <- train(n ~ density + area + dist + dist.retail + London +
+                  n.slag + year + n.nearest.city, #n.l.slag
+                data = df %>% filter(RGN11CD=="E12000008"),
+                trControl = tc,
+                method = "ranger", #"rf", 
+                importance = "impurity",  #TRUE,
+                na.action = na.omit)
+
+#stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
+
+summary(m.test)
+plot(m.test)
+m.test
+print(m.test)
+
+varimp_mars <- varImp(m)
+plot(varimp_mars, main="Variable Importance")
 ```
 
-Moran I
+### test on the hold out regions
+ 
+Wales region is missing!!!
 
 ```{r}
-path.out <- paste0(path, "/outputs/lisa/morani_oa.csv")
-morani %>% as_tibble() %>% 
-  rename('morani'=V1,
-                   p = V2,
-                   year = V3) %>% 
-  #kable() %>% 
-  write_csv(path.out)
+pred <- predict(m, df %>% ungroup() %>% filter(RGN21CD=="E12000008"), na.action = na.pass)
+length(pred)
+
+df %>% ungroup() %>% filter(RGN21CD=="E12000008") %>% filter(if_any(everything(), is.na))
+
+pred <- cbind(pred %>% as_tibble(), df %>% ungroup() %>% filter(RGN21CD=="E12000008"))
+postResample(pred = pred$value, obs = pred$n) ## 0.99
 ```
 
-## Gini
+## RF rolling
+
+### train the model in a loop
 
 ```{r}
+# Train on t & t + 1
 
-# add OAs with 0s
-df.with0s <- df %>% mutate(country = substring(oa11cd, 1, 1)) %>%
-  filter(country != "L" & country != "M" & country != "N") %>%
-  filter(!is.na(country)) %>%
-  complete(year, oa11cd, fill = list(n = 0)) %>%
-  filter(year!=1000,
-         !is.na(oa11cd)) %>%
-  dplyr::select(-country)
+# Make the parallelisation reproducible using https://stackoverflow.com/questions/13403427/fully-reproducible-parallel-models-using-caret. 
+# See also https://stackoverflow.com/questions/27944558/set-seed-parallel-random-forest-in-caret-for-reproducible-result
 
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
 
-gini.df <- data.frame()
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 9) # 9 after adding South
 
-for (t in 1996:2012){
-    a <- df.with0s %>% filter(year==t)
-  b <- as.data.frame(gini(a$n))
-  b$year = t
-  gini.df <- rbind(gini.df, b)
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   seeds = seeds,
+                   allowParallel = T,
+                   savePredictions = 'final')
+
+detectCores()
+cl <- makePSOCKcluster(14)
+registerDoParallel(cl)
+
+# run the model for every 2 years
+start.time <- Sys.time()
+years <- 1997:2012
+
+for (t in years){
+  tplus1 <- t + 1
+  set.seed(71)
+  model.all <- train(n ~ area + dist + dist.retail + London + south + #growth ~ 
+                      n.slag + n.l.slag + n.nearest.city + year, #n.lag +
+                     data = df %>% filter(year==t | year==tplus1), #%>% 
+                       # mutate(growth = ifelse(growth == -Inf | growth == Inf, NA, growth)) %>% 
+                       # mutate(growth = ifelse(is.na(growth), 0, growth)), 
+                     #%>% mutate(growth = ifelse(growth== -Inf | growth == Inf, NA, growth))
+                     trControl = tc,
+                     method = "rf", #"rpart", # rf lm
+                     na.action = na.omit,
+                     preProc = c("center", "scale"),
+                     importance = TRUE)
 }
 
-path.out <- paste0(path, "/outputs/lisa/gini_oa.csv")
-gini.df %>% write_csv(path.out)
+stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
+
+# df %>% filter(growth == Inf) 
+# log(n/n.lag)
+
+# The loop creates: 1998 (train on 1997-1998) - 2013 (train on 2012)
+# I need: 1998 (train on 1997-1998) - 2011 (train on 2010-2011)
 ```
 
-## Getis-Ord
-
-```{r, eval = F}
-
-t= 1998
-local_g <- localG(OA.Census$Qualification, nb_lw)
-local_g <- localG(df[df$year==t,]$n, listw)
-
-local_g <- cbind(OA.Census, as.matrix(local_g))
-names(local_g)[6] <- "gstat"
-
-```
-
-## Panel regressions
+### Resamples for plots
 
 ```{r}
-# London
-model <- plm(log(n+0.001) ~ log(London+.001)*as.factor(year), 
-             data = df,
-             index = c("oa11cd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
+# create a list of the above model outputs
+fit.model.all <- mget(ls(pattern = "^model.all\\d"))
 
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
 
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
+# plot metrics
 
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_london_oa.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to London on website counts, OA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
+# TODO: fix the year labels
 
-# Cities
-model <- plm(log(n+0.001) ~ log(dist+.001)*as.factor(year), 
-             data = df,
-             index = c("oa11cd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
 
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
-
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
-
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_cities_oa.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficienst: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to Cities on website counts, OA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
-
-# Retail centres
-model <- plm(log(n+0.001) ~ log(dist.retail+.001)*as.factor(year), 
-             data = df,
-             index = c("oa11cd", "year"),
-             model = "within",
-             effect = "twoways")
-summary(model)
-
-est <- coeftest(model, vcov = vcovHC, type = "HC1") # same
-int <- confint(est)
-
-out.model <- bind_cols(tidy(est), 
-                       as_tibble(int)) %>% 
-  mutate_if(is.numeric, round, 2) %>% 
-  mutate(year = 1997:2012) %>% 
-  rename(conf.low = '2.5 %',
-         conf.high = '97.5 %')
-
-path.out <- paste0(path,"/outputs/lisa/b_panel_dist_retail_oa.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-  geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                    width = 0.2,size  = 1,
-                    position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("Interaction coefficients: distance*year, robust st. errors") + xlab("") + 
-  ggtitle("Regression coefficients: distance to Retail Centres on website counts, OA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
+# TODO: fix the year labels
 ```
 
-## Website density regressions to London, cross-section
+### Variable importance
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
 
 ```{r}
-dens.London <- data.frame()
-out.model <- data.frame()
+help <- lapply(fit.model.all, function(x) varImp(x)) 
+help <- lapply(help, function(x) x[[1]])
+help <- do.call("rbind", help)
 
-for (t in 1996:2012){
-  model <- lm(log(density+0.001) ~ log(London), data = df[df$year==t,]) 
-  r2 <- as.data.frame(summary(model)$r.squared)
-  r2$year = t
-  dens.London <- rbind(r2, dens.London)
-  
-  out.model_ <- tidy(model, conf.int = TRUE) %>% 
-    slice(2) %>% 
-    mutate_if(is.numeric, round, 2)
-  out.model <- rbind(out.model_, out.model)
+importance <- help %>% rownames_to_column() %>% 
+  mutate(feature = gsub("model.all[0-9]+.", "", rowname),
+         year = gsub(".*?([0-9]+).*", "\\1", rowname)) %>% 
+  rename(importance = Overall) %>% 
+  relocate(importance, .after = year) %>% 
+  dplyr::select(-rowname)
+
+importance %>% ggplot() +
+  geom_line(aes(x=year, y = importance, color = feature, group = feature), size = 1) +
+  scale_color_discrete(name = "Features") +
+  #scale_linetype_manual(name = "Website density regressions111") 
+  ylab("Importance") + 
+  ggtitle("Feature importance") +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+### test
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+# growth or n
+
+# for a reference point
+df %>% group_by(year) %>%
+  summarise(min = min(n), max=max(n),
+            mean = mean(n), median = median(n)) %>%
+  round(2) %>% kable()
+```
+
+```{r}
+## Test on t + 2
+
+# It will create: 2001 (train on 2000-2001) - 2011 (train on 2010)
+# I need: 2001 (train on 2000-2001) - 2009 (train on 2008-2009)
+
+# use the model trainned in year t to predict io of year t + 1
+years <- (1998:2011)
+pred.by.year.all <- data.frame(matrix(NA,nrow=374, ncol = 0))
+for (t in years){
+  t_plus_1 <- t + 1
+  pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",t)], df[df$year==t_plus_1,])
+  pred <- as.data.frame(pred)
+  rownames(pred) <- c()
+  pred.by.year.all <- cbind(pred.by.year.all, pred)
 }
 
-names(dens.London)[1] <- "rsquared"
+#change column names to match with total
+names(pred.by.year.all) <- 1999:2012
 
-path.out <- paste0(path,"/outputs/lisa/rsq_dist_london_oa.png")
-ggplot(dens.London) +
-  geom_line(aes(x=year, y = rsquared)) +
-  ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to London on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) 
-ggsave(path.out)
+# wide to long
+pred.by.year.all <- gather(pred.by.year.all,key = year,value = predictions,1:14)
 
-out.model <- out.model %>% 
-  mutate(year = 1996:2012)
+# drop 2000 and select variables form total
+df.no1997_1 <- df %>% 
+  filter(year!=1996 & year!=1997 & year!=1998) %>% 
+  dplyr::select(ladcd, year, n) # CHANGE n WITH growth
 
-path.out <- paste0(path,"/outputs/lisa/b_dist_london_oa.png")
-ggplot(out.model, aes(x=reorder(year, year), y=estimate)) +
-#ggplot(out.model, aes(x=year, y = estimate)) +  
-           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                       width = 0.2,size  = 1,
-                       position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to London on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5))
-ggsave(path.out)
+# column bind prediction and data  
+pred.by.year.all <- cbind(pred.by.year.all, df.no1997_1 %>% arrange(year, ladcd)) #DOUBLE CHECK ARRANGE
 
-r2.all <- dens.London %>% 
-  rename(London = rsquared)
+# pred.by.year to list by year
+pred.by.year.all.list <- split(pred.by.year.all, pred.by.year.all$year)
 
-# Help for OA area size. I double checked the largest: E00102963
-# It is correct, this is its size.
-# ggplot(df, aes(x=area)) +
-#     geom_histogram(binwidth=.5, colour="black", fill="white")
-# 
-# df %>% filter(area>50)
-```
+# calculate metrics for every year
+rf.year.all.metrics <- lapply(pred.by.year.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$n))  # CHANGE n WITH growth
+rf.year.all.metrics %>% as.data.frame() %>%
+  round(2) %>%
+  kable()
 
-## Website density regressions to the nearest city, cross-section
+# there are 2 columns named year, so I drop one
+pred.by.year.all$year <- NULL
 
-```{r}
-dens.distMet <- data.frame()
-out.modelMet <- data.frame()
-
-for (t in 1996:2012){
-  model <- lm(log(density+0.001) ~ log(dist), data = df[df$year==t,])
-  r2 <- as.data.frame(summary(model)$r.squared)
-  r2$year = t
-  dens.distMet <- rbind(r2, dens.distMet)
-  
-  out.model_ <- tidy(model, conf.int = TRUE) %>% 
-    slice(2) %>% 
-    mutate_if(is.numeric, round, 2)
-  out.modelMet <- rbind(out.model_, out.modelMet)
-}
-
-names(dens.distMet)[1] <- "rsquared"
-
-path.out <- paste0(path,"/outputs/lisa/rsq_dist_city_oa.png")
-ggplot(dens.distMet) +
-  geom_line(aes(x=year, y = rsquared)) +
-  ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest city on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) 
-ggsave(path.out)
-
-out.modelMet <- out.modelMet %>% 
-  mutate(year = 1996:2012)
-
-path.out <- paste0(path,"/outputs/lisa/b_dist_city_oa.png")
-ggplot(out.modelMet, aes(x=reorder(year, year), y=estimate)) +
-           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                       width = 0.2,size  = 1,
-                       position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest city on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) 
-ggsave(path.out)
-
-r2.all <- r2.all %>% left_join(dens.distMet) %>% 
-  rename(cities = rsquared)
-```
-
-## Website density regressions to the nearest retail centre, cross-section
-
-```{r}
-dens.dist.retail <- data.frame()
-out.model.retail <- data.frame()
-
-for (t in 1996:2012){
-  model <- lm(log(density+0.001) ~ log(dist.retail+0.001), data = df[df$year==t,]) 
-  r2 <- as.data.frame(summary(model)$r.squared)
-  r2$year = t
-  dens.dist.retail <- rbind(r2, dens.dist.retail)
-  
-  out.model_ <- tidy(model, conf.int = TRUE) %>% 
-    slice(2) %>% 
-    mutate_if(is.numeric, round, 2)
-  out.model.retail <- rbind(out.model_, out.model.retail)
-}
-
-names(dens.dist.retail)[1] <- "rsquared"
-
-path.out <- paste0(path,"/outputs/lisa/rsq_dist_centre_oa.png")
-ggplot(dens.dist.retail) +
-  geom_line(aes(x=year, y = rsquared)) +
-  ylab("Rsquared") + 
-  ggtitle("Regression fit, distance to nearest retail centre on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) 
-ggsave(path.out)
-
-out.model.retail <- out.model.retail %>% 
-  mutate(year = 1996:2012)
-
-path.out <- paste0(path,"/outputs/lisa/b_dist_centre_oa.png")
-ggplot(out.model.retail, aes(x=reorder(year, year), y=estimate)) +
-           geom_errorbar(aes(ymin=conf.low, ymax=conf.high), 
-                       width = 0.2,size  = 1,
-                       position = "dodge", color="turquoise4") +
-  #geom_hline(yintercept = 0, color = "red", size = 1) +
-  geom_point() + coord_flip() +
-  ylab("distance coefficient") + xlab("") + 
-  ggtitle("Regression coefficients, distance to nearest retail centre on website density, OA") +
-  theme(plot.title = element_text(hjust = 0.5)) 
-ggsave(path.out)
-
-
-# library(pscl)
-# m1 <- zeroinfl((n) ~ log(dist.retail+0.001),
-#   data = df[df$year==t,], dist = "negbin", EM = TRUE)
-# summary(m1)
-# 
-# df %>% filter(year == 1996) %>% 
-#   group_by(group = cut(n, breaks = c(0, 1, 2, 10, 100, 1000, 10000), include.lowest = T, right = F)) %>%  #seq(0, max(n), 100))) %>%
-#   summarise(n = sum(n))
-```
-All R^2 dataframe
-
-```{r}
-path.out <- paste0(path, "/outputs/lisa/r2_all_oa.csv")
-
-r2.all <- dens.London %>% 
-  rename(London = rsquared) %>% 
-  left_join(dens.distMet) %>% 
-  rename(cities = rsquared) %>% 
-  left_join(dens.dist.retail) %>% 
-  rename(retail = rsquared) %>% 
-  relocate(year, .before = London) %>% 
-  arrange(year)
-
-write_csv(r2.all, path.out)
+ggplot(data = pred.by.year.all,aes(x = n, y = predictions)) +
+  geom_point(colour = "blue") +
+  geom_abline(intercept = 0, slope = 1, colour = "red") +
+  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
+  facet_wrap(~ year,ncol = 2) +
+  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
+  ggtitle("Predicted vs. actual trade by year")
 ```

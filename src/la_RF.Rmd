@@ -32,6 +32,8 @@ library(doParallel)
 library(raster)
 library(plm)
 #library(lmtest)
+library(caret)
+library(randomForest)
 
 options(scipen=10000)
 
@@ -430,6 +432,8 @@ lookup.region <- read_csv(path.lookup) %>% dplyr::select(LAD21CD, RGN21CD)
 df <- df %>% left_join(lookup.region, by = c("ladcd" = "LAD21CD")) %>% 
   relocate(RGN21CD, .after=year)
 
+##############ADD EAST, 4 REGIONS IN TOTAL###########
+
 # North/South
 #lookup.region %>% distinct(RGN21NM, .keep_all = T)
 south <- c("E12000007", "E12000008", "E12000009" )
@@ -446,9 +450,6 @@ sapply(df, function(x) sum(is.na(x)))
 ### train on all but one regions
 
 ```{r}
-library(caret)
-library(randomForest)
-
 # CV
 tc <- trainControl(method = "cv",
                    number = 10,
@@ -573,16 +574,17 @@ for (t in years){
   tplus1 <- t + 1
   set.seed(71)
   model.all <- train(n ~ area + dist + dist.retail + London + south + #growth ~ 
-                      n.slag + n.l.slag + n.nearest.city + year, #n.lag +
+                      n.slag + n.l.slag + n.nearest.city + year + n.lag,
                      data = df %>% filter(year==t | year==tplus1), #%>% 
                        # mutate(growth = ifelse(growth == -Inf | growth == Inf, NA, growth)) %>% 
                        # mutate(growth = ifelse(is.na(growth), 0, growth)), 
                      #%>% mutate(growth = ifelse(growth== -Inf | growth == Inf, NA, growth))
                      trControl = tc,
-                     method = "rf", #"rpart", # rf lm
+                     method = "ranger", #"rpart", # rf lm
                      na.action = na.omit,
-                     preProc = c("center", "scale"),
-                     importance = TRUE)
+                     #preProc = c("center", "scale"),
+                     importance = 'impurity') # TRUE for rf
+    assign(paste0("model.all",as.character(t + 1)), model.all)
 }
 
 stopCluster(cl)
