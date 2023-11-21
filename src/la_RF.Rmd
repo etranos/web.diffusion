@@ -447,6 +447,18 @@ df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
 sapply(df, function(x) sum(is.na(x)))
 ```
 
+## unregister_dopar function
+
+This is helpful when the parallel loop collapses. 
+
+```{r}
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
+unregister_dopar()
+```
+
 ## RF
 
 ### train on all but one regions
@@ -1030,7 +1042,7 @@ ggsave(path.out)
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 9) # 9 after adding South
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -1057,11 +1069,10 @@ for (i in regions){
   
   set.seed(71)
   indices <- CreateSpacetimeFolds(df %>% filter(RGN21CD==i), 
-                                spacevar = "ladcd",
+                                #spacevar = "ladcd",
                                 timevar = "year", 
                                 k = 10)
 
-  set.seed(71)
   model.all <- train(n ~ area + dist + dist.retail + London + south + 
                      n.slag + n.lag + n.l.slag + n.nearest.city + year,
                    data = df %>% filter(RGN21CD==i), 
@@ -1191,7 +1202,7 @@ rf.year.all.metrics %>%
   ggplot(aes(train.region, test.region, fill= Rsquared)) + 
   geom_tile() +
   coord_fixed() +
-  labs(y = "", x = "") +
+  labs(y = "", x = "") + #y: test.region, x: train.region
   scale_fill_gradientn(colours = terrain.colors(10), trans = 'reverse') +
   theme(#legend.position = "none",
         axis.text.x = element_text(angle = 45, hjust=1),

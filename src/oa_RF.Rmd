@@ -107,7 +107,7 @@ df <- df %>% filter(!is.na(oa11cd)) %>%
 #               year==2003)
 ```
 
-## spatial data
+## spatial data OLD
 
 ```{r}
 # get OA for England and Wales
@@ -178,12 +178,63 @@ gb <- readOGR(path.gb)
 gb <- spTransform(gb, CRS("+init=epsg:4326"))
 ```
 
+## spatial data NEW
+
+```{r}
+library(sf)
+
+# Get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- st_read(path.geo)
+
+# Spatial transformations
+oa.ew <- st_transform(oa.ew, 4326)  # EPSG code for WGS84
+
+# Rename columns and keep only necessary columns
+oa.ew <- oa.ew %>% dplyr::select(OA11CD, Shape__Area) %>% 
+  rename(id = OA11CD,
+         area = Shape__Area)
+# oa.ew <- oa.ew[, c('OA11CD', 'Shape__Area')]
+# colnames(oa.ew) <- c('id', 'area')
+
+# Check the data structure
+print(summary(oa.ew))
+
+# Get OA for Scotland
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- st_read(dsn = path.geo.sc, layer = "OutputArea2011_MHW")
+
+# Spatial transformations
+oa.sc <- st_transform(oa.sc, 4326)  # EPSG code for WGS84
+
+# Rename columns and keep only necessary columns
+oa.sc <- oa.sc %>% dplyr::select(code, SHAPE_1_Ar) %>% 
+  rename(id = code,
+         area = SHAPE_1_Ar)
+# oa.sc <- oa.sc[, c('code', 'SHAPE_1_Ar')]
+# colnames(oa.sc) <- c('id', 'area')
+
+# Check the data structure
+print(summary(oa.sc))
+
+# Build OA for GB
+oa.gb <- rbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+
+# Get GB
+path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+gb <- st_read(path.gb)
+
+# Spatial transformations
+gb <- st_transform(gb, 4326)  # EPSG code for WGS84
+```
+
 ## Full panel
 
 ```{r}
-oa.sf <- st_as_sf(oa.gb)
+#oa.sf <- st_as_sf(oa.gb)
 
-oa.full <- replicate(17, oa.sf %>% as_tibble(), simplify = FALSE) %>%
+oa.full <- replicate(17, oa.gb %>% as_tibble(), simplify = FALSE) %>%
   bind_rows(.id = 'id_') %>% 
   rename(year = id_) %>% 
   mutate(year = as.numeric(year) + 1995) %>% 
@@ -208,9 +259,16 @@ Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-bound
 # oa.gb.c <- (rgeos::gCentroid(oa.gb, byid=TRUE))@coords %>% as.data.frame()
 # oa.gb.c$id <- row.names(oa.gb.c)  #as_tibble(rownames = NA) %>% 
 #   mutate(id = row.names())
-oa.gb.c <- gCentroid(oa.gb, byid=TRUE)@coords %>% 
-  as.data.frame() %>% 
-  add_rownames(var = "id")
+
+# oa.gb.c <- gCentroid(oa.gb, byid=TRUE)@coords %>% 
+#   as.data.frame() %>% 
+#   add_rownames(var = "id")
+sf_use_s2(FALSE)
+oa.gb.c <- st_centroid(oa.gb) %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  #add_rownames(var = "id") %>% 
+  bind_cols(oa.gb %>% dplyr::select(id))
 
 # cities
 city.names <- c("London, UK", 
@@ -228,26 +286,38 @@ cities <- geo(city.names, no_query = F, method = "arcgis")
 
 # retail centres
 geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
-retail <-readOGR(geo.path) 
-#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
-retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
-  as.data.frame() %>% 
-  add_rownames(var = "id") #%>%
+#retail <-readOGR(geo.path) 
+retail <- st_read(geo.path)
 
-retail.major.cetres <- retail.major.cetres.help %>% 
-  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+# retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+#   as.data.frame() %>% 
+#   add_rownames(var = "id") #%>%
+retail.major.cetres.help <- st_centroid(retail) %>% 
   st_transform(4326) %>%
-  st_coordinates() %>%
-  as_tibble() %>% 
-  bind_cols(retail.major.cetres.help$id) %>% 
-  rename(id = '...3') %>% 
-  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+  st_coordinates() %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id")
+
+# retail.major.cetres <- retail.major.cetres.help %>% 
+#   st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+#   st_transform(4326) %>%
+#   st_coordinates() %>%
+#   as_tibble() %>% 
+#   bind_cols(retail.major.cetres.help$id) %>% 
+#   rename(id = '...3') %>% 
+#   left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+retail.major.cetres <- retail.major.cetres.help %>% 
+  # as_tibble() %>% 
+  # bind_cols(retail.major.cetres.help$id) %>% 
+  # #rename(id = '...3') %>% 
+  left_join(retail %>% rownames_to_column(var = "id"), by = 'id')
 ```
 
 Distance to cities
 
 ```{r}
-dist <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- distm(cbind(oa.gb.c$Y, oa.gb.c$Y), cbind(cities$long, cities$lat), fun=distHaversine) 
 dist <- round((dist/1000),2) %>% 
   as_tibble()  
 
@@ -281,16 +351,17 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 # length(unique(test$oa11cd))
 
 # calculate area
-oa.gb$area <- area(oa.gb) #/ 1000000
+oa.gb$area <- st_area(oa.gb) #/ 1000000
 
 # Join with distance and area
 df <- df %>% left_join(dist, by = c("id" = "oa11cd")) %>% 
   rename(oa11cd=id) %>% 
-  left_join(oa.gb@data, by = c("oa11cd" = "id")) %>% 
+  left_join(oa.gb, by = c("oa11cd" = "id")) %>% 
   relocate(area, .after = n) %>% 
   mutate(area = area / 1000000,
          density = n / area) %>% 
-  relocate(density, .after = area)
+  relocate(density, .after = area) %>% 
+  dplyr::select(-geometry)
 
 sapply(df, function(x) sum(is.na(x)))
 ```
@@ -298,7 +369,7 @@ sapply(df, function(x) sum(is.na(x)))
 Distance to retail centres
 
 ```{r}
-dist.retail <- distm(cbind(oa.gb.c$x, oa.gb.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- distm(cbind(oa.gb.c$X, oa.gb.c$Y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
 dist.retail <- round((dist.retail/1000),2) %>% 
   as_tibble()  
 
@@ -333,7 +404,7 @@ cities.sf <- st_set_crs(cities.sf, 4326)
 #   left_join(df, by = c("id"="oa11cd")) %>% dplyr::select(id, year, n)
 
 sf_use_s2(FALSE)
-help1 <- st_filter( oa.sf, cities.sf) %>% as_tibble %>% dplyr::select(id) %>% 
+help1 <- st_filter( oa.gb, cities.sf) %>% as_tibble %>% dplyr::select(id) %>% 
   mutate(cities = c("Leicester",
                     "Bristol",
                     "Manchester",
@@ -357,7 +428,7 @@ help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>%
 
 #####save this#####
 sf_use_s2(FALSE)
-oa.c <- st_centroid(oa.sf)
+oa.c <- st_centroid(oa.gb)
 kn <- knearneigh(oa.c, k = 5)
 knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
