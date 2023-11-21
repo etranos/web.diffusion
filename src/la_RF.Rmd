@@ -910,7 +910,7 @@ ggplot(data = df.predictions, aes(x = n, y = predictions)) +
   ggtitle("Predicted vs. actual trade by year")
 ```
 
-## RF spatial with CAST
+## RF with CAST
 
 ```{r}
 df <- df %>% mutate(help = substr(ladcd, start = 1, stop = 2)) %>% 
@@ -926,6 +926,7 @@ df <- df %>% filter(year > 1996)
 ### train the model in all data
 
 ```{r}
+set.seed(123)
 indices <- CreateSpacetimeFolds(df, 
                                 spacevar = "ladcd",
                                 timevar = "year", 
@@ -935,7 +936,7 @@ indices <- CreateSpacetimeFolds(df,
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 9) # 9 after adding South
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -967,6 +968,45 @@ end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 time.taken
 
+print(model.all)
+# Random Forest 
+# 
+# 5984 samples
+#   10 predictor
+# 
+# No pre-processing
+# Resampling: Cross-Validated (10 fold) 
+# Summary of sample sizes: 4718, 4690, 5040, 4718, 5055, 4704, ... 
+# Resampling results across tuning parameters:
+# 
+#   mtry  splitrule   RMSE        Rsquared   MAE       
+#    2    variance    0.02194750  0.9015001  0.01162254
+#    2    extratrees  0.02245492  0.8984940  0.01229071
+#    6    variance    0.02208770  0.9025087  0.01175267
+#    6    extratrees  0.02165214  0.9081808  0.01161281
+#   10    variance    0.02447416  0.8859265  0.01326348
+#   10    extratrees  0.02204464  0.9064730  0.01184945
+# 
+# Tuning parameter 'min.node.size' was held constant at a value of 5
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were mtry = 6, splitrule = extratrees and min.node.size = 5.
+
+varimp_mars <- varImp(model.all) 
+varimp_mars$importance <- varimp_mars$importance %>% 
+  rownames_to_column() %>% 
+  mutate(rowname = ifelse(rowname == "dist", "distance to the nearest city",
+                          ifelse(rowname == "dist.retail", "distance to the nearest retail centre", 
+                                 ifelse(rowname == "London", "distance to London",
+                                        ifelse(rowname == "n.slag", "spatial lag of web density",
+                                               ifelse(rowname == "n.lag", "temporal lag of web density",
+                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag  of web density",
+                                                             ifelse(rowname == "n.nearest.city", "web density in nearest city", rowname)))))))) %>% 
+  column_to_rownames()
+
+path.out <- paste0(path, "/outputs/rf/varimp_LA.png")
+ggplot(varimp_mars) + theme_minimal() + labs(x="") #+ theme(panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
 # ffsmodel_LLO <- ffs(predictors = df[, c("area", "dist", "dist.retail", "London", "south",  
 #                                       "n.slag", "n.lag", "n.l.slag", "n.nearest.city", 
 #                                                         "year")], 
@@ -982,7 +1022,7 @@ time.taken
 # plot_ffs(ffsmodel_LLO)
 ```
 
-### train the model in a loop
+### train the model in a loop per region
 
 ```{r}
 
@@ -1037,9 +1077,6 @@ stopCluster(cl)
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 time.taken
-
-# The loop creates: 1998 (train on 1997-1998) - 2013 (train on 2012)
-# I need: 1998 (train on 1997-1998) - 2011 (train on 2010-2011)
 ```
 
 ### Resamples for plots
@@ -1092,11 +1129,9 @@ importance %>% ggplot() +
 
 ```
 
-### test
+### Test on all other regions
 
 ```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
-
-# growth or n
 
 # for a reference point
 df %>% group_by(year) %>%
@@ -1106,8 +1141,6 @@ df %>% group_by(year) %>%
 ```
 
 ```{r}
-## Test on t + 2
-
 # train on one region, test on all the rest
 
 df.predictions <- data.frame()
@@ -1142,6 +1175,7 @@ lookup.region <- read_csv(path.lookup) %>%
   distinct() %>% 
   add_row(RGN21CD = c("S1", "N0", "W0"), RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
+path.out <- paste0(path, "/outputs/rf/heatmap_LA.png")
 rf.year.all.metrics %>% 
   as.data.frame() %>%
   rownames_to_column(var = "metrics") %>% 
@@ -1157,30 +1191,22 @@ rf.year.all.metrics %>%
   ggplot(aes(train.region, test.region, fill= Rsquared)) + 
   geom_tile() +
   coord_fixed() +
-  theme(legend.position = "none")
+  labs(y = "", x = "") +
+  scale_fill_gradientn(colours = terrain.colors(10), trans = 'reverse') +
+  theme(#legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust=1),
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
+
   #summarise(r = range(Rsquared))
   #round(2) %>%
   #kable()
+
 ```
-
-### test plots
-
-```{r}
-#plots
-ggplot(data = df.predictions, aes(x = n, y = predictions)) +
-  geom_point(colour = "blue") +
-  geom_abline(intercept = 0, slope = 1, colour = "red") +
-  #geom_vline(xintercept = 23, colour = "green", linetype = "dashed") +
-  facet_wrap(~ test.train, ncol = 2) +
-  #coord_cartesian(xlim = c(0,50000),ylim = c(0,50000)) +
-  ggtitle("Predicted vs. actual trade by year")
-```
-
-
-
-
-
-
 
 
 
