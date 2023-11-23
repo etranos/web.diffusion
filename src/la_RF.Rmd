@@ -1069,7 +1069,7 @@ for (i in regions){
   
   set.seed(71)
   indices <- CreateSpacetimeFolds(df %>% filter(RGN21CD==i), 
-                                #spacevar = "ladcd",
+                                spacevar = "ladcd",
                                 timevar = "year", 
                                 k = 10)
 
