@@ -488,7 +488,7 @@ sapply(df, function(x) sum(is.na(x)))
 # in.path <- paste0(path, "/data/temp/df_for_oa_rf_old.csv")
 # df.compare <- read_csv(in.path)
 
-# out.path <- paste0(path, "/data/temp/oa_rf.RData")
+# out.path <- paste0(path, "/data/temp/for_oa_rf.RData")
 # save.image(file = out.path)
 # load(out.path)
 
@@ -573,7 +573,28 @@ time.taken <- round(end.time - start.time,2)
 time.taken
 
 print(model.all)
-
+# Random Forest 
+# 
+# 3716736 samples
+#      10 predictor
+# 
+# No pre-processing
+# Resampling: Cross-Validated (10 fold) 
+# Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
+# Resampling results across tuning parameters:
+# 
+#   mtry  splitrule   RMSE      Rsquared   MAE      
+#    2    variance    3.865809  0.5809699  0.5313035
+#    2    extratrees  3.730542  0.6168954  0.5884731
+#    6    variance    3.761356  0.6063340  0.5366004
+#    6    extratrees  3.612670  0.6273041  0.5331196
+#   10    variance    3.929176  0.5775066  0.5449132
+#   10    extratrees  3.617598  0.6278302  0.5403551
+# 
+# Tuning parameter 'min.node.size' was held constant at a value of 5
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were mtry = 6, splitrule =
+#  extratrees and min.node.size = 5.
 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
@@ -591,6 +612,9 @@ path.out <- paste0(path, "/outputs/rf/varimp_OA.png")
 ggplot(varimp_mars) + theme_minimal() + labs(x="") #+ theme(panel.background = element_rect(fill = "white"))
 ggsave(path.out)
 
+path.out <- paste0(path, "/data/temp/oa_rf/all_OAs/all_OAs.RData")
+save(model.all, file = path.out)
+
 # ffsmodel_LLO <- ffs(predictors = df[, c("area", "dist", "dist.retail", "London", "south",  
 #                                       "n.slag", "n.lag", "n.l.slag", "n.nearest.city", 
 #                                                         "year")], 
@@ -605,7 +629,6 @@ ggsave(path.out)
 # ffsmodel_LLO$selectedvars
 # plot_ffs(ffsmodel_LLO)
 ```
-
 
 ### train the model in a loop per region
 
@@ -660,7 +683,7 @@ for (i in regions){
                    importance = "impurity")
   #assign(paste0("model.all",as.character(i)), model.all)
   
-  file <- paste0(path, "/data/temp/oa_rf/region_", as.character(i), ".RData")
+  file <- paste0(path, "/data/temp/oa_rf/regions/region_", as.character(i), ".RData")
   save(model.all, file = file)
   rm(model.all)
 }
@@ -675,16 +698,19 @@ time.taken
 
 ```{r}
 # create a list of the above model outputs
-filenames <- list.files(paste0(path, "/data/temp/oa_rf"), pattern = "*.RData", full.names = T)
+filenames <- list.files(paste0(path, "/data/temp/oa_rf/regions"), pattern = "*.RData", full.names = T)
 
 for (i in filenames){
   load(file = i)
-  i <- gsub("C:/Users/nw19521/OneDrive - University of Bristol/projects/web.diffusion/data/temp/oa_rf/|.RData", "", i)
+  i <- gsub("/home/nw19521/projects/web.diffusion/data/temp/oa_rf/regions/|.RData", "", i)
   assign(i, model.all)  
 }
 
-
 fit.model.all <- mget(ls(pattern = "^region_"))
+
+# clear up
+rm(model.all) # this is the last item from the loop
+rm(list = ls(pattern = "^region_"))
 
 # resamples
 fit.model.all.res <- resamples(fit.model.all)
@@ -928,7 +954,7 @@ for (t in years){
                      importance = 'impurity') #TRUE
   
   #assign(paste0("model.all",as.character(t + 1)), model.all)
-  file <- paste0(path, "/data/temp/oa_rf/timeseries", as.character(t + 1), ".RData")
+  file <- paste0(path, "/data/temp/oa_rf/timeseries/timeseries", as.character(t + 1), ".RData")
   save(model.all, file = file)
   rm(model.all)
 }
@@ -950,9 +976,9 @@ time.taken
 ```{r}
 # create a list of the above model outputs
 
-load(file = (paste0(path, "/data/temp/oa_rf/timeseries2001.RData")))
+#load(file = (paste0(path, "/data/temp/oa_rf/timeseries/timeseries2001.RData")))
 
-filenames <- list.files(paste0(path, "/data/temp/oa_rf"), pattern = "*.RData", full.names = T)
+filenames <- list.files(paste0(path, "/data/temp/oa_rf/timeseries/"), pattern = "*.RData", full.names = T)
 
 t <- 1997
 for (i in filenames){
