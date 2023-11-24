@@ -800,18 +800,20 @@ path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April
 lookup.region <- read_csv(path.lookup) %>% 
   dplyr::select(RGN21CD, RGN21NM) %>% 
   distinct() %>% 
-  add_row(RGN21CD = c("S1", "N0", "W0"), RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
+  rename(RGN11CD = RGN21CD) %>% 
+  add_row(RGN11CD = c("Scotland", "N0", "Wales"), 
+          RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
-path.out <- paste0(path, "/outputs/rf/heatmap_LA.png")
+path.out <- paste0(path, "/outputs/rf/heatmap_OA.png")
 rf.year.all.metrics %>% 
   as.data.frame() %>%
   rownames_to_column(var = "metrics") %>% 
   pivot_longer(!metrics, names_to = "train.test") %>% 
   pivot_wider(names_from = metrics, values_from = value) %>% 
   separate(train.test, c("train", "test"), remove = F) %>% 
-  left_join(lookup.region, by = c("train" = "RGN21CD")) %>% 
+  left_join(lookup.region, by = c("train" = "RGN11CD")) %>% 
   rename(train.region=RGN21NM) %>% 
-  left_join(lookup.region, by = c("test" = "RGN21CD")) %>% 
+  left_join(lookup.region, by = c("test" = "RGN11CD")) %>% 
   rename(test.region=RGN21NM) %>% 
   arrange(Rsquared) %>% 
   dplyr::select(train.region, test.region, Rsquared) %>% 
