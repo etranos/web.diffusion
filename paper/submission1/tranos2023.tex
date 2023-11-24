@@ -9,7 +9,6 @@
   3p]{elsarticle}
 
 \usepackage{amsmath,amssymb}
-\usepackage{lmodern}
 \usepackage{iftex}
 \ifPDFTeX
   \usepackage[T1]{fontenc}
@@ -19,6 +18,10 @@
   \usepackage{unicode-math}
   \defaultfontfeatures{Scale=MatchLowercase}
   \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else  
+    % xetex/luatex font selection
 \fi
 % Use upquote if available, for straight quotes in verbatim environments
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
@@ -119,10 +122,12 @@
 \@ifpackageloaded{subcaption}{}{\usepackage{subcaption}}
 \makeatother
 \makeatletter
-\@ifpackageloaded{tcolorbox}{}{\usepackage[many]{tcolorbox}}
+\@ifpackageloaded{tcolorbox}{}{\usepackage[skins,breakable]{tcolorbox}}
 \makeatother
 \makeatletter
 \@ifundefined{shadecolor}{\definecolor{shadecolor}{rgb}{.97, .97, .97}}
+\makeatother
+\makeatletter
 \makeatother
 \makeatletter
 \makeatother
@@ -194,13 +199,13 @@ technologies.
     keyword2
 \end{keyword}
 \end{frontmatter}
-    \ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, breakable, frame hidden, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, enhanced, interior hidden]}{\end{tcolorbox}}\fi
+    \ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[borderline west={3pt}{0pt}{shadecolor}, breakable, frame hidden, interior hidden, sharp corners, enhanced, boxrule=0pt]}{\end{tcolorbox}}\fi
 
 \hypertarget{sec1}{%
 \section{Introduction}\label{sec1}}
 
 Geographers were always interested in how new technologies and
-innovations diffuse across space and, importantly, how such
+innovations diffuse across space and time and, importantly, how such
 spatio-temporal processes can be modelled. After all, diffusion together
 with invention and innovation are considered the pillars of
 technological change \citep{das2022diffusion}. The seminal contribution
@@ -210,10 +215,10 @@ had been passed to other disciplines such as economics, business studies
 and sociology well before the `cultural turn' of economic geography
 \citep{perkins2005international}. A potential explanation of the lack of
 geographical studies exploring the diffusion of new and, more
-specifically, digital technologies across \emph{both} space and time can
-be attributed to the scarcity of relevant and granular enough data. As
-\citet{zook2022mapping} highlight, digital activities are hardly ever
-captured in official data.
+specifically for this paper, digital technologies across \emph{both}
+space and time can be attributed to the scarcity of relevant and
+granular enough data. As \citet{zook2022mapping} highlight, digital
+activities are hardly ever captured in official data.
 
 This paper offers such a contribution: a geographical study illustrating
 how a new technology that is the web diffused over space and time in the
@@ -222,28 +227,28 @@ period. It does so by employing a novel source of big data which
 captures the active engagement with web technologies during that period.
 By addressing this empirical question this paper exemplifies how the
 combination of data sources which escape the traditional social science
-domain and adequate research methods can offer new contributions
-regarding our understanding of how new technologies diffuse.
+domain and adequate research methods can offer new lenses to
+geographical research regarding the understanding of technological
+diffusion.
 
 The motivation for this paper lies in the fact that there are various
 stakeholders who are interested in knowing how new digital technologies
-diffused over space and time and use this information to make
-predictions regarding the diffusion of related \emph{future}
-technologies. As per \citet{leibowicz2016representing}, historical
-studies agree on the fact that ``technologies diffuse at different
-times, at different rates, and to different extents in different places,
-and can be significantly influenced by policies \citep{victor1993}''.
-\citet{meade2021modelling} highlight that a variety of actors have a
-direct interest in gaining such knowledge including network equipment
-suppliers; network operators, regulatory and local authorities. These
-processes and their effects very a lot between scales: although the
-diffusion of a new technology might not be optimal at a local level, it
-might be beneficial from a global perspective as it could lead to faster
-diffusion to less advantaged places \citep{leibowicz2016representing}.
-Despite the spatial heterogeneity of such diffusion mechanisms and the
-policy relevance, there are very limited attempts in the literature to
-analyse the diffusion of new digital technologies at a detailed
-geographical level.
+diffused over space and time and use this knowledge to make predictions
+regarding the diffusion of related \emph{future} technologies. As per
+\citet{leibowicz2016representing}, historical studies agree on the fact
+that ``technologies diffuse at different times, at different rates, and
+to different extents in different places, and can be significantly
+influenced by policies \citep{victor1993}''. \citet{meade2021modelling}
+highlight that a variety of actors have a direct interest in gaining
+such knowledge including network equipment suppliers; network operators,
+regulatory and local authorities. These processes and their effects very
+a lot across scales: although the diffusion of a new technology might
+not be optimal at a local level, it might be beneficial from a global
+perspective as it could lead to faster diffusion to less advantaged
+places \citep{leibowicz2016representing}. Despite the spatial
+heterogeneity of such diffusion mechanisms and the policy relevance,
+there are very limited attempts in the literature to analyse the
+diffusion of new digital technologies at a detailed geographical level.
 
 Technological diffusion, which is by definition an aggregated process,
 can be discussed in parallel with individual adoption mechanisms. On the
@@ -264,19 +269,19 @@ internet and, consequently, its almost universal adoption. The reader is
 reminded that it was only in 1994 when Netscape Navigator was
 introduced, a year before Microsoft's Internet Explorer \footnote{\url{https://www.theguardian.com/global/2015/mar/22/web-browser-came-back-haunt-microsoft}}.
 Also, only \(9\) per cent of UK's households had access to the internet
-in \(1998\) \citep{ons2018} and during that period that web included
-mostly static webpages, there were no social media and web browsing was
-happening exclusively from desktop PCs as there were no smartphones
-\citep{tranosuk}. Hence, it is fair to say that the study period
-captures the very early stages of the diffusion on a new technology that
-is the web. This is key point in the lifecycle of a new technology.
-Firstly, during this period new technologies are expensive, crude and
-imperfect \citep{rosenberg1994exploring, wilson201281}. A simple
-comparison between Web 1.0 and Web 3.0 applications clearly illustrates
-this \citep{tranos2020social}. During this period the performance of a
-new technology is the main attraction and not the cost to access and use
-it \citep{wilson2011lessons} There is a broader theoretical discussion
-in the literature regarding the motivation behind early adoption. As
+in \(1998\) \citep{ons2018}, the web included mostly static webpages,
+there were no social media and web browsing was happening exclusively
+from desktop PCs as there were no smartphones \citep{tranosuk}. Hence,
+it is fair to say that the study period captures the very early stages
+of the diffusion on a new technology that is the web. This is key point
+in the lifecycle of a new technology. Firstly, during this period new
+technologies are expensive, crude and imperfect
+\citep{rosenberg1994exploring, wilson201281}. A simple comparison
+between Web 1.0 and Web 3.0 applications clearly illustrates this
+\citep{tranos2020social}. During this period the performance of a new
+technology is the main attraction and not the cost to access and use it
+\citep{wilson2011lessons} There is a broader theoretical discussion in
+the literature regarding the motivation behind early adoption. As
 summarised by \citet{perkins2005international}, on the one hand,
 epidemic models highlight the role of interpersonal contacts as a way
 for new technologies to diffuse. On the other hand, economic models
@@ -293,8 +298,8 @@ between investment and economic returns as reflected in the Solow
 paradox \citep{acemoglu2014return, brynjolfsson2018artificial}.
 
 Importantly, the data used here depicts the \emph{active} engagement
-with the web as it contains all the commercial websites archived by the
-Internet Archive \footnote{\href{See\%20https://archive.org/}{https://archive.org/}.}
+with the web in the UK as it contains all the commercial websites
+archived by the Internet Archive \footnote{\href{See\%20https://archive.org/}{https://archive.org/}.}
 that include a mention to at least one valid UK postcode in the web
 text. Websites are identified as commercial ones if they are part of the
 .co.uk second level domain (SLD). Also, the act of of creating a website
@@ -303,7 +308,9 @@ passive act of browsing the web or having an internet connection
 \citep{tranosuk}. Previous studies have focused mostly on more passive
 notions of engaging with digital technologies such as internet adoption
 and internet speeds
-\citep[e.g.][]{blank2018local, riddlesden2014broadband}.
+\citep[e.g.][]{blank2018local, riddlesden2014broadband}. More details
+about the data and the data generation process can be found in Section
+\protect\hyperlink{sec3}{XX}. \textbf{ADD DATA DESCRIPTION, WHY .CO.UK}
 
 \citet{grubler1990rise} Later Hagerstrand conceptualized physical
 ``barrier'' effects like lakes or uninhabited areas, which, in addition

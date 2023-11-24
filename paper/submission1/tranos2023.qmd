@@ -40,7 +40,7 @@ editor:
 
 <!-- geographers lack of interest + motivation -->
 Geographers were always interested in how new technologies and
-innovations diffuse across space and, importantly, how such
+innovations diffuse across space and time and, importantly, how such
 spatio-temporal processes can be modelled. After all, diffusion together 
 with invention and innovation are considered the pillars of 
 technological change [@das2022diffusion]. The seminal contribution of
@@ -50,10 +50,10 @@ passed to other disciplines such as economics, business studies and
 sociology well before the 'cultural turn' of economic geography
 [@perkins2005international]. A potential explanation of the lack of 
 geographical studies exploring the diffusion of new and, more 
-specifically, digital technologies across *both* space and time can be
-attributed to the scarcity of relevant and granular enough data. As 
-@zook2022mapping highlight, digital activities are hardly ever captured 
-in official data.
+specifically for this paper, digital technologies across *both* space 
+and time can be attributed to the scarcity of relevant and granular 
+enough data. As @zook2022mapping highlight, digital activities are 
+hardly ever captured in official data.
 
 <!-- contribution -->
 This paper offers such a contribution: a geographical study illustrating 
@@ -63,8 +63,8 @@ period. It does so by employing a novel source of big data which
 captures the active engagement with web technologies during that period.
 By addressing this empirical question this paper exemplifies how the 
 combination of data sources which escape the traditional social science
-domain and adequate research methods can offer new contributions 
-regarding our understanding of how new technologies diffuse.
+domain and adequate research methods can offer new lenses to geographical
+research regarding the understanding of technological diffusion.
 
 <!-- motivation -->
 The motivation for this paper lies in the fact that there are various
@@ -78,7 +78,7 @@ influenced by policies [@victor1993]". @meade2021modelling highlight that
 a variety of actors have a direct interest in gaining such knowledge 
 including network equipment suppliers; network operators, regulatory 
 and local authorities. 
-These processes and their effects very a lot between scales: although
+These processes and their effects very a lot across scales: although
 the diffusion of a new technology might not be optimal at a local level,
 it might be beneficial from a global perspective as it could lead to 
 faster diffusion to less advantaged places [@leibowicz2016representing]. 
@@ -134,8 +134,8 @@ focus is on Information and Communication Technologies (ICT) because of the comm
 found lag between investment and economic returns as reflected in the Solow paradox 
 [@acemoglu2014return; @brynjolfsson2018artificial].
 
-Importantly, the data used here depicts the *active* engagement with the web as 
-it contains all the commercial websites archived by the Internet Archive
+Importantly, the data used here depicts the *active* engagement with the web in 
+the UK as it contains all the commercial websites archived by the Internet Archive
 ^[[https://archive.org/](See https://archive.org/).]
 that include a mention to at least one valid UK postcode in the web text. 
 Websites are identified as commercial ones if they are part of the .co.uk second 
@@ -143,7 +143,9 @@ level domain (SLD). Also, the act of of creating a website is understood here as
 active engagement with the web vis-à-vis the more passive act of browsing the web 
 or having an internet connection [@tranosuk]. Previous studies have focused mostly
 on more passive notions of engaging with digital technologies such as internet 
-adoption and internet speeds [e.g. @blank2018local; @riddlesden2014broadband].
+adoption and internet speeds [e.g. @blank2018local; @riddlesden2014broadband]. 
+More details about the data and the data generation process can be found in Section
+[XX](#sec3). **ADD DATA DESCRIPTION, WHY .CO.UK**
 
 <!-- description of the methods and results -->
 
@@ -193,12 +195,12 @@ using Monte Carlo simulations. Hägerstrand also incorporated the role of hierar
 and how some phenomena maybe firstly adopted in larger cities and then diffuse 
 to second tier ones. This is a sequential instead of a simultaneous process, which 
 resembles the 'lead-lag' spatial acceleration effect in market research 
-[@bento2018time; @PERES201091]. Hägerstrand maybe more widely known for highlighting 
-the role time plays in the diffusion of innovations: an early-pioneering 
-period, a middle fast accelerating period and a final saturation one [@morrill2020spatial. 
+[@bento2018time; @PERES201091]. Hägerstrand is more widely known though for highlighting 
+the role time plays in the diffusion of innovations: an early-pioneering period, 
+a middle fast accelerating period and a final saturation one [@morrill2020spatial.
 
 The temporal dimension was further explored by Everett Rogers and his seminal work 
-on 'Diffusion of Innovations' [@rogers2010diffusion]. Rogers being a sociologist 
+on 'Diffusion of Innovations' [@rogers2010diffusion]. Rogers being a sociologist, 
 his work focused not on the diffusion of innovations over space and time, but 
 instead on the adoption of new technologies and innovations by individuals and the 
 individual mechanisms that drive the decisions behind adoption. He identified five 
@@ -229,11 +231,12 @@ more coarse than the one adopted here. To begin with @beardsell1999spatial studi
 the evolution of the computer industry in $317$ US metro areas during the $1977-1992$ 
 period using employment data. Their analysis indicated that the relative size distribution
 holds for urban computer employment and also urban heterogeneity is essential in
-explaining this distribution. @bednarz2020pulled focused on wind turbines and modelled
-their spatial diffusion across $402$ German regions during $1970-2015$. Their key
-finding is that local demand than local supply was the main driving factor.
+explaining this distribution. in a recent study, @bednarz2020pulled focused on 
+wind turbines and modelled their spatial diffusion across $402$ German regions 
+during $1970-2015$. Their key finding is that local demand than local supply was 
+the main driving factor.
 
-At a global scale @perkins2005international analyzed if the diffusion rate of new
+At a global scale @perkins2005international explored whther the diffusion rate of new
 technologies is driven by a latecomer advantage and the engagement with the global
 economy via foreign direct investments and trade. Their results illustrate that 
 indeed latecomers and developing countries experience diffusion of new technologies 
@@ -345,7 +348,10 @@ using the total number of websites as we cannot compute a rate.
 
 Moran's I as @ding2010modeling **TODO** for t_0, diffusion speed
 
-## Results {#sec3.1}
+# Results {#sec3}
+
+
+## Old ideas
 
 Hexagon density maps: reflect the spatial structure of Britain. Websites
 are associated in places where people live and work.
@@ -357,7 +363,7 @@ Neighbourhood effect: diffusion proceeds outwards from innovation
 centers, first "hitting" nearby rather than far-away locations (Grubler
 1990)
 
--   Moran's I: for OA and LAD over time **TODO** add 0s
+-   Moran's I: for OA and LAD over time
 
 -   LISA maps: for OA and LAD over time More and less expected clusters.
     Different scales show different results
@@ -373,22 +379,45 @@ Hierarchy effect: from main centers to secondary ones -- central places
 
 S-shaped diffusion curves
 
--   S for LADs per firm and OA. **TODO**: OA per firm? fix firms over
-    time.
+-   S for LADs per firm and OA. 
 
 -   Fast and slow LAs map. There is clustering
 
--   **TODo** check s_uk_firm_11
+-   s_uk_firm_11
 
 -   ranks: there is stability and movement
 
-## 3.2 Case study approach {#sec3.2}
+## New structure
 
-# Digital technologies and spatial structure: a global view {#sec4}
+1. S-shaped diffusion curves: S for LADs per firm. UK, fast/slow/examples
 
-# The impact of ICT on the US and the UK spatial structures {#sec5}
+2. ranks: there is stability and movement
 
-# Discussion and conclusions {#sec6}
+3. Neighbourhood effect: diffusion proceeds outwards from innovation
+centers, first "hitting" nearby rather than far-away locations (Grubler
+1990)
+
+  -   Moran's I: for OA and LAD over time
+
+  -   LISA maps: for OA and LAD over time More and less expected clusters.
+    Different scales show different results
+
+  -   Website density regressions: for OA and LAD over time
+
+4. Hierarchy effect: from main centers to secondary ones -- central places
+
+  -   Gini coefficient. Almost perfect polarisation of web adoption in the
+    early stages at a granular level More equally diffused at the Local
+    Authority level Plateau overtime
+
+5. RF
+  
+  - ideal: (i) train RF for all years and all (1) LADs and (2) OAs with CAST
+  and report metrics. (ii) train for all years and per region for (1) LADs and (2)
+  OAs, and predict to the other regions. Reports predictions as region similarities
+
+
+# Discussion and conclusions {#sec4}
 
 contrary to results from future studies regarding social media
 [@lengyel2020role], web technologies did not exclusively spread from a
