@@ -291,7 +291,7 @@ a.la <- a.la %>% filter(term=="xmid") %>%
 ## Loop for S function estimation for Local Authorities keeping the model objects
 
 ```{r}
-a.la <- as_tibble()
+a.la <- tibble()
 all.la <- df %>% filter(ladcd != "NA") %>% distinct(ladcd) %>% 
   #top_n(n=2) %>% 
   simplify2array()
@@ -313,7 +313,7 @@ for (i in all.la){
 }
 
 a.la <- a.la %>% filter(term=="xmid") %>% 
-  bind_cols(as.tibble(all.la)) %>% 
+  bind_cols(as_tibble(all.la)) %>% 
   #mutate(estimate = round(estimate, 0)) %>% 
   #summarise(r = range(r2))
   filter(p.value < 0.01 & 
