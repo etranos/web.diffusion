@@ -635,7 +635,7 @@ save(model.all, file = path.out)
 ```{r}
 
 #folds
-k <- 3 # 7.09h for k=3
+k <- 10 # 7.09h for k=3
 
 #length is = (n_repeats*nresampling)+1
 seeds <- vector(mode = "list", length = 11)
@@ -647,7 +647,7 @@ for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
 seeds[[11]]<-sample.int(1000, 1)
 
 detectCores()
-cl <- makePSOCKcluster(2)
+cl <- makePSOCKcluster(8)
 registerDoParallel(cl)
 
 # train in every region

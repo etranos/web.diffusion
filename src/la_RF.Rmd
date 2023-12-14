@@ -127,9 +127,29 @@ df <- df %>% left_join(firms) %>%
 # sapply(df %>% left_join(firms), function(x) sum(is.na(x)))
 ```
 
-## spatial data
+## spatial data NEW
 
 ```{r}
+# get LA for the UK
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- st_read(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+la <- st_transform(la, 4326)
+
+#la.f <- fortify(la, region = "LAD21CD")
+
+# cities
+cities <- maps::world.cities %>% 
+  filter(country.etc=="UK") %>% 
+  arrange(pop) %>% tail(10) 
+cities.sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+```
+
+## spatial data
+
+```{r, eval=FALSE}
 # get LA for the UK
 path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
 la <- readOGR(path.geo)
@@ -156,11 +176,17 @@ Retail centres from [source](https://data.cdrc.ac.uk/dataset/retail-centre-bound
 
 ```{r}
 # LA centroids
-la.c <- gCentroid(la, byid=TRUE)@coords %>% 
-  as.data.frame() %>%
-  bind_cols(la@data) %>% 
-  dplyr::select(LAD21CD, x, y) %>% 
-  remove_rownames()
+# la.c <- gCentroid(la, byid=TRUE)@coords %>% 
+#   as.data.frame() %>%
+#   bind_cols(la@data) %>% 
+#   dplyr::select(LAD21CD, x, y) %>% 
+#   remove_rownames()
+
+sf_use_s2(FALSE)
+la.c <- st_centroid(la) %>% 
+  st_coordinates() %>%
+  as.data.frame() %>% 
+  bind_cols(la %>% dplyr::select(LAD21CD))
 
 # cities
 city.names <- c("London, UK", 
@@ -178,26 +204,38 @@ cities <- geo(city.names, no_query = F, method = "arcgis")
 
 # retail centres
 geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
-retail <-readOGR(geo.path) 
-#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
-retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
-  as.data.frame() %>% 
-  add_rownames(var = "id") #%>%
+#retail <-readOGR(geo.path) 
+retail <- st_read(geo.path)
 
-retail.major.cetres <- retail.major.cetres.help %>% 
-  st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+#retail.major.cetres <- subset(retail, retail$Classification == "Major Town Centre") #%>% 
+# retail.major.cetres.help <- gCentroid(retail, byid=TRUE)@coords %>% 
+#   as.data.frame() %>% 
+#   add_rownames(var = "id") #%>%
+retail.major.cetres.help <- st_centroid(retail) %>% 
   st_transform(4326) %>%
-  st_coordinates() %>%
-  as_tibble() %>% 
-  bind_cols(retail.major.cetres.help$id) %>% 
-  rename(id = '...3') %>% 
-  left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+  st_coordinates() %>% 
+  as.data.frame() %>% 
+  add_rownames(var = "id")
+
+# retail.major.cetres <- retail.major.cetres.help %>% 
+#   st_as_sf(coords = c("x", "y"), crs = 27700) %>%
+#   st_transform(4326) %>%
+#   st_coordinates() %>%
+#   as_tibble() %>% 
+#   bind_cols(retail.major.cetres.help$id) %>% 
+#   rename(id = '...3') %>% 
+#   left_join(retail@data %>% mutate(id = rownames(retail@data)), by = 'id')
+retail.major.cetres <- retail.major.cetres.help %>% 
+  # as_tibble() %>% 
+  # bind_cols(retail.major.cetres.help$id) %>% 
+  # #rename(id = '...3') %>% 
+  left_join(retail %>% rownames_to_column(var = "id"), by = 'id')
 ```
 
 Distance to cities
 
 ```{r}
-dist <- distm(cbind(la.c$x, la.c$y), cbind(cities$long, cities$lat), fun=distHaversine) 
+dist <- distm(cbind(la.c$X, la.c$Y), cbind(cities$long, cities$lat), fun=distHaversine) 
 dist <- round((dist/1000),2) %>% 
   as_tibble()  
 
@@ -235,14 +273,14 @@ dist <- transform(dist, dist = do.call(pmin, dist[-1]))
 # length(unique(test$oa11cd))
 
 # calculate area
-la$SHAPE_Area <- area(la) #/ 1000000
+#la$SHAPE_Area <- area(la) #/ 1000000
+la$area <- st_area(la) #/ 1000000
 
 # Join with distance and area
 df <- df %>% left_join(dist, by = c("ladcd" = "ladcd")) %>% 
-  left_join(la@data, by = c("ladcd" = "LAD21CD")) %>% 
-  rename(area = SHAPE_Area) %>% 
+  left_join(la, by = c("ladcd" = "LAD21CD")) %>% 
   relocate(area, .after = n) %>% 
-  mutate(area = area / 1000000,
+  mutate(area = area / 1000000,     # UNITS APPEAR WRONGLY IN M AND NOT IN KM
          density = n / area) %>% 
   relocate(density, .after = area)
 sapply(df, function(x) sum(is.na(x)))
@@ -251,7 +289,7 @@ sapply(df, function(x) sum(is.na(x)))
 Distance to retail centres
 
 ```{r}
-dist.retail <- distm(cbind(la.c$x, la.c$y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
+dist.retail <- distm(cbind(la.c$X, la.c$Y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
 dist.retail <- round((dist.retail/1000),2) %>% 
   as_tibble()  
 
@@ -379,15 +417,15 @@ summary(mod2)
 
 ```{r}
 # London = Islington 
-sf_use_s2(FALSE)
-path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
-la.sf <- st_read(path.geo)
+# sf_use_s2(FALSE)
+# path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+# la.sf <- st_read(path.geo)
 
+#help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
+#  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
 
-help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
-  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
-
-help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
+# nearest city
+help1 <- st_filter( la, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
   mutate(cities = c("Leicester",
                     "Bristol",
                     "Manchester",
@@ -411,12 +449,13 @@ help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>%
   dplyr::select(ladcd, nearest.city.LAD21CD)
 
 sf_use_s2(FALSE)
-la.c <- st_centroid(la.sf)
+la.c <- st_centroid(la)
 kn <- knearneigh(la.c, k = 5)
 knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
 
-df <- df %>% drop_na() %>% group_by(year) %>% 
+df <- df %>% drop_na() %>% # THIS DROPS L999999
+  group_by(year) %>% 
   mutate(n.slag = lag.listw(knn.l, n)) %>% 
   group_by(ladcd) %>% 
   mutate(n.l.slag = dplyr::lag(n.slag, n=1, order_by=year),
@@ -442,7 +481,9 @@ south <- c("E12000006", "E12000007", "E12000008", "E12000009" )
 df <- df %>% mutate(south = ifelse(RGN21CD %in% south, 1, 0))
 
 # For growth:
-#df <- df %>% mutate(growth = log(n/n.lag))
+#df <- df %>% mutate(growth = log(n/n.lag))                          
+df <- df %>% mutate(growth = log((n+0.001)/(n.lag+0.01)))                       # CONSTANT FOR GROWTH
+#df <- df %>% mutate(growth = n- n.lag)                                         # ABS. GROWTH
 
 sapply(df, function(x) sum(is.na(x)))
 ```
@@ -930,16 +971,25 @@ df <- df %>% mutate(help = substr(ladcd, start = 1, stop = 2)) %>%
   ungroup() %>% 
   dplyr::select(-help)
 
-df <- df %>% filter(year > 1996)
+df <- df %>% left_join(df %>% 
+                         ungroup() %>% 
+                         filter(LAD21NM == "Islington") %>% 
+                         dplyr::select(year, n) %>% 
+                         rename(n.London = n)) %>% 
+  group_by(ladcd) %>% 
+  mutate(n.London.lag = dplyr::lag(n.London)) %>% 
+  mutate(n.nearest.city.lag = dplyr::lag(n.nearest.city)) %>% 
+  ungroup()
 
-#df <- df %>% dplyr::select(-n.lag)
+df <- df %>% filter(year > 1996)
+sapply(df, function(x) sum(is.na(x)))
 ```
 
 ### train the model in all data
 
 ```{r}
 set.seed(123)
-indices <- CreateSpacetimeFolds(df, 
+indices <- CreateSpacetimeFolds(df %>% filter(year > 1999),                     # FILTER BY YEAR FOR GROWTH
                                 spacevar = "ladcd",
                                 timevar = "year", 
                                 k = 10)
@@ -948,7 +998,7 @@ indices <- CreateSpacetimeFolds(df,
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 6) # , 11) 9 after adding South
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -966,9 +1016,10 @@ cl <- makePSOCKcluster(14)
 registerDoParallel(cl)
 
 start.time <- Sys.time()
-model.all <- train(n ~ area + dist + dist.retail + London + south + 
-                     n.slag + n.lag + n.l.slag + n.nearest.city + year,
-                   data = df, 
+model.all <- train(growth ~                                                     # REPLACE n WITH growth
+                     #area + dist + dist.retail + London + south + n.slag + n.lag + n.l.slag + London.n.lag + n.nearest.city + year,
+                     I(n.London.lag/dist) + I(n.nearest.city.lag/London) + n.l.slag + year,
+                   data = df %>% filter(year > 1999),                           # FILTER BY YEAR FOR GROWTH
                    trControl = tc,
                    method = "ranger",
                    na.action = na.omit,
@@ -1034,58 +1085,62 @@ ggsave(path.out)
 # plot_ffs(ffsmodel_LLO)
 ```
 
-### train the model in a loop per region
+### train the model in a loop for all but one regions
 
 ```{r}
+rm(indices)
 
 #length is = (n_repeats*nresampling)+1
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
+set.seed(831)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 6) # 4 feature + 2
 
 #for the last model
+set.seed(832)
 seeds[[11]]<-sample.int(1000, 1)
 
-# CV
-tc <- trainControl(method = "cv",
-                   number = 10,
-                   seeds = seeds,
-                   allowParallel = T,
-                   index = indices$index,
-                   savePredictions = 'final')
-
-detectCores()
+# detectCores()
 cl <- makePSOCKcluster(14)
 registerDoParallel(cl)
 
 # train in every region
 start.time <- Sys.time()
 
-regions <- df %>% distinct(RGN21CD)
+regions <- df %>% ungroup() %>% distinct(RGN21CD)
 regions <- as.vector(regions$RGN21CD)
 
 for (i in regions){
   
   set.seed(71)
-  indices <- CreateSpacetimeFolds(df %>% filter(RGN21CD==i), 
+  indices <- CreateSpacetimeFolds(df %>% filter(RGN21CD!=i), #& year > 1999),   # FILTER BY YEAR FOR GROWTH 
                                 spacevar = "ladcd",
                                 timevar = "year", 
                                 k = 10)
+  # CV
+  tc <- trainControl(method = "cv", #MOVED HERE< DOUBLE CHECK
+                   number = 10,
+                   seeds = seeds,
+                   allowParallel = T,
+                   index = indices$index,
+                   savePredictions = 'final')
 
-  model.all <- train(n ~ area + dist + dist.retail + London + south + 
-                     n.slag + n.lag + n.l.slag + n.nearest.city + year,
-                   data = df %>% filter(RGN21CD==i), 
+
+  model.all <- train(growth ~                                                   # REPLACE n WITH growth
+                       #area + dist + dist.retail + London + south + n.slag + n.lag + n.l.slag + n.nearest.city + year,
+                       I(n.London.lag/dist) + I(n.nearest.city.lag/London) + n.l.slag + year,
+                   data = df %>% filter(RGN21CD!=i), #& year > 1999),           # FILTER BY YEAR FOR GROWTH
                    trControl = tc,
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
                    importance = "impurity")
-  assign(paste0("model.all",as.character(i)), model.all)
+  assign(paste0("model.all",as.character(i)), model.all) # object name = region not in the training data
 }
 
 stopCluster(cl)
-end.time <- Sys.time()
+end.time <- Sys.time() # ca. 2h
 time.taken <- round(end.time - start.time,2)
 time.taken
 ```
@@ -1140,7 +1195,7 @@ importance %>% ggplot() +
 
 ```
 
-### Test on all other regions
+### Test on one region
 
 ```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
 
@@ -1152,6 +1207,71 @@ df %>% group_by(year) %>%
 ```
 
 ```{r}
+# train on all but one region, test on that region
+
+df.predictions <- data.frame()
+for (i in regions){
+    pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all",i)], 
+                    df[df$RGN21CD==i,]) #& df$year > 1999,])                            # FILTER BY YEAR
+    pred <- as.data.frame(pred)
+    rownames(pred) <- c()
+    assign(paste0("region.predict.model.", ".on.", i), pred)
+    
+    d <- paste0("region.predict.model.", ".on.", i)
+    d <- cbind(get(d), df %>% filter(RGN21CD==i)) #& year > 1999))                      # FILTER BY YEAR
+    d <- d %>% dplyr::select(RGN21CD, ladcd, year, growth, 1)                           # REPLACE n WITH growth
+    colnames(d)[5] <- "predictions"
+    d <- d %>% mutate(tested.on = i)
+    df.predictions <- rbind(d, df.predictions)
+}
+
+df.predictions <- df.predictions %>% mutate(test.train = paste0(RGN21CD, ".", tested.on))
+
+# split to list by region pair
+pred.by.region.all.list <- split(df.predictions, df.predictions$RGN21CD) 
+
+# calculate metrics for every region pair 
+rf.year.all.metrics <- lapply(pred.by.region.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$growth))    # REPLACE n WITH growth
+
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% 
+  dplyr::select(RGN21CD, RGN21NM) %>% 
+  distinct() %>% 
+  add_row(RGN21CD = c("S1", "N0", "W0"), RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
+
+path.out <- paste0(path, "/outputs/rf/heatmap_LA.png")
+rf.year.all.metrics %>% 
+  as.data.frame() %>%
+  rownames_to_column(var = "metrics") %>% 
+  pivot_longer(!metrics, names_to = "test.on") %>% 
+  pivot_wider(names_from = metrics, values_from = value) %>% 
+  left_join(lookup.region, by = c("test.on" = "RGN21CD")) %>% 
+  arrange(Rsquared)  
+
+ggplot(aes(train.region, test.region, fill= Rsquared)) + 
+  geom_tile() +
+  coord_fixed() +
+  labs(y = "", x = "") + #y: test.region, x: train.region
+  scale_fill_gradientn(colours = terrain.colors(10), trans = 'reverse') +
+  theme(#legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust=1),
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
+
+  #summarise(r = range(Rsquared))
+  #round(2) %>%
+  #kable()
+
+```
+
+#### OLD
+
+```{r, eval=FALSE}
 # train on one region, test on all the rest
 
 df.predictions <- data.frame()
@@ -1220,6 +1340,37 @@ ggsave(path.out)
 ```
 
 
+## Granger
 
+```{r}
+library(plm)
+p.df <- pdata.frame(df, index= c("ladcd","year"))
+
+
+test <- pgrangertest(n ~ n.l.slag, data = p.df, order = 1L) # *** reject the null that x does NOT cause y
+# n ~ Lags(n, 1) + Lags(n.l.slag, 1), or
+# n ~ Lags(n, 1) + Lags(n.slag, 2)
+# n ~ Lags(n, 1)
+test$indgranger %>% as_tibble() %>% arrange(`p-value`) #filter(`p-value` < 0.01)
+
+
+test <- pgrangertest(n ~ n.slag, data = p.df, order = 1L)
+# n ~ Lags(n, 1:1) + Lags(n.slag, 1:1)
+# n ~ Lags(n, 1:1)
+test$indgranger %>% as_tibble() %>% arrange(`p-value`) #filter(`p-value` < 0.01)
+
+
+test <- pgrangertest(n.slag ~ n, data = p.df, order = 1L) # ** reject the null that x does NOT cause y
+test$indgranger %>% as_tibble() %>% arrange(`p-value`)
+
+
+p.df$n.London_dist = p.df$n.London/p.df$London
+p.df$n.nearest.city_dist = p.df$n.nearest.city/p.df$dist
+
+pgrangertest(n ~ n.London_dist, data = p.df, order = 1L)
+pgrangertest(n ~ n.nearest.city_dist, data = p.df, order = 1L)
+
+cor(p.df$n.London_dist, dplyr::lag(p.df$n.London_dist), use = "complete.obs")
+```
 
 
