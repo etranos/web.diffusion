@@ -127,3 +127,48 @@ Tuning parameter 'min.node.size' was held constant at a value of 5
 RMSE was used to select the optimal model using the smallest value.
 The final values used for the model were mtry = 6, splitrule =
  extratrees and min.node.size = 5.
+
+## After QuSS
+- [ ] Rui's point: control for types of companies, is it because of diffusion or because of types of firms?
+
+- [ ] lisa markov model: 
+fraction of time LL in to vs t1, probability to go through classes
+
+conditional being a LL, what is the provability of a neighbour to be a LL.
+==> diffusion 
+
+- [x] model log odds, standard model and then transform back to get the plot, tail behaviour
+I fit a logistic curve (y = asym/(1+e^((xmid-x)/scal))) using a self-starter function that estimates suitable start values for the necessary parameters: asymptote and scale 
+https://stat.ethz.ch/R-manual/R-devel/library/stats/html/SSlogis.html
+fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
+
+
+- [ ] MLM to borrow form the country's S curve, deviation from the country
+
+- [ ] Firm GINI, conditional of the firms being unequal,
+Decomposition of GINI Serge used for inequalities 
+GINI for firm 
+
+- Local Authorities levels
+	- [x] y ~ n.l.slag + lag(n.nearest.city) + lag(n.London) + year
+	R^2: 0.7953016  
+
+	- [x] divide by d
+	R^2: 0.8000562, d^2: 0.7970405
+	
+	- [x] Train to all but one, test on one: for n NI .62, NW.65, SC.8, L.81, rest > .86 
+	
+- Local Authorities growth  
+	- for year > 1999, R^2 =  0.7381668. For 1998, 2 cases with growth = Inf, NI .83, NW .84, NE .86, SC .89, L .89 	
+	- growth for n + .001, for year > 1999 similar order to levels, all years much lower R^2 and different order 
+	- abs. growth, for year > 1999 NW, L, SW, SC lower R^2, all years NW, L, NI, SC
+	- INCLUDE: growth rate for year > 1999 and abs. growth for all years
+
+- OA levels
+	- [ ] y ~ n.l.slag + lag(n.nearest.city)/d + lag(n.nearest.retail)/d + lag(London)/d + year
+	This tests for continuity, hierarchy and time. No rank dynamics
+
+- [ ] Granger
+
+
+leapfrogging 

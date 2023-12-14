@@ -1,5 +1,5 @@
 ---
-title: 'Digital economy in the UK: an evolutionary story'
+title: 'A multi-scalar story of the diffusion of a new technology: the web'
 # date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 author: |
   |
@@ -39,34 +39,32 @@ path <- find_rstudio_root_file()
 
 ## Contents
 
-<br>
-
 ::: {style="margin-left: 50px !important; text-align:left !important"}
 -   Introduction
+
 -   Web data
--   Spatial analysis
--   S-shaped diffusion curves
--   Rank dynamics
+
+-   Methods
+
+-   Results
+
+    -   S-shaped diffusion curves
+    -   Rank dynamics
+    -   Spatial analysis
+    -   Modelling
+
 -   Conclusions <br> <br>
     <!-- [etranos.info/post/gceg2022](https://etranos.info/post/gceg2022/) -->
 :::
 
 # Introduction
 
-## Aims
-
-<br>
-
--   Map the **active** engagement with the *digital*
--   Over time, **early stages** of the internet
--   **Granular** and **multi-scale** spatial perspective
-
-## Aims
+## Aim
 
 -   Diffusion of a new technology: the *web*
 -   Geographers used to be interested in diffusion
 -   @hagerstrand1968innovation
--   Passed the torch to economists and sociologists 
+-   Passed the torch to economists and sociologists
 -   Why? Lack of granular data:
 
 > Because new digital activities are rarely---if ever---captured in
@@ -74,8 +72,6 @@ path <- find_rstudio_root_file()
 > from alternative sources [@zook2022mapping].
 
 ## Importance
-
--   Understand how the adoption of new technologies evolves
 
 -   Guide policies for deployment of new technologies
 
@@ -109,29 +105,58 @@ path <- find_rstudio_root_file()
 @hagerstrand1965monte: from innovative centres (core) through a
 hierarchy of sub-centres, to the periphery
 
+## Diffusion of a new *digital* technology
+
+<br>
+
+-   Diffusion of an intangible/digital technology
+
+-   Map the **active** engagement with the *digital*
+
+-   Over time, **early stages** of the internet
+
+-   **Granular** and **multi-scale** spatial perspective
+
 # Web data
 
 ## Long story short
 
-<br>
-
--   Archived web data
+-   Data from the Internet Archive, the oldest web archive
 
 -   Observe commercial websites 1996 - 2012 in the UK (*.co.uk*)
 
--   Geolocate:
-  
-    - to a unique postcode
+-   Geolocation: postcode references in the text
 
-    - to multiple postcodes
+-   Timestamp: archival year
 
--------------------------------------------
+-   Counts
+
+## Web data: The Internet Archive
+
+![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture1.png){width="70%"}
+
+## Web data: The Internet Archive
+
+![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture2.png){width="70%"}
+
+## Long story short
+
+-   Data from a Web Archive -- The Internet Archive
+
+-   Observe commercial websites 1996 - 2012 in the UK (*.co.uk*)
+
+-   Geolocation: postcode references in the text
+
+-   Timestamp: archival year
+
+-   Counts
+
+------------------------------------------------------------------------
 
 ```{r , eval=T, message=FALSE, out.width = "1200px"}
 path.image <- paste0(path, "/presentations/images/past_publications.png")
 knitr::include_graphics(path.image)
 ```
-
 
 ## Web data: The Internet Archive
 
@@ -143,14 +168,6 @@ knitr::include_graphics(path.image)
 -   Using the hyperlinks included in the crawled URLs, new URLs are
     identified and crawled (snowball sampling)
 -   Time-stamp
-
-## Web data: The Internet Archive
-
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture1.png){width="70%"}
-
-## Web data: The Internet Archive
-
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture2.png){width="70%"}
 
 ## Our web data
 
@@ -251,19 +268,214 @@ kable(f.websites.pc,
 
 ## Directory website with a lot of postcodes
 
-![](C:/Users/nw19521/OneDrive - University of Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
+![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
 
 ## Website with a unique postcode in London
 
-![](C:/Users/nw19521/OneDrive - University of Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
+![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
 
-# Web diffusion
+# Methods
 
-## Mapping website density
+## Reminder: diffusion mechanisms
+
+-   **S-shaped** pattern in the cumulative level of adoption
+
+-   A **hierarchy effect**: from main centres to secondary ones
+
+-   A **neighborhood effect**: first "hitting" nearby locations
+
+## Methods
+
+-   Model cumulative adoption
+
+-   Descriptive statistics, ESDA & density regressions
+
+-   Modelling framework
+
+-   Two scales:
+
+    -   websites per firm in a Local Authority
+    -   websites in an Output Area
+
+# S-shaped diffusion curves
 
 ------------------------------------------------------------------------
 
-```{r heatmaps, results='asis', out.width = "60%"}
+```{r UK S, eval=T, out.width = "60%", out.height="60%"}
+#, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"
+
+path.image <- paste0(path, "/outputs/s_uk_per_firm.png")
+knitr::include_graphics(path.image)
+```
+
+```{r LA_S_gif, eval=F, results='asis', out.width = "60%"}
+path.images <- paste0(path, "/outputs/")
+
+library(magick)
+las <- list.files(path = path.images, pattern = "^lad_", full.names = T) #%>% 
+las_list <- lapply(las, image_read)
+
+## join the images together
+las_joined <- image_join(las_list)
+
+## animate at 2 frames per second
+las_animated <- image_animate(las_joined, fps = 2)
+
+## view animated image
+las_animated
+
+## save to disk
+image_write(image = las_animated,
+            path = "las.gif")
+
+
+  # map(image_read) %>% # reads each path file
+  # image_join() %>% # joins image
+  # image_animate(delay=50) #%>% # animates, can opt for number of loops
+  #image_write("test.gif") # write to current dir
+```
+
+------------------------------------------------------------------------
+
+```{r Xmid_frequency_graph, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/xmid_f.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+```{r diffusion_speed_map, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/speed_pam.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+<!-- fast  -->
+
+```{r Darlington, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000005.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Nottingham, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000018.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Reading, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000038.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+```{r City_of_London, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000001.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+<!-- slow -->
+
+```{r Middlesbrough, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000002.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+```{r Leicester, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000016.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Bristol, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000023.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Plymouth, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000026.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Liverpool, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E08000012.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+```{r Hackney, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000012.png")
+knitr::include_graphics(path.image)
+```
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r Edinburgh, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
+path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_S12000036.png")
+knitr::include_graphics(path.image)
+```
+
+## Diffusion speed
+
+<br>
+
+-   Spatial heterogeneity
+
+-   Not a clear, easy to explain pattern
+
+# Rank dynamics: stability vs. volatility
+
+------------------------------------------------------------------------
+
+<br>
+
+-   Adoption heterogeneity
+
+-   Different perceptions of risk and economic returns from new
+    technologies
+
+-   Early adopters vs. laggards, leapfrogging
+
+------------------------------------------------------------------------
+
+```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only05.png")
+knitr::include_graphics(path.image)
+```
+
+------------------------------------------------------------------------
+
+```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only95.png")
+knitr::include_graphics(path.image)
+```
+
+## Rank dynamics and diffusion speed
+
+-   Spatial heterogeneity
+
+-   Expected volatility
+
+# Spatial mechanisms
+
+<!-- ------------------------------------------------------------------------ -->
+
+```{r, eval=FALSE, heatmaps, results='asis', out.width = "60%"}
 path.images <- paste0(path, "/outputs/")
 
 list.files(path = path.images, pattern = "^hex1", full.names = T) %>% 
@@ -285,7 +497,7 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
   #image_write("test.gif") # write to current dir
 ```
 
----
+------------------------------------------------------------------------
 
 > **Neighbourhood effect**: diffusion proceeds outwards from innovation
 > centers, first "hitting" nearby rather than far-away locations
@@ -372,7 +584,6 @@ $Website\,Density_{i}$:
 -   Websites per firm in a Local Authority $i$, *or*
 
 -   Websites in an Output Area $i$
-
 :::
 
 ## Website density regressions
@@ -391,9 +602,7 @@ $Place$:
 -   Nearest city, *or*
 
 -   Nearest retail centre
-
 :::
-
 
 ## Website density regressions
 
@@ -503,23 +712,22 @@ read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>%
 
 ## Neighbourhood effect
 
-- Spatial dependency
-	- Relatively small and constant over time / scales
-	- London hot spot early on
-	- At local scale, consistent hotspots over time
-	- Granular analysis reveals other hotspots
-
-- Distance effect
-	- Urban gravitation increases over time and then drops
-	- Granular analysis: gravitation
-	- Lost explanatory power over time
+-   Spatial dependency
+    -   Relatively small, consistent over time / scales
+    -   London hot spot early on
+    -   At local scale, consistent hotspots over time
+    -   Granular analysis reveals other hotspots
+-   Distance effect
+    -   Urban gravitation increases over time and then drops
+    -   Granular analysis: gravitation
+    -   Lost explanatory power over time
 
 ------------------------------------------------------------------------
 
 <br>
 
 > **Hierarchy effect**: from main centers to secondary ones -- central
-places
+> places
 
 -   Gini coefficient
 
@@ -555,192 +763,88 @@ read.csv(path.in) %>% dplyr::select(year, gini.a.n.) %>%
 
 -   Almost perfect polarisation of web adoption in the early stages at a
     granular level
-    
--   Polarisation decreases over time    
+
+-   Polarisation decreases over time
 
 -   More equally diffused at the Local Authority level
 
+# Putting all of these together
 
-# S-shaped diffusion curves
+## Modelling framework
 
-------------------------------------------------------------------------
+-   Random forests to predict $Website\,Density_{i,t}$
 
-```{r UK S, eval=T}
-#, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"
+-   4 sets of models:
 
-path.image <- paste0(path, "/outputs/s_uk.png")
-knitr::include_graphics(path.image)
-```
+    -   All the data ⟹ *variable importance*
+    -   Train on one region, test on the rest ⟹ *spatial differences and
+        similarities* of diffusion mechanisms
+    -   For Local Authorities and Output Areas
 
-```{r LA_S_gif, eval=F, results='asis', out.width = "60%"}
-path.images <- paste0(path, "/outputs/")
+-   Space-time sensitive 10-fold CV (`CAST`)
 
-library(magick)
-las <- list.files(path = path.images, pattern = "^lad_", full.names = T) #%>% 
-las_list <- lapply(las, image_read)
-
-## join the images together
-las_joined <- image_join(las_list)
-
-## animate at 2 frames per second
-las_animated <- image_animate(las_joined, fps = 2)
-
-## view animated image
-las_animated
-
-## save to disk
-image_write(image = las_animated,
-            path = "las.gif")
-
-
-  # map(image_read) %>% # reads each path file
-  # image_join() %>% # joins image
-  # image_animate(delay=50) #%>% # animates, can opt for number of loops
-  #image_write("test.gif") # write to current dir
-```
-
-------------------------------------------------------------------------
-
-```{r Xmid_frequency_graph, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/xmid_f.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-```{r diffusion_speed_map, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/speed_pam.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-<!-- fast  -->
-
-```{r Darlington, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000005.png")
-knitr::include_graphics(path.image)
-```
-
-<!-- ------------------------------------------------------------------------ -->
-
-```{r Nottingham, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000018.png")
-knitr::include_graphics(path.image)
-```
-
-<!-- ------------------------------------------------------------------------ -->
-
-```{r Reading, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000038.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-```{r City_of_London, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000001.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-<!-- slow -->
-
-```{r Middlesbrough, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000002.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-```{r Leicester, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000016.png")
-knitr::include_graphics(path.image)
-```
-
-<!-- ------------------------------------------------------------------------ -->
-
-```{r Bristol, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000023.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-```{r Plymouth, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E06000026.png")
-knitr::include_graphics(path.image)
-```
-
-<!-- ------------------------------------------------------------------------ -->
-
-```{r Liverpool, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E08000012.png")
-knitr::include_graphics(path.image)
-```
-
-------------------------------------------------------------------------
-
-```{r Hackney, eval=T, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_E09000012.png")
-knitr::include_graphics(path.image)
-```
-
-<!-- ------------------------------------------------------------------------ -->
-
-```{r Edinburgh, eval=F, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"}
-path.image <- paste0(path, "/outputs/s_lad_per_firm/lad_S12000036.png")
-knitr::include_graphics(path.image)
-```
-
-## Diffusion speed
-
+## Models trained on all data
 <br>
 
-- Spatial heterogeneity
-- Not clear pattern
+|                   | RMSE  | RSquared | MAE   |
+|-------------------|-------|----------|-------|
+| Local Authorities | 0.022 | 0.908    | 0.012 |
+| Output Areas      | 3.613 | 0.627    | 0.533 |
 
-# Rank dynamics: stability vs. volatility
+## Variable importance for Local Authorities
 
-------------------------------------------------------------------------
+```{r varimpLA, eval = T, out.height= "58%", out.width="58%", message=FALSE}
 
-<br>
-
-- Adoption heterogeneity 
-- Perceptions of risk and economic returns from new technologies
-- Early adopters vs. laggards, leapfrogging
-
-------------------------------------------------------------------------
-
-```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only05.png")
+path.image <- paste0(path, "/outputs/rf/varimp_LA.png")
 knitr::include_graphics(path.image)
 ```
 
-------------------------------------------------------------------------
+## Variable importance for Output Areas
 
-```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only95.png")
+```{r varimpOA, eval = T, out.height= "58%", out.width="58%", message=FALSE}
+#,  fig.height=5, fig.width=5,message=FALSE
+
+path.image <- paste0(path, "/outputs/rf/varimp_OA.png")
 knitr::include_graphics(path.image)
 ```
 
+## Regional similarities for Local Authorities
+
+```{r similarity_LA, eval = T, message=FALSE}
+#fig.height=5, fig.width=5 
+#, out.height= "60%", out.width="60%"
+path.image <- paste0(path, "/outputs/rf/heatmap_LA.png")
+knitr::include_graphics(path.image)
+```
+
+## Regional similarities for Output Areas
+
+```{r similarity_OA, eval = T, out.height= "70%", out.width="70%", message=FALSE}
+
+path.image <- paste0(path, "/outputs/rf/heatmap_OA.png")
+knitr::include_graphics(path.image)
+```
 
 # Conclusions
 
-----
+------------------------------------------------------------------------
 
-<br>
+-   Established technological diffusion drivers still apply
 
--   **Geography matters:** spatial dependency, urban gravitation
+    -   for a digital technology
+    -   at local scales
+
+-   Geography matters: spatial dependency, urban gravitation
 
 -   Some indications of a hierarchical diffusion
 
 -   Granular analysis reveals patterns otherwise not visible
 
--   Well-established theoretical approaches of diffusion survive even at
-    a granular level
-    
--   Stability and volatility: leapfrogging, early adopters dropping, but also maintaining      
+-   Stability and volatility: leapfrogging, early adopters dropping, but
+    also stable positions
+
+-   Spatially consistent mechanisms at local scale
+
+-   Heterogeneity increases with resolution
 
 ## References {.allowframebreaks}
