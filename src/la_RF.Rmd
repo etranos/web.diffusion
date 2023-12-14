@@ -1011,7 +1011,7 @@ varimp_mars$importance <- varimp_mars$importance %>%
                                  ifelse(rowname == "London", "distance to London",
                                         ifelse(rowname == "n.slag", "spatial lag of web density",
                                                ifelse(rowname == "n.lag", "temporal lag of web density",
-                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag  of web density",
+                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag of web density",
                                                              ifelse(rowname == "n.nearest.city", "web density in nearest city", rowname)))))))) %>% 
   column_to_rownames()
 
