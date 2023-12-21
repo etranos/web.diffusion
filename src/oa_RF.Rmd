@@ -379,7 +379,7 @@ Distance to retail centres
 
 ```{r}
 dist.retail <- distm(cbind(oa.gb.c$X, oa.gb.c$Y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
-dist.retail <- round((dist.retail/1000),2) %>% 
+dist.retail<- round((dist.retail/1000),2) %>% 
   as_tibble()  
 
 # retail.names <- retail.major.cetres$RC_Name
@@ -389,14 +389,60 @@ dist.retail <- dist.retail %>% bind_cols(oa.gb.c$id) %>%
   rename(oa11cd = last_col()) %>% 
   relocate(oa11cd)
 
+# This efficiently returns the name of the column with the shortest distance
+dist.retail <- dist.retail %>% mutate(dist.retail.name = names(.)[max.col(.[2:6424]*-1)+1L])
+
+# dist.retail_ <- dist.retail %>% slice_sample(n=100)
+# dist.retail_[,6425:6426]
+# dist.retail_ <- transform(dist.retail_, dist.retail = do.call(pmin, dist.retail_[2:6424])) 
+# sum(is.na(dist.retail_$dist.retail.name))
+
 # Minimum distance 
-dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[-1]))
-dist.retail <- dist.retail %>% dplyr::select(oa11cd, dist.retail)
+dist.retail <- transform(dist.retail, dist.retail = do.call(pmin, dist.retail[2:6424])) 
+
+dist.retail <- dist.retail  %>% dplyr::select(oa11cd, dist.retail.name, dist.retail)
+# 232,296 
+#sapply(dist.retail, function(x) sum(is.na(x))) #0
+
+#spatial join retail centroids into OA
+retail.major.cetres.help <- st_centroid(retail) %>% 
+  st_transform(4326)
+
+# lookup obj with retail id and OA id
+help <- st_join(retail.major.cetres.help, oa.gb) %>% 
+  as_tibble %>% 
+  mutate(dist.retail.name = row_number(),
+         dist.retail.name = paste0("V", dist.retail.name)) %>% 
+  dplyr::select(id, dist.retail.name) %>% 
+  rename(oa11cd.retail = id)
+
+dist.retail <- dist.retail %>% 
+  left_join(help, by = c('dist.retail.name' = 'dist.retail.name')) %>% 
+  dplyr::select(-dist.retail.name)
+sapply(dist.retail, function(x) sum(is.na(x))) 
+# 1 retail centre is missing, because the centroid falls in the water
+
+dist.retail %>% filter(is.na(oa11cd.retail))
+missing.retail.centre <- retail.major.cetres.help %>% filter(RC_ID=="RC_EW_24")
+st_nearest_feature(missing.retail.centre, oa.gb)
+oa.gb[91986,] # missing OA: E00094765 
+
+dist.retail <- dist.retail %>%
+  mutate(oa11cd.retail = ifelse(is.na(oa11cd.retail), "E00094765", oa11cd.retail))
+
+# dist.retail %>% distinct(dist.retail.name) #6405
+# help %>% distinct(dist.retail.name) # 6423 
+# dist.retail %>% distinct(oa11cd.retail) #6217 as there are multiple centres in an OA
 
 # Join with complete panel
 df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd")) 
 
 sapply(df, function(x) sum(is.na(x)))
+df %>% filter(is.na(oa11cd.retail)) %>% distinct(oa11cd) #493 rows or 29 OA don't have oa11cd.retail
+
+# df <- df %>% dplyr::select(-dist.retail.x, -oa11cd.retail.x) %>% 
+#   rename(dist.retail = dist.retail.y,
+#          oa11cd.retail = oa11cd.retail.y)
 ```
 
 ## df for RF
@@ -435,6 +481,8 @@ help2 <- dist %>% left_join(help1, by = c("dist.city.name" = "cities")) %>%
   rename(nearest.city.oa11cd = id) %>% 
   dplyr::select(oa11cd, nearest.city.oa11cd)
 
+help.retail <- dist.retail
+
 #####save this#####
 sf_use_s2(FALSE)
 oa.c <- st_centroid(oa.gb)
@@ -443,6 +491,7 @@ knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
 knn.l <- nb2listw(knn)
 ##################
 
+# lags
 df <- df %>% 
   group_by(year) %>% 
   mutate(n.slag = lag.listw(knn.l, n)) %>% 
@@ -451,12 +500,32 @@ df <- df %>%
          n.lag = dplyr::lag(n, n=1, order_by = year)) %>% 
   left_join(help2, by = c("oa11cd" = "oa11cd")) 
 
+# n nearest city
 df <- df %>% left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
                          rename(n.nearest.city = n), 
                        by = c("nearest.city.oa11cd" = "oa11cd",
                               "year" = "year")) 
+# n London 
+df <- df %>% left_join(df %>% 
+                         ungroup() %>% 
+                         filter(oa11cd == "E00176659") %>% 
+                         dplyr::select(year, n) %>% 
+                         rename(n.London = n)) %>% 
+  group_by(oa11cd) %>% 
+  mutate(n.London.lag = dplyr::lag(n.London)) %>% 
+  mutate(n.nearest.city.lag = dplyr::lag(n.nearest.city)) %>% 
+  ungroup() 
+
+# n nearest retail
+df <- df %>% left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
+                         rename(n.nearest.retail = n), 
+                       by = c("oa11cd.retail" = "oa11cd",
+                              "year" = "year")) %>% 
+  mutate(n.nearest.retail.lag = dplyr::lag(n.nearest.retail))
+
 
 # Lookup: OA to regions
+# NEED TO ADD NI. NOT A PROBLEM FOR NOW AS IT IS FIXED IN THE TEST SECTION
 path.lookup <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")  
 lookup.region <- read_csv(path.lookup) %>% dplyr::select(OA11CD, RGN11CD, RGN11NM)
 
@@ -471,47 +540,93 @@ df <- df %>% left_join(lookup.region, by = c("oa11cd" = "OA11CD")) %>%
                                 ifelse(help == "S", "Scotland", NA)))) %>% 
   dplyr::select(-help)
 
-# df %>% ungroup() %>% distinct(RGN11NM)
-# sapply(df, function(x) sum(is.na(x)))
-
-
 # North/South
 #lookup.region %>% distinct(RGN21NM, .keep_all = T)
 south <- c("London", "South West", "South West", "East of England")
 df <- df %>% mutate(south = ifelse(RGN11NM %in% south, 1, 0))
 
 # For growth:
-#df <- df %>% mutate(growth = log(n/n.lag))
+df <- df %>% mutate(growth = log(n/n.lag),
+                    abs.growth = n - n.lag)
 
-sapply(df, function(x) sum(is.na(x)))
-
-# in.path <- paste0(path, "/data/temp/df_for_oa_rf_old.csv")
-# df.compare <- read_csv(in.path)
-
-# out.path <- paste0(path, "/data/temp/for_oa_rf.RData")
-# save.image(file = out.path)
-# load(out.path)
-
-df <- df %>% dplyr::select(-c("Birmingham", "Glasgow", "Liverpool", "Bristol",
-                        "Manchester", "Sheffield", "Leeds", "Edinburgh",
-                        "Leicester", "nearest.city.oa11cd")) 
-  
-# out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
-# df <- read_csv(out.path)
-# df %>% write_csv(file = out.path)
-```
-
-## RF with CAST
-
-```{r}
+# regional identifier
 df <- df %>% mutate(help = substr(oa11cd, start = 1, stop = 2)) %>% 
   mutate(RGN11CD = ifelse(is.na(RGN11CD), help, RGN11CD)) %>% 
   ungroup() %>% 
   dplyr::select(-help)
 
-df <- df %>% filter(year > 1996)
+sapply(df, function(x) sum(is.na(x)))
 
-#df <- df %>% dplyr::select(-n.lag)
+# remove not used columns
+df <- df %>% dplyr::select(-c("Birmingham", "Glasgow", "Liverpool", "Bristol",
+                        "Manchester", "Sheffield", "Leeds", "Edinburgh",
+                        "Leicester", "nearest.city.oa11cd")) 
+
+# out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
+# df <- read_csv(out.path)
+# df %>% write_csv(file = out.path)
+
+```
+
+## RF with CAST
+
+```{r}
+london.help <- df %>% group_by(RGN11NM, year) %>% 
+  summarise(n.London = sum(n)) %>% 
+  filter(RGN11NM == "London") %>%
+  mutate(n.London.lag = dplyr::lag(n.London)) %>% 
+  ungroup() %>% 
+  dplyr::select(-RGN11NM) 
+
+#n.nearest.retail IS WRONG. FIX UPSTREAM
+df <- df %>% 
+  rename(oa11cd.retail = n.nearest.retail) %>% 
+  dplyr::select(-n.nearest.retail.lag) %>% 
+  left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
+                         rename(n.nearest.retail = n), 
+                       by = c("oa11cd.retail" = "oa11cd",
+                              "year" = "year")) %>% 
+  mutate(n.nearest.retail.lag = dplyr::lag(n.nearest.retail))
+
+
+df <- df %>% dplyr::select(-n.London, -n.London.lag) %>% 
+  left_join(london.help, by = c('year' = 'year'))
+
+# There are no lags for 1996, so it is removed
+df <- df %>% filter(year > 1996) %>% 
+  dplyr::select(oa11cd, year, RGN11CD, n, n.l.slag, n.nearest.city.lag, n.nearest.retail.lag, n.London.lag, London, dist, dist.retail) #growth, abs.growth, RGN11NM, 
+
+df %>% group_by(year) %>% 
+  filter(n == 0) %>% 
+  count(n)
+# in 2012, 120848 0s  
+
+# df %>% dplyr::select(area, dist, dist.retail, London, south, n.slag, n.lag, n.l.slag, n.nearest.city, year) %>% 
+#   #sapply(function(x) sum(is.na(x)))
+#   summarise(across(where(is.numeric), .fns = 
+#                      list(#n = is.na,
+#                           min = min,
+#                           median = median,
+#                           mean = mean,
+#                           stdev = sd,
+#                           # q25 = ~quantile(., 0.25),
+#                           # q75 = ~quantile(., 0.75),
+#                           max = max))) %>%
+#   pivot_longer(everything(), names_sep='_', names_to=c('variable', '.value'))
+# 
+# df %>% dplyr::select(n.London.lag, n.nearest.city.lag, n.nearest.retail.lag, n.l.slag, year, London, dist, dist.retail) %>% 
+#   #sapply(function(x) sum(is.na(x)))
+#   summarise(across(where(is.numeric), .fns = 
+#                      list(#n = is.na,
+#                           min = min,
+#                           median = median,
+#                           mean = mean,
+#                           stdev = sd,
+#                           # q25 = ~quantile(., 0.25),
+#                           # q75 = ~quantile(., 0.75),
+#                           max = max))) %>%
+#   pivot_longer(everything(), names_sep='_', names_to=c('variable', '.value'))
+
 ```
 
 ### unregister_dopar function
@@ -526,7 +641,6 @@ unregister_dopar <- function() {
 unregister_dopar()
 ```
 
-
 ### train the model in all data 
 
 ```{r}
@@ -540,7 +654,7 @@ indices <- CreateSpacetimeFolds(df,
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 11) # 9 after adding South
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # 9 after adding South. It should be RHS variables + 2
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -558,8 +672,8 @@ tc <- trainControl(method = "cv",
 # registerDoParallel(cl)
 
 start.time <- Sys.time()
-model.all <- train(n ~ area + dist + dist.retail + London + south + 
-                     n.slag + n.lag + n.l.slag + n.nearest.city + year,
+model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.lag + n.l.slag + n.nearest.city + year,
+                     n.London.lag + n.nearest.city.lag + n.nearest.retail.lag + n.l.slag + year + London + dist + dist.retail,
                    data = df, 
                    trControl = tc,
                    method = "ranger",
@@ -570,7 +684,7 @@ model.all <- train(n ~ area + dist + dist.retail + London + south +
 # stopCluster(cl)
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
-time.taken
+time.taken #1.3h
 
 print(model.all)
 # Random Forest 

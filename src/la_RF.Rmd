@@ -981,6 +981,7 @@ df <- df %>% left_join(df %>%
   mutate(n.nearest.city.lag = dplyr::lag(n.nearest.city)) %>% 
   ungroup()
 
+# There are no lags for 1996, so it is removed
 df <- df %>% filter(year > 1996)
 sapply(df, function(x) sum(is.na(x)))
 ```
