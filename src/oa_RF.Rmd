@@ -594,7 +594,7 @@ df <- df %>% dplyr::select(-n.London, -n.London.lag) %>%
 
 # There are no lags for 1996, so it is removed
 df <- df %>% filter(year > 1996) %>% 
-  dplyr::select(oa11cd, year, RGN11CD, n, n.l.slag, n.nearest.city.lag, n.nearest.retail.lag, n.London.lag, London, dist, dist.retail) #growth, abs.growth, RGN11NM, 
+  dplyr::select(oa11cd, year, RGN11CD, n, abs.growth, n.l.slag, n.nearest.city.lag, n.nearest.retail.lag, n.London.lag, London, dist, dist.retail) #growth, abs.growth, RGN11NM, 
 
 df %>% group_by(year) %>% 
   filter(n == 0) %>% 
@@ -614,9 +614,9 @@ df %>% group_by(year) %>%
 #                           max = max))) %>%
 #   pivot_longer(everything(), names_sep='_', names_to=c('variable', '.value'))
 # 
-# df %>% dplyr::select(n.London.lag, n.nearest.city.lag, n.nearest.retail.lag, n.l.slag, year, London, dist, dist.retail) %>% 
+# df %>% dplyr::select(n, n.London.lag, n.nearest.city.lag, n.nearest.retail.lag, n.l.slag, year, London, dist, dist.retail) %>%
 #   #sapply(function(x) sum(is.na(x)))
-#   summarise(across(where(is.numeric), .fns = 
+#   summarise(across(where(is.numeric), .fns =
 #                      list(#n = is.na,
 #                           min = min,
 #                           median = median,
@@ -626,7 +626,8 @@ df %>% group_by(year) %>%
 #                           # q75 = ~quantile(., 0.75),
 #                           max = max))) %>%
 #   pivot_longer(everything(), names_sep='_', names_to=c('variable', '.value'))
-
+# 
+# df %>% slice_max(order_by = n, n = 5, by = year)
 ```
 
 ### unregister_dopar function
