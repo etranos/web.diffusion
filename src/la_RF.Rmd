@@ -424,6 +424,10 @@ summary(mod2)
 #help1 <- st_filter( la.sf, cities.sf) %>% as_tibble %>% dplyr::select(LAD21CD) %>% 
 #  left_join(df, by = c("LAD21CD"="ladcd")) %>% dplyr::select(LAD21CD, year, n)
 
+
+
+#************** DOUBLE CHECK THE ORDER OF CITY NAMES BELOW **************
+
 # nearest city
 help1 <- st_filter( la, cities.sf) %>% as_tibble %>% dplyr::select(LAD21NM,LAD21CD) %>% 
   mutate(cities = c("Leicester",
