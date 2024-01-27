@@ -149,7 +149,7 @@ fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.test)
 Decomposition of GINI Serge used for inequalities 
 GINI for firm 
 
-- Local Authorities levels
+- Local Authorities levels WRONG DISTANCES
 	- [x] y ~ n.l.slag + lag(n.nearest.city) + lag(n.London) + year
 	R^2: 0.7953016  
 
@@ -167,8 +167,49 @@ GINI for firm
 - OA levels
 	- [ ] y ~ n.l.slag + lag(n.nearest.city)/d + lag(n.nearest.retail)/d + lag(London)/d + year
 	This tests for continuity, hierarchy and time. No rank dynamics
+	
+n:   2     extratrees  3.774361  0.10143994  0.7419166
+	
+	the old OA level RF takes 1.2 days. The new OA level and growth took 2.3 h, but when I re-run the new OA takes a few hours. First time I run it, it crushed. I need to think about London and city n and fix the code re: retail centres. Grouped? For retail, take the sum of the retail polygon. For cities, maybe the local authority? 
+
+2     variance    5.085630  0.1787893  1.057603, 
+20.5h
+
+dist	100.000000			
+London	98.084009			
+dist.retail	64.841641			
+n.l.slag	40.710252			
+n.nearest.retail.lag	29.226725			
+n.nearest.city.lag	11.928686			
+year	1.469731			
+n.London.lag	0.000000
+
+2     extratrees  5.231046  0.1275830  1.135169
+n ~ London.v + city.v + retail.v + n.l.slag + year
+retail.v	100.00000			
+London.v	78.46748			
+city.v	72.62728			
+n.l.slag	68.04044			
+year	0.00000	
+
+  2     variance    4.999920  0.2053697  1.047293
+n.London.lag + n.nearest.city.lag + n.nearest.retail.lag + n.l.slag + year + London + dist + dist.retail,
+
+London               100.000
+dist                  90.710
+dist.retail           57.471
+n.nearest.retail.lag  42.193
+n.l.slag              34.319
+n.nearest.city.lag    10.568
+year                   3.231
+n.London.lag           0.000	
+
+- OA abs.growth, nothing, 19h
+mtry  splitrule   RMSE      Rsquared     MAE      
+  2     variance    4.019052  0.032595435  0.5413159
 
 - [ ] Granger
 
 
-leapfrogging 
+- Temporal clustering for ranking instead of n: hopefully leapfrogging etc.
+
