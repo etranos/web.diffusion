@@ -922,10 +922,10 @@ varimp_mars$importance <- varimp_mars$importance %>%
   mutate(rowname = ifelse(rowname == "dist", "distance to the nearest city",
                           ifelse(rowname == "dist.retail", "distance to the nearest retail centre", 
                                  ifelse(rowname == "London", "distance to London",
-                                        ifelse(rowname == "n.nearest.retail.lag", "Nearest retail centre's web density, t-1",
-                                               ifelse(rowname == "n.London.lag", "London's web density, t-1",
-                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag of web density",
-                                                             ifelse(rowname == "n.nearest.city", "Nearest city's web density, t-1", rowname)))))))) %>% 
+                                        ifelse(rowname == "n.nearest.retail.lag", "Nearest retail centre's wensite density, t-1",
+                                               ifelse(rowname == "n.London.lag", "London's wensite density, t-1",
+                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag of wensite density",
+                                                             ifelse(rowname == "n.nearest.city", "Nearest city's wensite density, t-1", rowname)))))))) %>% 
   column_to_rownames()
 
 path.out <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
