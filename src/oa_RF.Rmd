@@ -896,25 +896,25 @@ print(model.all)
 # Random Forest 
 # 
 # 3716736 samples
-#      10 predictor
+#       8 predictor
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
 # Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
 # Resampling results across tuning parameters:
 # 
-#   mtry  splitrule   RMSE      Rsquared   MAE      
-#    2    variance    3.865809  0.5809699  0.5313035
-#    2    extratrees  3.730542  0.6168954  0.5884731
-#    6    variance    3.761356  0.6063340  0.5366004
-#    6    extratrees  3.612670  0.6273041  0.5331196
-#   10    variance    3.929176  0.5775066  0.5449132
-#   10    extratrees  3.617598  0.6278302  0.5403551
+#   mtry  splitrule   RMSE      Rsquared   MAE     
+#   2     variance    4.999920  0.2053697  1.047293
+#   2     extratrees  5.167655  0.1540213  1.103048
+#   5     variance    5.187039  0.1710128  1.034382
+#   5     extratrees  5.169570  0.1557868  1.122845
+#   8     variance    5.633427  0.1247189  1.035171
+#   8     extratrees  5.182860  0.1563555  1.137332
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 6, splitrule =
-#  extratrees and min.node.size = 5.
+# The final values used for the model were mtry = 2, splitrule =
+#  variance and min.node.size = 5.
 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
@@ -922,10 +922,10 @@ varimp_mars$importance <- varimp_mars$importance %>%
   mutate(rowname = ifelse(rowname == "dist", "distance to the nearest city",
                           ifelse(rowname == "dist.retail", "distance to the nearest retail centre", 
                                  ifelse(rowname == "London", "distance to London",
-                                        ifelse(rowname == "n.slag", "spatial lag of web density",
-                                               ifelse(rowname == "n.lag", "temporal lag of web density",
+                                        ifelse(rowname == "n.nearest.retail.lag", "Nearest retail centre's web density, t-1",
+                                               ifelse(rowname == "n.London.lag", "London's web density, t-1",
                                                       ifelse(rowname == "n.l.slag", "spatial and temporal lag of web density",
-                                                             ifelse(rowname == "n.nearest.city", "web density in nearest city", rowname)))))))) %>% 
+                                                             ifelse(rowname == "n.nearest.city", "Nearest city's web density, t-1", rowname)))))))) %>% 
   column_to_rownames()
 
 path.out <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
@@ -982,7 +982,7 @@ for (i in regions){
   print(paste0("start loop for ", i))
   
   set.seed(71)
-  indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD==i), 
+  indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD!=i), 
                                 spacevar = "oa11cd",
                                 timevar = "year", 
                                 k = k)
@@ -1005,7 +1005,8 @@ for (i in regions){
                    importance = "impurity")
   #assign(paste0("model.all",as.character(i)), model.all)
   
-  file <- paste0(path, "/outputs/rf/models/oa_rf/regions/region_", as.character(i), ".RData")
+  #file <- paste0(path, "/outputs/rf/models/oa_rf/regions/region_", as.character(i), ".RData")
+  file <- paste0("/hdd/tmp/regions/region_", as.character(i), ".RData")  
   save(model.all, file = file)  # file name = region not in the training data
   rm(model.all)
   
@@ -1031,7 +1032,7 @@ for (i in filenames){
   assign(i, model.all)  
 }
 
-fit.model.all <- mget(ls(pattern = "^region_"))
+ fit.model.all <- mget(ls(pattern = "^region_"))
 
 # clear up
 rm(model.all) # this is the last item from the loop
