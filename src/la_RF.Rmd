@@ -1246,7 +1246,7 @@ lookup.region <- read_csv(path.lookup) %>%
   distinct() %>% 
   add_row(RGN21CD = c("S1", "N0", "W0"), RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
-path.out <- paste0(path, "/outputs/rf/figures/test_regions.csv")
+path.out <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
 rf.year.all.metrics %>% 
   as.data.frame() %>%
   rownames_to_column(var = "metrics") %>% 
