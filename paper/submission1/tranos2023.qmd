@@ -74,11 +74,11 @@ regarding the diffusion of related *future* technologies.
 As per @leibowicz2016representing, historical studies agree on the fact that 
 "technologies diffuse at different times, at different rates, and to
 different extents in different places, and can be significantly
-influenced by policies [@victor1993]". @meade2021modelling highlight that 
+influenced by policies" [@victor1993]. @meade2021modelling highlight that 
 a variety of actors have a direct interest in gaining such knowledge 
 including network equipment suppliers; network operators, regulatory 
 and local authorities. 
-These processes and their effects very a lot across scales: although
+These processes and their effects vary a lot across scales: although
 the diffusion of a new technology might not be optimal at a local level,
 it might be beneficial from a global perspective as it could lead to 
 faster diffusion to less advantaged places [@leibowicz2016representing]. 
@@ -227,7 +227,7 @@ also shaped by distance and a neighbourhood effect and contaminate nearby locati
 The remaining of this section reviews empirical studies which analysed the diffusion 
 on new technologies over space and time. Although the spatial dimension is present
 in most of the following studies, the level of spatial detail is almost always 
-more coarse than the one adopted here. To begin with @beardsell1999spatial studied 
+more coarse than the one adopted here. @beardsell1999spatial studied 
 the evolution of the computer industry in $317$ US metro areas during the $1977-1992$ 
 period using employment data. Their analysis indicated that the relative size distribution
 holds for urban computer employment and also urban heterogeneity is essential in

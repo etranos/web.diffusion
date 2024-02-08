@@ -50,7 +50,7 @@ path <- find_rstudio_root_file()
 
     -   S-shaped diffusion curves
     -   Rank dynamics
-    -   Spatial analysis
+    -   Exploratory spatial analysis
     -   Modelling
 
 -   Conclusions <br> <br>
@@ -109,11 +109,11 @@ hierarchy of sub-centres, to the periphery
 
 <br>
 
--   Diffusion of an intangible/digital technology
+-   Diffusion of an **intangible**, digital technology [*web*]
 
 -   Map the **active** engagement with the *digital*
 
--   Over time, **early stages** of the internet
+-   Over time, **early stages** of the internet [*1996-2012*]
 
 -   **Granular** and **multi-scale** spatial perspective
 
@@ -176,25 +176,33 @@ knitr::include_graphics(path.image)
 
 -   Curated by the British Library
 
-<small>
+<!-- <small> -->
 
--   Tranos, E., and C. Stich. 2020. Individual internet usage and the
-    availability of online content of local interest: A multilevel
-    approach. *Computers, Environment and Urban Systems*, 79:101371.
+<!-- -   Tranos, E., and C. Stich. 2020. Individual internet usage and the -->
 
--   Tranos, E., T. Kitsos, and R. Ortega-Argilés. 2021. Digital economy
-    in the UK: Regional productivity effects of early adoption.
-    *Regional Studies*, 55:12, 1924-1938.
+<!--     availability of online content of local interest: A multilevel -->
 
--   Stich, C., E. Tranos and M. Nathan. 2022. Modelling clusters from
-    the ground up: a web data approach. *Environment and Planning B*, in
-    press.
+<!--     approach. *Computers, Environment and Urban Systems*, 79:101371. -->
 
--   Tranos, E., A. C. Incera and G. Willis. 2022. Using the web to
-    predict regional trade flows: data extraction, modelling, and
-    validation, *Annals of the AAG*, in press.
+<!-- -   Tranos, E., T. Kitsos, and R. Ortega-Argilés. 2021. Digital economy -->
 
-</small>
+<!--     in the UK: Regional productivity effects of early adoption. -->
+
+<!--     *Regional Studies*, 55:12, 1924-1938. -->
+
+<!-- -   Stich, C., E. Tranos and M. Nathan. 2022. Modelling clusters from -->
+
+<!--     the ground up: a web data approach. *Environment and Planning B*, in -->
+
+<!--     press. -->
+
+<!-- -   Tranos, E., A. C. Incera and G. Willis. 2022. Using the web to -->
+
+<!--     predict regional trade flows: data extraction, modelling, and -->
+
+<!--     validation, *Annals of the AAG*, in press. -->
+
+<!-- </small> -->
 
 ## Our web data
 
@@ -207,7 +215,7 @@ knitr::include_graphics(path.image)
 
 <!-- <small></small> -->
 
-20080509162138/<http://www.website1.co.uk/contact_us> IG8 8HD
+20080509162138 \| <http://www.website1.co.uk/contact_us> \| IG8 8HD
 
 ## Data cleaning
 
@@ -286,11 +294,12 @@ kable(f.websites.pc,
 
 ## Methods
 
--   Model cumulative adoption
+-   Cumulative adoption: Self-starting logistic growth model [`nls` and
+    `SSlogis`]
 
 -   Descriptive statistics, ESDA & density regressions
 
--   Modelling framework
+-   Machine learning framework [random forests]
 
 -   Two scales:
 
@@ -309,30 +318,40 @@ knitr::include_graphics(path.image)
 ```
 
 ```{r LA_S_gif, eval=F, results='asis', out.width = "60%"}
-path.images <- paste0(path, "/outputs/")
+path.images <- paste0(path, "/outputs/s_lad_per_firm/")
 
 library(magick)
-las <- list.files(path = path.images, pattern = "^lad_", full.names = T) #%>% 
+las <- list.files(path = path.images, pattern = "^lad_", full.names = T) 
+las <- sample(las, 50)
 las_list <- lapply(las, image_read)
 
 ## join the images together
 las_joined <- image_join(las_list)
 
 ## animate at 2 frames per second
-las_animated <- image_animate(las_joined, fps = 2)
+las_animated <- image_animate(las_joined, fps = 4)
 
 ## view animated image
-las_animated
+#las_animated
 
 ## save to disk
-image_write(image = las_animated,
-            path = "las.gif")
-
+# image_write(image = las_animated,
+#             path = "las.gif")
+image_write_gif(las_animated, path = "las.gif")
 
   # map(image_read) %>% # reads each path file
   # image_join() %>% # joins image
   # image_animate(delay=50) #%>% # animates, can opt for number of loops
   #image_write("test.gif") # write to current dir
+```
+
+------------------------------------------------------------------------
+
+```{r gif S, eval=T, out.width = "60%", out.height="60%"}
+#, fig.height=5, fig.width=5, message=FALSE, out.width = "60%"
+
+path.image <- paste0(path, "/presentations/las.gif")
+knitr::include_graphics(path.image)
 ```
 
 ------------------------------------------------------------------------
@@ -505,7 +524,7 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
 
 -   Spatial dependency (Moran's I & LISA maps)
 
--   Website density regressions -- distance effect
+<!-- -   Website density regressions -- distance effect -->
 
 -   Websites per firm in Local authorities (c. 400)
 
@@ -570,145 +589,203 @@ list.files(path = path.images, pattern = "^lisa_level_pc1_oa", full.names = T) %
   #image_write("test.gif") # write to current dir
 ```
 
-## Website density regressions
+<!-- ## Website density regressions -->
 
-<br>
+<!-- <br> -->
 
-$$Website\,Density_{i} = a + \beta Distance\,to\,Place_{i} + e_{i}$$
+<!-- $$Website\,Density_{i} = a + \beta Distance\,to\,Place_{i} + e_{i}$$ -->
 
-<br>
+<!-- <br> -->
 
-::: {style="margin-left: 50px !important; text-align:left !important"}
-$Website\,Density_{i}$:
+<!-- ::: {style="margin-left: 50px !important; text-align:left !important"} -->
 
--   Websites per firm in a Local Authority $i$, *or*
+<!-- $Website\,Density_{i}$: -->
 
--   Websites in an Output Area $i$
-:::
+<!-- -   Websites per firm in a Local Authority $i$, *or* -->
 
-## Website density regressions
+<!-- -   Websites in an Output Area $i$ -->
 
-<br>
+<!-- ::: -->
 
-$$Website\,Density_{i} = a + \beta Distance\,to\,Place_{i} + e_{i}$$
+<!-- ## Website density regressions -->
 
-<br>
+<!-- <br> -->
 
-::: {style="margin-left: 50px !important; text-align:left !important"}
-$Place$:
+<!-- $$Website\,Density_{i} = a + \beta Distance\,to\,Place_{i} + e_{i}$$ -->
 
--   London, *or*
+<!-- <br> -->
 
--   Nearest city, *or*
+<!-- ::: {style="margin-left: 50px !important; text-align:left !important"} -->
 
--   Nearest retail centre
-:::
+<!-- $Place$: -->
 
-## Website density regressions
+<!-- -   London, *or* -->
 
-<br>
+<!-- -   Nearest city, *or* -->
 
-$\beta$ interpretation:
+<!-- -   Nearest retail centre -->
 
--   The lower the $\beta$ is (or the larger the $|\beta|$ is)...
+<!-- ::: -->
 
--   ... the larger urban gravitation is for web adoption.
+<!-- ## Website density regressions -->
 
-------------------------------------------------------------------------
+<!-- <br> -->
 
-```{r b_London_la, fig.height=5, fig.width=5, message=FALSE}
-path.image <- paste0(path, "/outputs/lisa/b_dist_london_la.png")
-knitr::include_graphics(path.image)
-```
+<!-- $\beta$ interpretation: -->
 
-------------------------------------------------------------------------
+<!-- -   The lower the $\beta$ is (or the larger the $|\beta|$ is)... -->
 
-```{r b_city_la, fig.height=5, fig.width=5, message=FALSE}
-#, out.width = "60%"
-path.image <- paste0(path, "/outputs/lisa/b_dist_city_la.png")
-knitr::include_graphics(path.image)
-```
+<!-- -   ... the larger urban gravitation is for web adoption. -->
 
-------------------------------------------------------------------------
+<!-- ------------------------------------------------------------------------ -->
 
-```{r b_centre_la,  fig.height=5, fig.width=5,message=FALSE}
-#, out.height= "60%", out.width="60%"
-path.image <- paste0(path, "/outputs/lisa/b_dist_centre_la.png")
-knitr::include_graphics(path.image)
-```
+<!-- ```{r b_London_la, fig.height=5, fig.width=5, message=FALSE} -->
 
-------------------------------------------------------------------------
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_london_la.png") -->
 
-```{r b_London_oa, eval=T, fig.height=5, fig.width=5, message=FALSE}
-#, out.width = "60%"
-path.image <- paste0(path, "/outputs/lisa/b_dist_london_oa.png")
-knitr::include_graphics(path.image)
-```
+<!-- knitr::include_graphics(path.image) -->
 
-------------------------------------------------------------------------
+<!-- ``` -->
 
-```{r b_centre_oa, eval = T,  fig.height=5, fig.width=5,message=FALSE}
-#fig.height=4, fig.width=4, 
-#, out.height= "60%", out.width="60%"
-path.image <- paste0(path, "/outputs/lisa/b_dist_city_oa.png")
-knitr::include_graphics(path.image)
-```
+<!-- ------------------------------------------------------------------------ -->
 
-------------------------------------------------------------------------
+<!-- ```{r b_city_la, fig.height=5, fig.width=5, message=FALSE} -->
 
-```{r b_city_oa, eval = T, fig.height=5, fig.width=5, message=FALSE}
-#, out.width = "60%"
-path.image <- paste0(path, "/outputs/lisa/b_dist_centre_oa.png")
-knitr::include_graphics(path.image)
-```
+<!-- #, out.width = "60%" -->
 
-------------------------------------------------------------------------
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_city_la.png") -->
 
-```{r r_squared, eval=T, results='asis'}
-# This is for the RSquared of the different website density regressions.
+<!-- knitr::include_graphics(path.image) -->
 
-path.in1 <- paste0(path, "/outputs/lisa/r2_all_oa.csv")
-path.in2 <- paste0(path, "/outputs/lisa/r2_all_la.csv")
+<!-- ``` -->
 
-# read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>% 
-#   ggplot(aes(x=year)) +
-#   geom_line(aes(y=London, color = "OA to London"), size=1) +
-#   geom_line(aes(y=cities, color = "OA to nearest city"), size=1) +
-#   geom_line(aes(y=retail, color = "OA to nearest retail centre"), size=1) +
-# 
-#   geom_line(aes(y=London.LA, color = "LA to London"), size=1, linetype = 2) +
-#   geom_line(aes(y=cities.LA, color = "LA to nearest city"), size=1, linetype = 2) +
-#   geom_line(aes(y=retail.LA, color = "LA to nearest retail centre"), size=1, linetype = 2) +
-# 
-#   scale_color_discrete(name = "R-squared for regression:") +
-#   #scale_linetype_manual(name = "Website density regressions111") 
-#   ylab("R-squared") + 
-#   ggtitle("Website density regressions") +
-#   theme_minimal() +
-#   theme(axis.title.x=element_blank(),
-#         plot.title = element_text(hjust = 0.5))
-  
+<!-- ------------------------------------------------------------------------ -->
 
-read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>% 
-  pivot_longer(!year, names_to = "regression", values_to = "Rsquared") %>% 
-  mutate(LA = if_else(str_ends(regression, ".LA"), " to LA", "to OA"),
-         regression = str_remove_all(regression, ".LA"),
-         line = paste0(regression, " ", LA)) %>% 
-  ggplot() +
-  geom_line(aes(x=year, y = Rsquared, color = line),
-            size = 1) +
-  scale_color_discrete(name = "R-squared for regression:") +
-  #scale_linetype_manual(name = "Website density regressions111") 
-  ylab("R-squared") + 
-  ggtitle("Website density regressions") +
-  theme_minimal() +
-  theme(axis.title.x=element_blank(),
-        plot.title = element_text(hjust = 0.5))
-    
+<!-- ```{r b_centre_la,  fig.height=5, fig.width=5,message=FALSE} -->
 
-#   scale_color_manual(values = c("red", "blue", "green"))
+<!-- #, out.height= "60%", out.width="60%" -->
 
-```
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_centre_la.png") -->
+
+<!-- knitr::include_graphics(path.image) -->
+
+<!-- ``` -->
+
+<!-- ------------------------------------------------------------------------ -->
+
+<!-- ```{r b_London_oa, eval=T, fig.height=5, fig.width=5, message=FALSE} -->
+
+<!-- #, out.width = "60%" -->
+
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_london_oa.png") -->
+
+<!-- knitr::include_graphics(path.image) -->
+
+<!-- ``` -->
+
+<!-- ------------------------------------------------------------------------ -->
+
+<!-- ```{r b_centre_oa, eval = T,  fig.height=5, fig.width=5,message=FALSE} -->
+
+<!-- #fig.height=4, fig.width=4,  -->
+
+<!-- #, out.height= "60%", out.width="60%" -->
+
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_city_oa.png") -->
+
+<!-- knitr::include_graphics(path.image) -->
+
+<!-- ``` -->
+
+<!-- ------------------------------------------------------------------------ -->
+
+<!-- ```{r b_city_oa, eval = T, fig.height=5, fig.width=5, message=FALSE} -->
+
+<!-- #, out.width = "60%" -->
+
+<!-- path.image <- paste0(path, "/outputs/lisa/b_dist_centre_oa.png") -->
+
+<!-- knitr::include_graphics(path.image) -->
+
+<!-- ``` -->
+
+<!-- ------------------------------------------------------------------------ -->
+
+<!-- ```{r r_squared, eval=T, results='asis'} -->
+
+<!-- # This is for the RSquared of the different website density regressions. -->
+
+<!-- path.in1 <- paste0(path, "/outputs/lisa/r2_all_oa.csv") -->
+
+<!-- path.in2 <- paste0(path, "/outputs/lisa/r2_all_la.csv") -->
+
+<!-- # read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>%  -->
+
+<!-- #   ggplot(aes(x=year)) + -->
+
+<!-- #   geom_line(aes(y=London, color = "OA to London"), size=1) + -->
+
+<!-- #   geom_line(aes(y=cities, color = "OA to nearest city"), size=1) + -->
+
+<!-- #   geom_line(aes(y=retail, color = "OA to nearest retail centre"), size=1) + -->
+
+<!-- #  -->
+
+<!-- #   geom_line(aes(y=London.LA, color = "LA to London"), size=1, linetype = 2) + -->
+
+<!-- #   geom_line(aes(y=cities.LA, color = "LA to nearest city"), size=1, linetype = 2) + -->
+
+<!-- #   geom_line(aes(y=retail.LA, color = "LA to nearest retail centre"), size=1, linetype = 2) + -->
+
+<!-- #  -->
+
+<!-- #   scale_color_discrete(name = "R-squared for regression:") + -->
+
+<!-- #   #scale_linetype_manual(name = "Website density regressions111")  -->
+
+<!-- #   ylab("R-squared") +  -->
+
+<!-- #   ggtitle("Website density regressions") + -->
+
+<!-- #   theme_minimal() + -->
+
+<!-- #   theme(axis.title.x=element_blank(), -->
+
+<!-- #         plot.title = element_text(hjust = 0.5)) -->
+
+<!-- read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>%  -->
+
+<!--   pivot_longer(!year, names_to = "regression", values_to = "Rsquared") %>%  -->
+
+<!--   mutate(LA = if_else(str_ends(regression, ".LA"), " to LA", "to OA"), -->
+
+<!--          regression = str_remove_all(regression, ".LA"), -->
+
+<!--          line = paste0(regression, " ", LA)) %>%  -->
+
+<!--   ggplot() + -->
+
+<!--   geom_line(aes(x=year, y = Rsquared, color = line), -->
+
+<!--             size = 1) + -->
+
+<!--   scale_color_discrete(name = "R-squared for regression:") + -->
+
+<!--   #scale_linetype_manual(name = "Website density regressions111")  -->
+
+<!--   ylab("R-squared") +  -->
+
+<!--   ggtitle("Website density regressions") + -->
+
+<!--   theme_minimal() + -->
+
+<!--   theme(axis.title.x=element_blank(), -->
+
+<!--         plot.title = element_text(hjust = 0.5)) -->
+
+<!-- #   scale_color_manual(values = c("red", "blue", "green")) -->
+
+<!-- ``` -->
 
 ## Neighbourhood effect
 
@@ -717,10 +794,10 @@ read.csv(path.in1) %>% left_join(read.csv(path.in2)) %>%
     -   London hot spot early on
     -   At local scale, consistent hotspots over time
     -   Granular analysis reveals other hotspots
--   Distance effect
-    -   Urban gravitation increases over time and then drops
-    -   Granular analysis: gravitation
-    -   Lost explanatory power over time
+        <!-- -   Distance effect -->
+        <!--     -   Urban gravitation increases over time and then drops -->
+        <!--     -   Granular analysis: gravitation -->
+        <!--     -   Lost explanatory power over time -->
 
 ------------------------------------------------------------------------
 
@@ -772,30 +849,58 @@ read.csv(path.in) %>% dplyr::select(year, gini.a.n.) %>%
 
 ## Modelling framework
 
+-   [A **hierarchy effect**: from main centres to secondary ones]{style="color:orange;"}
+
+-   [A **neighborhood effect**: first "hitting" nearby locations]{style="color:olive;"}
+
+-   [**S-shaped** pattern in the cumulative level of adoption]{style="color:violet;"}
+
+<br> <small>
+$$Website\,Density_{t} \sim \color{orange}{Distance\,London} + 
+\color{orange}{Website\,density\,London_{t-1}} + \\
+\color{orange}{Distance\,Nearest\,City} + 
+\color{orange}{Website\,density\,Nearest\,City_{t-1}} + \\
+\color{orange}{Distance\,Nearest\,Retail_{i}} +
+\color{orange}{Website\,density\,Nearest\,Retail_{t-1}} +\\
+\color{olive}{W*\, Website\,density_{t-1}} +\\ 
+\color{violet}{year_{t}}$$ </small>
+
+## Modelling framework
+
 -   Random forests to predict $Website\,Density_{i,t}$
 
--   4 sets of models:
+-   2 spatial resolutions:
+
+    -   Local Authorities (websites per firm)
+    -   Output Areas (websites)
+
+-   2 sets of models:
 
     -   All the data ⟹ *variable importance*
-    -   Train on one region, test on the rest ⟹ *spatial differences and
-        similarities* of diffusion mechanisms
-    -   For Local Authorities and Output Areas
+    -   Train on all but one region, test on the holdout region ⟹
+        *spatial differences and similarities* of diffusion mechanisms
 
 -   Space-time sensitive 10-fold CV (`CAST`)
 
+
 ## Models trained on all data
+
 <br>
 
 |                   | RMSE  | RSquared | MAE   |
 |-------------------|-------|----------|-------|
-| Local Authorities | 0.022 | 0.908    | 0.012 |
-| Output Areas      | 3.613 | 0.627    | 0.533 |
+| Local Authorities | 0.032 | 0.810    | 0.019 |
+| Output Areas*      | 5.000 | 0.205    | 1.047 |
 
+<small>
+*No retail centre variables for the Local Authority models
+</small>
+  
 ## Variable importance for Local Authorities
 
 ```{r varimpLA, eval = T, out.height= "58%", out.width="58%", message=FALSE}
 
-path.image <- paste0(path, "/outputs/rf/varimp_LA.png")
+path.image <- paste0(path, "/outputs/rf/figures/varimp_LA.png")
 knitr::include_graphics(path.image)
 ```
 
@@ -804,25 +909,56 @@ knitr::include_graphics(path.image)
 ```{r varimpOA, eval = T, out.height= "58%", out.width="58%", message=FALSE}
 #,  fig.height=5, fig.width=5,message=FALSE
 
-path.image <- paste0(path, "/outputs/rf/varimp_OA.png")
+path.image <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
 knitr::include_graphics(path.image)
 ```
 
 ## Regional similarities for Local Authorities
 
 ```{r similarity_LA, eval = T, message=FALSE}
-#fig.height=5, fig.width=5 
-#, out.height= "60%", out.width="60%"
-path.image <- paste0(path, "/outputs/rf/heatmap_LA.png")
-knitr::include_graphics(path.image)
+path.table <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
+read.csv(path.table) %>% 
+  mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
+  kable()
 ```
 
 ## Regional similarities for Output Areas
 
-```{r similarity_OA, eval = T, out.height= "70%", out.width="70%", message=FALSE}
+```{r similarity_OA, eval = F, out.height= "70%", out.width="70%", message=FALSE}
 
-path.image <- paste0(path, "/outputs/rf/heatmap_OA.png")
+path.image <- paste0(path, "/outputs/rf/figures/heatmap_OA.png")
 knitr::include_graphics(path.image)
+```
+
+## Alternative specification: growth, trained on all data
+
+<br> <small>
+$$Website\,Density\,Growth_{t} \sim \color{orange}{Distance\,London} + 
+\color{orange}{Website\,density\,London_{t-1}} + \\
+\color{orange}{Distance\,Nearest\,City} + 
+\color{orange}{Website\,density\,Nearest\,City_{t-1}} + \\
+\color{orange}{Distance\,Nearest\,Retail_{i}} +
+\color{orange}{Website\,density\,Nearest\,Retail_{t-1}} +\\
+\color{olive}{W*\, Website\,density_{t-1}} +\\ 
+\color{violet}{year_{t}}$$ </small>
+
+<br>
+
+|                   | RMSE  | RSquared | MAE   |
+|-------------------|-------|----------|-------|
+| Local Authorities* | 0.200 | 0.634    | 0.148 |
+
+<small>
+*No retail centre variables for the Local Authority models
+</small>
+
+## Alternative specification: growth, trained on all data
+
+```{r growth LA}
+path.table <- paste0(path, "/outputs/rf/figures/test_regions_LA_growth.csv")
+read.csv(path.table) %>% 
+  mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
+  kable()
 ```
 
 # Conclusions
@@ -836,7 +972,7 @@ knitr::include_graphics(path.image)
 
 -   Geography matters: spatial dependency, urban gravitation
 
--   Some indications of a hierarchical diffusion
+-   Hierarchical diffusion
 
 -   Granular analysis reveals patterns otherwise not visible
 
@@ -846,5 +982,7 @@ knitr::include_graphics(path.image)
 -   Spatially consistent mechanisms at local scale
 
 -   Heterogeneity increases with resolution
+
+-   Things to do: OA?
 
 ## References {.allowframebreaks}

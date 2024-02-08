@@ -1,0 +1,745 @@
+---
+title: "Random Forests", BUAs
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+TODO: 
+
+- check missing bua
+- check out
+- regions
+- growth
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+#library(rgdal)
+#library(rgeos)
+library(sf)
+library(spdep)
+#library(tmap)
+#library(maptools)
+library(knitr)
+library(REAT)
+library(tidygeocoder)
+library(geosphere)
+library(broom)
+#library(foreach)
+library(doParallel)
+library(raster)
+library(plm)
+#library(lmtest)
+library(caret)
+library(randomForest)
+library(CAST)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>%  # for n == 1 
+  ungroup()
+
+# Partially complete panel as not all OAs have a website in at least one year
+df <- df %>% filter(!is.na(oa11cd)) %>% 
+  complete(oa11cd, year) %>% 
+  replace(is.na(.), 0)
+
+# temp for working on laptop
+# path.in <- paste0(path, "/data/temp/help.oa.csv")
+# df <- read_csv(path.in)
+
+# https://geoportal.statistics.gov.uk/datasets/df834d6d654d4f4a9a211fdbbb8893bd_0/explore
+# path.lookup.rg <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")
+# lookup.rg <- read_csv(path.lookup.rg) %>% 
+#   dplyr::select(-ObjectId)
+```
+
+## spatial data
+
+```{r}
+
+# Get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- st_read(path.geo)
+
+# Spatial transformations
+oa.ew <- st_transform(oa.ew, 4326)  # EPSG code for WGS84
+
+# Rename columns and keep only necessary columns
+oa.ew <- oa.ew %>% dplyr::select(OA11CD, Shape__Area) %>% 
+  rename(id = OA11CD,
+         area = Shape__Area)
+# oa.ew <- oa.ew[, c('OA11CD', 'Shape__Area')]
+# colnames(oa.ew) <- c('id', 'area')
+
+# Check the data structure
+print(summary(oa.ew))
+
+# Get OA for Scotland
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- st_read(dsn = path.geo.sc, layer = "OutputArea2011_MHW")
+
+# Spatial transformations
+oa.sc <- st_transform(oa.sc, 4326)  # EPSG code for WGS84
+
+# Rename columns and keep only necessary columns
+oa.sc <- oa.sc %>% dplyr::select(code, SHAPE_1_Ar) %>% 
+  rename(id = code,
+         area = SHAPE_1_Ar)
+# oa.sc <- oa.sc[, c('code', 'SHAPE_1_Ar')]
+# colnames(oa.sc) <- c('id', 'area')
+
+# Check the data structure
+print(summary(oa.sc))
+
+# Build OA for GB
+oa.gb <- rbind(oa.ew, oa.sc)
+rm(oa.ew, oa.sc)
+
+# # Get GB
+# path.gb <- "/hdd/internet_archive/archive/gis/Countries_December_2014_Full_Clipped_Boundaries_in_Great_Britain.shp"
+# gb <- st_read(path.gb)
+# 
+# # Spatial transformations
+# gb <- st_transform(gb, 4326)  # EPSG code for WGS84
+```
+
+## Full panel
+
+```{r}
+#oa.sf <- st_as_sf(oa.uk)
+
+oa.full <- replicate(17, oa.gb %>% as_tibble(), simplify = FALSE) %>%
+  bind_rows(.id = 'id_') %>% 
+  rename(year = id_) %>% 
+  mutate(year = as.numeric(year) + 1995) %>% 
+  dplyr::select(id, year)
+
+df <- oa.full %>% left_join(df, by = c("id" = "oa11cd", "year" = "year")) %>% 
+  replace(is.na(.), 0)
+
+sapply(df, function(x) sum(is.na(x)))
+rm(oa.full)
+```
+
+## OA to BUA
+
+```{r}
+# long to wide
+df.w <- df %>% pivot_wider(names_from = year, values_from = n)
+  
+sf_use_s2(FALSE)
+oa.gb.c <- st_centroid(oa.gb) %>%
+  left_join(df.w)
+
+# BUA
+# source: https://geoportal.statistics.gov.uk/datasets/ad30b234308f4b02b4bb9b0f4766f7bb_0/explore
+bua.path <- paste0(path, "/data/raw/BUA_2022_GB_-8042218937152150708.geojson")
+bua <- st_read(bua.path)
+bua <- st_transform(bua, 4326)  # EPSG code for WGS84
+
+
+# OA fall within a BUA
+df.within <- st_join(oa.gb.c, bua, join = st_intersects) %>% #, join = st_intersects
+  as_tibble()
+
+df.out <- df.within %>% filter(is.na(OBJECTID))
+df.within <- df.within %>% filter(!is.na(OBJECTID))
+
+# help <- st_is_within_distance(oa.gb.c %>% filter(id %in% df.out$id), bua, dist=500) %>% #, join = st_intersects
+#   as_tibble()
+df.out <- st_join(oa.gb.c %>% filter(id %in% df.out$id), bua, join = st_nearest_feature) %>% #, join = st_intersects
+  as_tibble() 
+
+df <- bind_rows(df.within, df.out) %>% # 142953
+  dplyr::select(BUA22CD, BUA22NM, 3:19) %>% 
+  pivot_longer(!c(BUA22CD, BUA22NM), names_to = "year", values_to = "n") %>% 
+  group_by(BUA22CD, year) %>% 
+  summarise(n = sum(n)) %>% 
+  ungroup() %>% 
+  left_join(bua %>% as_tibble() %>% dplyr::select(BUA22CD, BUA22NM)) %>% 
+  relocate(BUA22NM, .after = BUA22CD) %>% 
+  mutate(year = as.numeric(year))
+
+# # WE ARE MISSING 42855 websites were in OA not in a BUA
+# # The above might help but takes a long time
+# df <- st_join(oa.gb.c, bua, join = st_intersects) %>% # 94265
+#   as_tibble() %>% 
+#   dplyr::select(BUA22CD, BUA22NM, 3:19) %>% 
+#   pivot_longer(!c(BUA22CD, BUA22NM), names_to = "year", values_to = "n") %>% 
+#   group_by(BUA22CD, year) %>% 
+#   summarise(n = sum(n)) %>% 
+#   ungroup() %>% 
+#   left_join(bua %>% as_tibble() %>% dplyr::select(BUA22CD, BUA22NM)) %>% 
+#   relocate(BUA22NM, .after = BUA22CD) %>% 
+#   mutate(year = as.numeric(year))
+
+sapply(df, function(x) sum(is.na(x)))  
+# df <- df %>% filter(is.na(BUA22CD))
+# 42855 websites were in OA not in a BUA (3,536,635 - 3,493,780)
+```
+
+## Distances to cities 
+
+### City BUA
+
+```{r}
+
+city.names <- c("City of Westminster",
+"Birmingham",
+"Glasgow",
+"Liverpool",
+"Bristol",
+"Manchester",
+"Sheffield",
+"Leeds",
+"Edinburgh",
+"Leicester")
+
+#cities.bua <- df %>% filter(BUA22NM %in% city.names) %>% distinct(BUA22CD)
+cities.bua <- bua %>% filter(BUA22NM %in% city.names) 
+
+cities.bua.c <- cities.bua %>% filter(BUA22NM %in% city.names) %>% 
+  st_centroid() %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  #add_rownames(var = "id") %>% 
+  bind_cols(cities.bua %>% dplyr::select(BUA22CD, BUA22NM)) %>% 
+  dplyr::select(BUA22CD, BUA22NM, X, Y)
+
+bua.c <- bua %>% 
+  st_centroid() %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  #add_rownames(var = "id") %>% 
+  bind_cols(bua %>% dplyr::select(BUA22CD, BUA22NM)) %>% 
+  dplyr::select(BUA22CD, BUA22NM, X, Y)
+```
+
+### Distance to cities
+
+```{r}
+
+dist.gb <- distm(cbind(bua.c$X, bua.c$Y), cbind(cities.bua.c$X, cities.bua.c$Y), fun=distHaversine) 
+dist.gb <- round((dist.gb/1000),2) %>% 
+  as_tibble()  
+
+names(dist.gb) <- cities.bua.c$BUA22NM #city.names 
+
+dist.gb <- dist.gb %>% 
+  mutate(BUA22CD = bua.c$BUA22CD,
+         BUA22NM = bua.c$BUA22NM) %>% 
+  relocate(c(BUA22CD, BUA22NM))
+
+# dist$dist <- names(dist)[apply(dist[-1], MARGIN = 1, FUN = which.min)]
+# dist$distMet <- apply(dist[,2:11], 1, min)
+
+# min distance
+dist.gb <- transform(dist.gb, dist = do.call(pmin, dist.gb[-(1:2)]))
+
+# City name for minimum distance 
+# +2L to accommodate for the first two columns: BUA22CD and BUA22NM
+dist.gb <- dist.gb %>% mutate(dist.city.name = names(.)[max.col(.[3:12]*-1)+2L]) 
+
+# Join with distance and area
+df <- df %>% left_join(dist.gb %>% dplyr::select(-BUA22NM)) 
+
+sapply(df, function(x) sum(is.na(x)))
+```
+
+## n for London and nearest city 
+
+```{R}
+df <- df %>% mutate(dist.city.name = ifelse(dist.city.name == "City.of.Westminster",
+                                             "City of Westminster", dist.city.name)) %>% 
+  left_join(cities.bua.c %>%
+              dplyr::select(BUA22CD, BUA22NM) %>% 
+              rename(BUA22CD.city = BUA22CD),
+            by = c("dist.city.name" = "BUA22NM")) %>% 
+  left_join(df %>% dplyr::select(BUA22CD, year, n) %>% 
+              rename(n.nearest.city = n),
+            by = c("BUA22CD.city" = "BUA22CD", "year" = "year")) %>% 
+  left_join(df %>% dplyr::select(BUA22NM, year, n) %>% 
+              rename(n.London = n) %>% 
+              filter(BUA22NM == "City of Westminster") %>% 
+              rename(help = BUA22NM),
+            by = c("year" = "year")) %>% 
+  dplyr::select(-c(help, Leeds, Liverpool, Manchester, Sheffield, Leicester, Birmingham, 
+                   Bristol, Edinburgh, Glasgow))
+```
+
+## Spatial and spatio-temporal lags
+
+```{r}
+
+bua.used <- df %>% distinct(BUA22CD) %>% as.vector()
+sf_use_s2(FALSE)
+bua.c <- bua %>% filter(BUA22CD %in% bua.used$BUA22CD) %>% 
+  st_centroid()
+kn <- knearneigh(bua.c, k = 5)
+knn <- knn2nb(kn, row.names = NULL, sym = FALSE)
+knn.l <- nb2listw(knn)
+
+df <- df %>% 
+  group_by(year) %>% 
+  mutate(n.slag = lag.listw(knn.l, n)) %>% 
+  group_by(BUA22CD) %>% 
+  mutate(n.l.slag = dplyr::lag(n.slag, n=1, order_by=year),
+         n.London.lag = dplyr::lag(n.London, n=1, order_by = year),
+         n.nearest.city.lag = dplyr::lag(n.nearest.city, n=1, order_by = year))
+```
+
+## RF with CAST
+
+NOT DONE
+
+```{r}
+
+# Lookup: OA to regions
+path.lookup <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% dplyr::select(OA11CD, RGN11CD, RGN11NM)
+
+df <- df %>% left_join(lookup.region, by = c("oa11cd" = "OA11CD")) %>% 
+  relocate(c(RGN11NM, RGN11CD), .after=year) %>% 
+  mutate(help = substring(oa11cd, 1, 1),
+         RGN11CD = ifelse(help=="E", RGN11CD,
+                         ifelse(help=="W", "Wales",
+                                ifelse(help == "S", "Scotland", "NI"))),
+         RGN11NM = ifelse(help=="E", RGN11NM,
+                         ifelse(help=="W", "Wales",
+                                ifelse(help == "S", "Scotland", "NI")))) %>% 
+  dplyr::select(-help)
+
+# # North/South
+# #lookup.region %>% distinct(RGN21NM, .keep_all = T)
+# south <- c("London", "South West", "South West", "East of England")
+# df <- df %>% mutate(south = ifelse(RGN11NM %in% south, 1, 0))
+
+# For growth:
+df <- df %>% group_by(oa11cd) %>% 
+  mutate(#n.lag = dplyr::lag(n),
+         growth = log(n/n.lag),
+                    abs.growth = n - n.lag) %>% 
+  relocate(n.lag, .after = n)
+
+# out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
+# df <- read_csv(out.path)
+# df %>% write_csv(file = out.path)
+
+# rm(list=setdiff(ls(), "df"))
+
+# # This is the project path
+# path <- find_rstudio_root_file()
+
+# remove not used columns
+df <- df %>% dplyr::select(-c("Birmingham", "Glasgow", "Liverpool", "Bristol",
+                        "Manchester", "Sheffield", "Leeds", "Edinburgh",
+                        "Leicester", "dist.city.name", "dist.retail.name", "name")) 
+
+
+
+
+# There are no lags for 1996, so it is removed
+df <- df %>% filter(year > 1996) %>% 
+  dplyr::select(BUA22CD, BUA22NM, year, n, n.l.slag, n.nearest.city.lag, 
+                n.London.lag, City.of.Westminster, dist,) %>% 
+  rename(London = City.of.Westminster)
+
+df %>% group_by(year) %>% 
+  filter(n == 0) %>% 
+  count(n)
+# in 2012, 120848 0s  
+
+```
+
+### unregister_dopar function
+
+This is helpful when the parallel loop collapses. 
+
+```{r}
+unregister_dopar <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
+unregister_dopar()
+```
+
+### train the model in all data 
+
+```{r}
+set.seed(123)
+indices <- CreateSpacetimeFolds(df, 
+                                spacevar = "BUA22CD",
+                                timevar = "year", 
+                                k = 10)
+
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
+
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # It should be RHS variables + 2
+
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   seeds = seeds,
+                   allowParallel = T,
+                   index = indices$index,
+                   savePredictions = 'final')
+
+detectCores()
+cl <- makePSOCKcluster(6)
+registerDoParallel(cl)
+
+start.time <- Sys.time()
+model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.lag + n.l.slag + n.nearest.city + year,
+                     n.London.lag + n.nearest.city.lag + n.l.slag + year + London + dist ,
+                     #London.v + city.v + retail.v + n.l.slag + year,
+                   data = df, 
+                   trControl = tc,
+                   method = "ranger",
+                   na.action = na.omit,
+                   #preProc = c("center", "scale"),
+                   importance = "impurity")
+
+# stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken #7.3m
+
+print(model.all)
+
+# Random Forest 
+# 
+# 134528 samples
+#      6 predictor
+# 
+# No pre-processing
+# Resampling: Cross-Validated (10 fold) 
+# Summary of sample sizes: 113505, 105938, 105938, 113520, 113490, 105938, ... 
+# Resampling results across tuning parameters:
+# 
+#   mtry  splitrule   RMSE      Rsquared   MAE     
+#   2     variance    79.06941  0.6270099  24.31033
+#   2     extratrees  93.85626  0.5098337  26.64545
+#   4     variance    75.36044  0.6507424  21.62872
+#   4     extratrees  85.91194  0.5748039  25.88575
+#   6     variance    75.32465  0.6476521  21.19409
+#   6     extratrees  83.85574  0.5904021  26.05747
+# 
+# Tuning parameter 'min.node.size' was held constant at a value of 5
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were mtry = 6, splitrule = variance and min.node.size = 5.
+
+varimp_mars <- varImp(model.all) 
+varimp_mars$importance <- varimp_mars$importance %>% 
+  rownames_to_column() %>% 
+  mutate(rowname = ifelse(rowname == "dist", "distance to the nearest city",
+                          ifelse(rowname == "dist.retail", "distance to the nearest retail centre", 
+                                 ifelse(rowname == "London", "distance to London",
+                                        ifelse(rowname == "n.nearest.retail.lag", "Nearest retail centre's wensite density, t-1",
+                                               ifelse(rowname == "n.London.lag", "London's wensite density, t-1",
+                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag of wensite density",
+                                                             ifelse(rowname == "n.nearest.city", "Nearest city's wensite density, t-1", rowname)))))))) %>% 
+  column_to_rownames()
+
+path.out <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
+ggplot(varimp_mars) + theme_minimal() + labs(x="") #+ theme(panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
+path.out <- paste0(path, "/outputs/rf/models/oa_rf/all_OAs/all_OAs.RData")
+save(model.all, file = path.out)
+
+# ffsmodel_LLO <- ffs(predictors = df[, c("area", "dist", "dist.retail", "London", "south",  
+#                                       "n.slag", "n.lag", "n.l.slag", "n.nearest.city", 
+#                                                         "year")], 
+#                     response = df$n, #%>% dplyr::select(n) %>% as.data.frame %>% mutate(n = as.numeric(n)),
+#                     trControl = tc,
+#                     method = "ranger",
+#                     #na.action = na.omit,
+#                     #importance = "impurity",
+#                     metric="Rsquared",
+#                     verbose=FALSE)
+# ffsmodel_LLO
+# ffsmodel_LLO$selectedvars
+# plot_ffs(ffsmodel_LLO)
+```
+
+### train the model in a loop for all but one regions
+
+
+```{r}
+
+#folds
+k <- 10 # 
+
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
+
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables + 2
+
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# detectCores()
+# cl <- makePSOCKcluster(2)
+# registerDoParallel(cl)
+
+# train in every region
+start.time <- Sys.time()
+
+regions <- df %>% ungroup() %>% distinct(RGN11CD) 
+regions <- as.vector(regions$RGN11CD)
+
+for (i in regions){
+  
+  print(paste0("start loop for ", i))
+  
+  set.seed(71)
+  indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD!=i), 
+                                spacevar = "oa11cd",
+                                timevar = "year", 
+                                k = k)
+  
+  # CV
+  tc <- trainControl(method = "cv",
+                   number = k,
+                   seeds = seeds,
+                   allowParallel = T,
+                   index = indices$index,
+                   savePredictions = 'final')
+
+
+  model.all <- train(n ~ n.London.lag + n.nearest.city.lag + n.nearest.retail.lag + n.l.slag + year + London + dist + dist.retail,
+                   data = df %>% filter(RGN11CD!=i), 
+                   trControl = tc,
+                   method = "ranger",
+                   na.action = na.omit,
+                   #preProc = c("center", "scale"),
+                   importance = "impurity")
+  #assign(paste0("model.all",as.character(i)), model.all)
+  
+  #file <- paste0(path, "/outputs/rf/models/oa_rf/regions/region_", as.character(i), ".RData")
+  file <- paste0("/hdd/tmp/regions/region_", as.character(i), ".RData")  
+  save(model.all, file = file)  # file name = region not in the training data
+  rm(model.all)
+  
+  print(paste0("end loop for ", i))
+  
+}
+
+# stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken
+```
+
+### Resamples for plots
+
+```{r}
+# create a list of the above model outputs
+filenames <- list.files(paste0(path, "/outputs/rf/models/oa_rf/regions"), pattern = "*.RData", full.names = T)
+
+for (i in filenames){
+  load(file = i)
+  i <- gsub("/home/nw19521/projects/web.diffusion/outputs/rf/models/oa_rf/regions/|.RData", "", i)
+  assign(i, model.all)  
+}
+
+ fit.model.all <- mget(ls(pattern = "^region_"))
+
+# clear up
+rm(model.all) # this is the last item from the loop
+rm(list = ls(pattern = "^region_"))
+
+# resamples
+fit.model.all.res <- resamples(fit.model.all)
+summary(fit.model.all.res)
+
+# plot metrics
+
+# TODO: fix the year labels
+
+scales <- list(x=list(relation="free"), y=list(relation="free"))
+bwplot(fit.model.all.res, scales=scales)
+
+# TODO: fix the year labels
+```
+
+### Variable importance
+
+```{r , include=TRUE, results= 'markup', message=FALSE}
+lapply(names(fit.model.all), function(x) plot(varImp(fit.model.all[[x]]), main=as.character(x)))
+```
+
+```{r}
+help <- lapply(fit.model.all, function(x) varImp(x)) 
+help <- lapply(help, function(x) x[[1]])
+help <- do.call("rbind", help)
+
+importance <- help %>% rownames_to_column() %>% 
+  mutate(feature = gsub("model.all[0-9]+.", "", rowname),
+         year = gsub(".*?([0-9]+).*", "\\1", rowname)) %>% 
+  rename(importance = Overall) %>% 
+  relocate(importance, .after = year) %>% 
+  dplyr::select(-rowname)
+
+importance %>% ggplot() +
+  geom_line(aes(x=year, y = importance, color = feature, group = feature), size = 1) +
+  scale_color_discrete(name = "Features") +
+  #scale_linetype_manual(name = "Website density regressions111") 
+  ylab("Importance") + 
+  ggtitle("Feature importance") +
+  theme_minimal() +
+  theme(axis.title.x=element_blank(),
+        plot.title = element_text(hjust = 0.5))
+
+```
+
+### Test on one region
+
+```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
+
+# for a reference point
+df %>% group_by(year) %>%
+  summarise(min = min(n), max=max(n),
+            mean = mean(n), median = median(n)) %>%
+  round(2) %>% kable()
+```
+
+```{r}
+# train on all but one region, test on that region
+
+df.predictions <- data.frame()
+for (i in regions){
+  #for (j in regions[!regions == i]){
+    pred <- predict(fit.model.all[names(fit.model.all)==paste0("region_", i)], 
+                    df[df$RGN11CD==i,])
+    pred <- as.data.frame(pred)
+    rownames(pred) <- c()
+    assign(paste0("region.predict.model.", ".on.", i), pred)
+    
+    d <- paste0("region.predict.model.", ".on.", i)
+    d <- cbind(get(d), df %>% filter(RGN11CD==i)) #%>% arrange(year, ladcd)
+    
+    #***dplyr::select(RGN21CD, ladcd, year, growth, 1)***
+    
+    d <- d[,c(5, 2, 4, 6, 1)]     
+    colnames(d)[5] <- "predictions"
+    d <- d %>% mutate(trained.on = i)
+    df.predictions <- rbind(d, df.predictions)
+  #}
+}
+
+df.predictions <- df.predictions %>% mutate(test.train = paste0(RGN11CD, ".", trained.on))
+
+# split to list by region pair
+pred.by.region.all.list <- split(df.predictions, df.predictions$test.train) #correct length = 132 = 12*11
+
+# calculate metrics for every region pair 
+rf.year.all.metrics <- lapply(pred.by.region.all.list, function(x) postResample(pred = x$predictions,
+                                                                     obs = x$n))  # CHANGE n WITH growth
+
+path.lookup <- paste0(path, "/data/raw/Local_Authority_District_to_Region_(April_2021)_Lookup_in_England.csv")  
+lookup.region <- read_csv(path.lookup) %>% 
+  dplyr::select(RGN21CD, RGN21NM) %>% 
+  distinct() %>% 
+  rename(RGN11CD = RGN21CD) %>% 
+  add_row(RGN11CD = c("Scotland", "N0", "Wales"), 
+          RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
+
+path.out <- paste0(path, "/outputs/rf/heatmap_OA.png")
+rf.year.all.metrics %>% 
+  as.data.frame() %>%
+  rownames_to_column(var = "metrics") %>% 
+  pivot_longer(!metrics, names_to = "train.test") %>% 
+  pivot_wider(names_from = metrics, values_from = value) %>% 
+  separate(train.test, c("train", "test"), remove = F) %>% 
+  left_join(lookup.region, by = c("train" = "RGN11CD")) %>% 
+  rename(train.region=RGN21NM) %>% 
+  left_join(lookup.region, by = c("test" = "RGN11CD")) %>% 
+  rename(test.region=RGN21NM) %>% 
+  arrange(Rsquared) %>% 
+  dplyr::select(train.region, test.region, Rsquared) %>% 
+  ggplot(aes(train.region, test.region, fill= Rsquared)) + 
+  geom_tile() +
+  coord_fixed() +
+  labs(y = "", x = "") + #y: test.region, x: train.region
+  scale_fill_gradientn(colours = terrain.colors(10), trans = 'reverse') +
+  theme(#legend.position = "none",
+        axis.text.x = element_text(angle = 45, hjust=1),
+        panel.border = element_blank(), 
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
+
+  #summarise(r = range(Rsquared))
+  #round(2) %>%
+  #kable()
+
+```
+
