@@ -952,7 +952,6 @@ save(model.all, file = path.out)
 
 ### train the model in a loop for all but one regions
 
-
 ```{r}
 
 #folds
