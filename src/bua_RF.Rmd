@@ -349,6 +349,18 @@ df <- df %>%
   ungroup()
 ```
 
+```{r}
+# out.path <- paste0(path, "/data/temp/df_for_bua_rf.csv")
+# df <- read_csv(out.path)
+# df %>% write_csv(file = out.path)
+
+# rm(list=setdiff(ls(), "df"))
+
+# # This is the project path
+# path <- find_rstudio_root_file()
+
+```
+
 ## RF with CAST
 
 ```{r}
@@ -362,7 +374,7 @@ path.lookup <- paste0(path, "/data/raw/Built_Up_Area_to_Region_(December_2022)_L
 lookup.region <- read_csv(path.lookup)  
 
 df <- df %>% left_join(lookup.region %>% 
-                         filter(WHOLE_PART=="Whole") %>% 
+                         #filter(WHOLE_PART=="Whole") %>% 
                          dplyr::select(BUA22CD, RGN22CD, RGN22NM), 
                        by = c("BUA22CD" = "BUA22CD")) %>% 
   #filter(is.na(RGN22CD))                                      #142 BUA in more than one regions dropped
@@ -380,16 +392,6 @@ df <- df %>% group_by(BUA22CD) %>%
          growth = log(n/n.lag),
                     abs.growth = n - n.lag) %>% 
   relocate(n.lag, .after = n)
-
-# out.path <- paste0(path, "/data/temp/df_for_bua_rf.csv")
-# df <- read_csv(out.path)
-# df %>% write_csv(file = out.path)
-
-# rm(list=setdiff(ls(), "df"))
-
-# # This is the project path
-# path <- find_rstudio_root_file()
-
 
 # There are no lags for 1996, so it is removed
 df <- df %>% filter(year > 1996) %>% 
@@ -522,7 +524,7 @@ for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables 
 seeds[[11]]<-sample.int(1000, 1)
 
 # detectCores()
-cl <- makePSOCKcluster(4)
+cl <- makePSOCKcluster(6)
 registerDoParallel(cl)
 
 # train in every region
@@ -576,17 +578,6 @@ time.taken
 ### Resamples for plots
 
 ```{r}
-# create a list of the above model outputs
-filenames <- list.files(paste0(path, "/outputs/rf/models/oa_rf/regions"), pattern = "*.RData", full.names = T)
-
-for (i in filenames){
-  load(file = i)
-  i <- gsub("/home/nw19521/projects/web.diffusion/outputs/rf/models/oa_rf/regions/|.RData", "", i)
-  assign(i, model.all)  
-}
-
- fit.model.all <- mget(ls(pattern = "^region_"))
-
 # create a list of the above model outputs
 fit.model.all <- mget(ls(pattern = "^model.allE|^model.allN|^model.allW|^model.allS"))
 
@@ -653,7 +644,6 @@ df %>% group_by(year) %>%
 
 df.predictions <- data.frame()
 for (i in regions){
-  #for (j in regions[!regions == i]){
     pred <- predict(fit.model.all[names(fit.model.all)==paste0("model.all", i)], 
                     df[df$RGN22CD==i,])
     pred <- as.data.frame(pred)
@@ -688,7 +678,7 @@ lookup.region <- read_csv(path.lookup) %>%
   dplyr::select(RGN22CD, RGN22NM) %>% 
   distinct()
 
-path.out <- paste0(path, "/outputs/rf/test_regions_BUA.csv")
+path.out <- paste0(path, "/outputs/rf/figures/test_regions_BUA.csv")
 
 rf.year.all.metrics %>% 
   as.data.frame() %>%
