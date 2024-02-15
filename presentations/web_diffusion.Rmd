@@ -133,11 +133,13 @@ hierarchy of sub-centres, to the periphery
 
 ## Web data: The Internet Archive
 
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture1.png){width="70%"}
+<!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture1.png){width="70%"} -->
+![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/figure/Picture1.png){width="70%"}
 
 ## Web data: The Internet Archive
 
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture2.png){width="70%"}
+<!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture2.png){width="70%"} -->
+![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/figure/Picture2.png){width="70%"}
 
 ## Long story short
 
@@ -241,8 +243,8 @@ knitr::include_graphics(path.image)
 ```{r eval=TRUE, echo=FALSE, results='asis'}
 
 # load 2000 co.uk
-# setwd("C:/Users/TranosE/DataShare/archive/nuts")
-path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
+# path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
+path.2000 <- "/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/all2000couk.csv"
 
 all2000.duplicates <- data.table::fread(path.2000) #
 # dim(all2000.duplicates) # 3336162
@@ -276,11 +278,13 @@ kable(f.websites.pc,
 
 ## Directory website with a lot of postcodes
 
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
+<!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png) -->
+![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
 
 ## Website with a unique postcode in London
 
-![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
+<!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png) -->
+![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
 
 # Methods
 
@@ -849,11 +853,11 @@ read.csv(path.in) %>% dplyr::select(year, gini.a.n.) %>%
 
 ## Modelling framework
 
--   [A **hierarchy effect**: from main centres to secondary ones]{style="color:orange;"}
+-   [A hierarchy effect: from main centres to secondary ones]{style="color:orange;"}
 
--   [A **neighborhood effect**: first "hitting" nearby locations]{style="color:olive;"}
+-   [A neighborhood effect: first "hitting" nearby locations]{style="color:olive;"}
 
--   [**S-shaped** pattern in the cumulative level of adoption]{style="color:violet;"}
+-   [S-shaped pattern in the cumulative level of adoption]{style="color:violet;"}
 
 <br> <small>
 $$Website\,Density_{t} \sim \color{orange}{Distance\,London} + 
@@ -924,10 +928,11 @@ read.csv(path.table) %>%
 
 ## Regional similarities for Output Areas
 
-```{r similarity_OA, eval = F, out.height= "70%", out.width="70%", message=FALSE}
-
-path.image <- paste0(path, "/outputs/rf/figures/heatmap_OA.png")
-knitr::include_graphics(path.image)
+```{r similarity_OA, out.height= "70%", out.width="70%", message=FALSE}
+path.table <- paste0(path, "/outputs/rf/figures/test_regions_OA.csv")
+read.csv(path.table) %>% 
+  mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
+  kable()
 ```
 
 ## Alternative specification: growth, trained on all data
