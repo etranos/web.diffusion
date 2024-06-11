@@ -134,11 +134,13 @@ hierarchy of sub-centres, to the periphery
 ## Web data: The Internet Archive
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture1.png){width="70%"} -->
+
 ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/figure/Picture1.png){width="70%"}
 
 ## Web data: The Internet Archive
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/archive/nuts/figure/Picture2.png){width="70%"} -->
+
 ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/figure/Picture2.png){width="70%"}
 
 ## Long story short
@@ -279,11 +281,13 @@ kable(f.websites.pc,
 ## Directory website with a lot of postcodes
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png) -->
+
 ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
 
 ## Website with a unique postcode in London
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png) -->
+
 ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
 
 # Methods
@@ -537,7 +541,7 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
 ------------------------------------------------------------------------
 
 ```{r moransi_la, results='asis'}
-path.in <- paste0(path, "/outputs/lisa/oa_ggplot/morani_la.csv")
+path.in <- paste0(path, "/outputs/lisa/la_ggplot/morani_la.csv")
 
 read.csv(path.in) %>% dplyr::select(year, morani) %>% 
   ggplot(aes(x=year, y=morani)) +
@@ -572,7 +576,7 @@ read.csv(path.in) %>% dplyr::select(year, morani) %>%
 ------------------------------------------------------------------------
 
 ```{r lisa_la, results='asis', out.width = "30%"}
-path.images <- paste0(path, "/outputs/oa_ggplot/lisa/")
+path.images <- paste0(path, "/outputs/la_ggplot/lisa/")
 
 list.files(path = path.images, pattern = "^lisa_level_pc1_la", full.names = T) %>% 
   map(image_read) %>% # reads each path file
@@ -853,11 +857,14 @@ read.csv(path.in) %>% dplyr::select(year, gini.a.n.) %>%
 
 ## Modelling framework
 
--   [A hierarchy effect: from main centres to secondary ones]{style="color:orange;"}
+-   [A hierarchy effect: from main centres to secondary
+    ones]{style="color:orange;"}
 
--   [A neighborhood effect: first "hitting" nearby locations]{style="color:olive;"}
+-   [A neighborhood effect: first "hitting" nearby
+    locations]{style="color:olive;"}
 
--   [S-shaped pattern in the cumulative level of adoption]{style="color:violet;"}
+-   [S-shaped pattern in the cumulative level of
+    adoption]{style="color:violet;"}
 
 <br> <small>
 $$Website\,Density_{t} \sim \color{orange}{Distance\,London} + 
@@ -886,20 +893,18 @@ $$Website\,Density_{t} \sim \color{orange}{Distance\,London} +
 
 -   Space-time sensitive 10-fold CV (`CAST`)
 
-
 ## Models trained on all data
 
 <br>
 
-|                   | RMSE  | RSquared | MAE   |
-|-------------------|-------|----------|-------|
-| Local Authorities* | 0.032 | 0.810    | 0.019 |
-| Output Areas       | 5.000 | 0.205    | 1.047 |
+|                     | RMSE  | RSquared | MAE   |
+|---------------------|-------|----------|-------|
+| Local Authorities\* | 0.032 | 0.810    | 0.019 |
+| Output Areas        | 5.000 | 0.205    | 1.047 |
 
-<small>
-*No retail centre predictors for the Local Authority models
+<small> \*No retail centre predictors for the Local Authority models
 </small>
-  
+
 ## Variable importance for Local Authorities
 
 ```{r varimpLA, eval = T, out.height= "58%", out.width="58%", message=FALSE}
@@ -937,7 +942,6 @@ lad %>% left_join(oa) %>%
   kable(digits=3)
 ```
 
-
 ## Alternative specification: growth, trained on all data
 
 <br> <small>
@@ -952,12 +956,11 @@ $$Website\,Density\,Growth_{t} \sim \color{orange}{Distance\,London} +
 
 <br>
 
-|                   | RMSE  | RSquared | MAE   |
-|-------------------|-------|----------|-------|
-| Local Authorities* | 0.200 | 0.634    | 0.148 |
+|                     | RMSE  | RSquared | MAE   |
+|---------------------|-------|----------|-------|
+| Local Authorities\* | 0.200 | 0.634    | 0.148 |
 
-<small>
-*No retail centre predictors for the Local Authority models
+<small> \*No retail centre predictors for the Local Authority models
 </small>
 
 ## Alternative specification: growth, trained on all data
@@ -991,6 +994,5 @@ read.csv(path.table) %>%
 -   Spatially consistent mechanisms at local scale
 
 -   Regional heterogeneity
-
 
 ## References {.allowframebreaks}
