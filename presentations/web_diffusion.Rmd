@@ -1,5 +1,5 @@
 ---
-title: 'A multi-scalar story of the diffusion of a new technology: the web'
+title: 'A multi-scale story of the diffusion of a new technology: the web'
 # date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
 author: |
   |
@@ -115,7 +115,7 @@ hierarchy of sub-centres, to the periphery
 
 -   Over time, **early stages** of the internet [*1996-2012*]
 
--   **Granular** and **multi-scale** spatial perspective
+-   Granular and multi-scale **spatial processes**
 
 # Web data
 
@@ -301,7 +301,7 @@ kable(f.websites.pc,
 -   Cumulative adoption: Self-starting logistic growth model [`nls` and
     `SSlogis`]
 
--   Descriptive statistics, ESDA & density regressions
+-   Descriptive statistics & ESDA
 
 -   Machine learning framework [random forests]
 
@@ -532,7 +532,7 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
 
 -   Websites per firm in Local authorities (c. 400)
 
--   Websites in Output Areas (c. 200,000)
+-   Websites in Output Areas (c. 230,000)
 
 ------------------------------------------------------------------------
 
@@ -893,11 +893,11 @@ $$Website\,Density_{t} \sim \color{orange}{Distance\,London} +
 
 |                   | RMSE  | RSquared | MAE   |
 |-------------------|-------|----------|-------|
-| Local Authorities | 0.032 | 0.810    | 0.019 |
-| Output Areas*      | 5.000 | 0.205    | 1.047 |
+| Local Authorities* | 0.032 | 0.810    | 0.019 |
+| Output Areas       | 5.000 | 0.205    | 1.047 |
 
 <small>
-*No retail centre variables for the Local Authority models
+*No retail centre predictors for the Local Authority models
 </small>
   
 ## Variable importance for Local Authorities
@@ -917,23 +917,26 @@ path.image <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
 knitr::include_graphics(path.image)
 ```
 
-## Regional similarities for Local Authorities
+## Regional similarities
 
-```{r similarity_LA, eval = T, message=FALSE}
-path.table <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
-read.csv(path.table) %>% 
-  mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
-  kable()
+```{r similarity, eval = T, message=FALSE}
+path.lad <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
+path.oa <- paste0(path, "/outputs/rf/figures/test_regions_OA.csv")
+
+lad <- read.csv(path.lad) %>% 
+  rename('RSquared LAD' = Rsquared)
+
+oa <- read.csv(path.oa) %>% rename(Region = test.region,
+                                   'RSquared OA' = Rsquared)
+
+lad %>% left_join(oa) %>% 
+  mutate('Rank OA' = rank(desc(`RSquared OA`)),
+         'Rank LAD' = rank(desc(`RSquared LAD`))) %>% 
+  relocate(5, .after = 2) %>% 
+  arrange(`Rank LAD`) %>% 
+  kable(digits=3)
 ```
 
-## Regional similarities for Output Areas
-
-```{r similarity_OA, out.height= "70%", out.width="70%", message=FALSE}
-path.table <- paste0(path, "/outputs/rf/figures/test_regions_OA.csv")
-read.csv(path.table) %>% 
-  mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
-  kable()
-```
 
 ## Alternative specification: growth, trained on all data
 
@@ -954,7 +957,7 @@ $$Website\,Density\,Growth_{t} \sim \color{orange}{Distance\,London} +
 | Local Authorities* | 0.200 | 0.634    | 0.148 |
 
 <small>
-*No retail centre variables for the Local Authority models
+*No retail centre predictors for the Local Authority models
 </small>
 
 ## Alternative specification: growth, trained on all data
@@ -963,6 +966,7 @@ $$Website\,Density\,Growth_{t} \sim \color{orange}{Distance\,London} +
 path.table <- paste0(path, "/outputs/rf/figures/test_regions_LA_growth.csv")
 read.csv(path.table) %>% 
   mutate(Rsquared = round(Rsquared, digits= 3)) %>% 
+  arrange(desc(Rsquared)) %>% 
   kable()
 ```
 
@@ -970,7 +974,7 @@ read.csv(path.table) %>%
 
 ------------------------------------------------------------------------
 
--   Established technological diffusion drivers still apply
+-   Established technological diffusion spatial processes still apply
 
     -   for a digital technology
     -   at local scales
@@ -986,8 +990,7 @@ read.csv(path.table) %>%
 
 -   Spatially consistent mechanisms at local scale
 
--   Heterogeneity increases with resolution
+-   Regional heterogeneity
 
--   Things to do: OA?
 
 ## References {.allowframebreaks}

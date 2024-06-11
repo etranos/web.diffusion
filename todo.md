@@ -213,3 +213,15 @@ mtry  splitrule   RMSE      Rsquared     MAE
 
 - Temporal clustering for ranking instead of n: hopefully leapfrogging etc.
 
+## GfR
+- [ ] Infection points because of data structure problems, e.g. 2004
+	  I need to find how the 2004-2005 problem. LAD: E08000006 for 2005 and 2006
+- [ ] London and year
+- [ ] End points for S curve
+- [ ] idea for further research: Diffusion distance plumber to plumber
+- [ ] For 2004, emerald said Google fixed their algorithm 
+- [ ] Sensitivity different n postcodes 
+- [ ] Marcus Janser For green (for Emerald)
+- [ ] Rank plots, average start and end
+- [ ] rerun: train the model in a loop for all but one regions
+
