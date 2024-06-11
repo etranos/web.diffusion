@@ -1,0 +1,214 @@
+---
+title: "diffusion, websites with 1 pc"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+library(sf)
+library(magick)
+library(spdep)
+library(kableExtra)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 12
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) 
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012)
+
+df <- bind_rows(df9610, df1112) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n,             # for n == 1
+    year > 1995 & year <2013) %>%   
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  #summarise(n = n()) %>%            # for multiple pc  
+  summarise(n = sum(V1.domain)) %>%  # for n == 1 
+  ungroup()
+
+
+# tests for Scotland
+# df %>% filter(substr(oa11cd, 1,1) =="S",
+#               year==2010) %>% summarise(mean(n, na.rm = T))
+# 
+# df %>% filter(oa11cd=="S00090182")
+# 
+# test@data %>% filter(substr(id, 1,1) =="S",
+#                      n!=0)
+# 
+# df %>% filter(substr(oa11cd, 1,1) =="W",
+#               year==2003)
+```
+
+## spatial data
+
+```{r}
+# get OA for England and Wales
+path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
+oa.ew <- st_read(path.geo)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+oa.ew <- st_transform(oa.ew, 4326)  # EPSG code for WGS84
+
+# keep in the data slot only the ONS Output Area id, renaming it as 'id'
+oa.ew <- oa.ew %>% 
+  dplyr::select(OA11CD, Shape__Area) %>% 
+  rename(id = OA11CD,
+         area = Shape__Area)
+
+path.geo.sc <- paste0(path, "/data/raw/output-area-2011-mhw")
+oa.sc <- st_read(dsn=path.geo.sc, layer = "OutputArea2011_MHW")
+# source: https://www.nrscotland.gov.uk/statistics-and-data/geography/our-products/census-datasets/2011-census/2011-boundaries
+
+# spatial transformations
+oa.sc <- st_transform(oa.sc, 4326)  # EPSG code for WGS84
+
+# Scotland (follows same steps as EW, see notes above)
+oa.sc <- oa.sc %>% 
+  dplyr::select(code, SHAPE_1_Ar) %>% 
+  rename(id = code,
+         area = SHAPE_1_Ar)
+
+# NI
+path.geo.ni <- paste0(path, "/data/raw/ni_small_area/")
+oa.ni <- st_read(dsn = path.geo.ni, layer = "SA2011")
+oa.ni <- st_transform(oa.ni, 4326)  # EPSG code for WGS84
+oa.ni <- oa.ni %>% dplyr::select(SA2011, Hectares) %>% 
+  rename(id= SA2011,
+         area = Hectares)
+
+# Build OA for UK
+oa.uk <- rbind(oa.ew, oa.sc, oa.ni)
+rm(oa.ew, oa.sc, oa.ni)
+
+# get UK
+path.uk <- "https://services1.arcgis.com/ESMARspQHYMw9BZ9/arcgis/rest/services/Countries_December_2023_Boundaries_UK_BUC/FeatureServer/0/query?outFields=*&where=1%3D1&f=geojson"
+uk <- st_read(path.uk)
+# spatial transformations
+uk <- st_transform(uk, 4326)  # EPSG code for WGS84
+```
+
+## lisa maps
+
+```{r}
+path.out <- paste0(path, "/outputs/lisa/oa_ggplot/lisa_level_pc", n, "_oa") # for unique PC
+#path.out <- paste0(path, "/outputs/lisa/oa_ggplot/lisa_level_pc", m, "_oa")  # for multiple PC
+
+morani <- data.frame()
+
+#spatial weight matrix
+sf_use_s2(FALSE)
+nb <- poly2nb(oa.uk)
+listw <- nb2listw(nb, style = "W", zero.policy = T)
+
+for (t in 1996:2012){
+  test <- oa.uk
+  test <- test %>% left_join(df[df$year==t,], by = c("id"="oa11cd")) %>% 
+    mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
+           year = ifelse(is.na(year), t, year))
+    
+  #spatial weight matrix
+  #moved out of the loop
+  
+  #Moran's I
+  globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
+  a <- cbind(globalMoran$estimate[[1]],globalMoran$p.value, t[1])
+  morani <- rbind(a, morani)
+  
+  #LISA
+  lmoran <- localmoran(test$n, listw,  adjust.x=TRUE, zero.policy = T, na.action = na.exclude)
+  
+  quadr <- attr(lmoran, "quadr")
+  #quadr[lmoran[,5] > 0.05 | is.na(lmoran[,5]), ] <- NA
+  quadr[p.adjust(lmoran[,5], method = "fdr") > 0.05 | is.na(lmoran[,5]), ] <- NA
+  
+  palette_new <- grDevices::colorRampPalette(
+            colors = c("blue", "lightsalmon", "lightblue", "red", "white"))(5)
+  
+  cities <- maps::world.cities %>%
+    filter(country.etc=="UK") %>% 
+    arrange(pop) %>% tail(10) 
+  tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+
+  ggplot(data = oa.uk, aes(fill = quadr$median)) +
+    geom_sf(data = uk, fill = "white", linewidth = .5) +
+    geom_sf(linewidth = 0) +
+    geom_sf(data = tif_sf, fill = "black", size = .3) +
+    #geom_sf_text(data = tif_sf, aes(label = name, fill = "black"), size = 4) +
+    scale_fill_manual(values = palette_new, na.value="white", drop = F) +
+    theme_minimal() +
+    theme(panel.grid.major = element_line(colour = "transparent"),
+          axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks = element_blank(),
+          legend.title=element_blank()) +
+          #legend.position="none") +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    labs(title = t,
+        subtitle = "LISA, websites per OA")
+  
+  filename = paste(path.out, t, ".png", sep = "")
+  ggsave(filename, bg='#ffffff')
+}
+```
+  
+Moran I
+
+```{r}
+path.out <- paste0(path, "/outputs/lisa/oa_ggplot/morani_oa.csv")
+morani %>% as_tibble() %>% 
+  rename('morani'=V1,
+                   p = V2,
+                   year = V3) %>% 
+  #kable() %>% 
+  write_csv(path.out)
+```
+

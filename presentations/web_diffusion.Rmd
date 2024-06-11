@@ -537,7 +537,7 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
 ------------------------------------------------------------------------
 
 ```{r moransi_la, results='asis'}
-path.in <- paste0(path, "/outputs/lisa/morani_la.csv")
+path.in <- paste0(path, "/outputs/lisa/oa_ggplot/morani_la.csv")
 
 read.csv(path.in) %>% dplyr::select(year, morani) %>% 
   ggplot(aes(x=year, y=morani)) +
@@ -551,7 +551,7 @@ read.csv(path.in) %>% dplyr::select(year, morani) %>%
 ------------------------------------------------------------------------
 
 ```{r, eval=T, moransi_oa, results='asis'}
-path.in <- paste0(path, "/outputs/lisa/morani_oa.csv")
+path.in <- paste0(path, "/outputs/lisa/oa_ggplot/morani_oa.csv")
 # read.csv(path.in) %>% dplyr::select(year, morani) %>% 
 #   rename('Moran\'s I' = morani,
 #          Year = year) %>% 
@@ -572,7 +572,7 @@ read.csv(path.in) %>% dplyr::select(year, morani) %>%
 ------------------------------------------------------------------------
 
 ```{r lisa_la, results='asis', out.width = "30%"}
-path.images <- paste0(path, "/outputs/lisa/")
+path.images <- paste0(path, "/outputs/oa_ggplot/lisa/")
 
 list.files(path = path.images, pattern = "^lisa_level_pc1_la", full.names = T) %>% 
   map(image_read) %>% # reads each path file
@@ -584,7 +584,7 @@ list.files(path = path.images, pattern = "^lisa_level_pc1_la", full.names = T) %
 ------------------------------------------------------------------------
 
 ```{r lisa_oa, eval=T,results='asis', out.width = "30%"}
-path.images <- paste0(path, "/outputs/lisa/")
+path.images <- paste0(path, "/outputs/oa_ggplot/lisa/")
 
 list.files(path = path.images, pattern = "^lisa_level_pc1_oa", full.names = T) %>% 
   map(image_read) %>% # reads each path file
