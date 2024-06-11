@@ -246,7 +246,8 @@ knitr::include_graphics(path.image)
 
 # load 2000 co.uk
 # path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
-path.2000 <- "/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/all2000couk.csv"
+# path.2000 <- "/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/all2000couk.csv"
+path.2000 <- paste0(path, "/data/temp/all2000couk.csv")
 
 all2000.duplicates <- data.table::fread(path.2000) #
 # dim(all2000.duplicates) # 3336162
