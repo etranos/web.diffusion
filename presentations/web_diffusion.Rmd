@@ -282,14 +282,14 @@ kable(f.websites.pc,
 ## Directory website with a lot of postcodes
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png) -->
-
-![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png)
+<!-- ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_directory_website_2010.png) -->
+![](images/screenshot_directory_website_2010.png)
 
 ## Website with a unique postcode in London
 
 <!-- ![](C:/Users/nw19521/OneDrive%20-%20University%20of%20Bristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png) -->
-
-![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png)
+<!-- ![](/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/shoreditch/paper/images_screenshots/screenshot_2010.png) -->
+![](images/screenshot_2010.png)
 
 # Methods
 
