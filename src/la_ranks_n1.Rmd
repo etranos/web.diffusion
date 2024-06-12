@@ -120,14 +120,16 @@ df <- df %>% left_join(firms) %>%
 ```{r}
 # get LA for the UK
 path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
-la <- readOGR(path.geo)
+la <- st_read(path.geo)
+# source: https://geoportal.statistics.gov.uk/
 
-la.names <- la@data %>% 
+la.names <- la %>% 
   dplyr::select(LAD21CD, LAD21NM) %>% 
   rename(ladcd = LAD21CD,
          ladnm = LAD21NM) 
 
-df <- df %>% left_join(la.names)
+df <- df %>% left_join(la.names) %>% 
+  dplyr::select(-geometry)
 # source: https://geoportal.statistics.gov.uk/
 ```
 
@@ -148,11 +150,14 @@ df %>% group_by(year) %>%
   group_by(ladcd) %>% 
   #mutate(diff_1st = -diff(rank))
   mutate(diff_1st = -(rank-lag(rank))) %>% 
-  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .95, na.rm = T)) 
-  # t= 2000: q.95 = 199.5, q.9 = 168, q.1 = 7, q.05 = 3.75. **abs()**
-  # t= 1996: q.95 = 257.125, q.9 = 232.25, q.1 = 17.75, q.05 = 6.875. **abs()**
+  # ungroup() %>% summarise(q = quantile(abs(diff_1st), .1, na.rm = T)) 
+  # t = 2000: q.95 = 194.5, q.90 = 168.5, q.1 = 9, q.05 = 3.75. **abs()**, 12/6/2024
+  # t = 2000: q.95 = 199.5, q.9 = 168, q.1 = 7, q.05 = 3.75. **abs()**
+  # t = 1996: q.95 = 257.125, q.9 = 232.25, q.1 = 17.75, q.05 = 6.875. **abs()**
 
-  mutate(alpha = ifelse(abs(diff_1st) > 199.5, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(abs(diff_1st) > 194.5, .8, 0.1)) %>% 
+  #mutate(alpha = ifelse(abs(diff_1st) <= 3.75, .8, 0.1)) %>% 
+  
   mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
   mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
 
@@ -172,7 +177,60 @@ df %>% group_by(year) %>%
 ggsave(out.path)
 ```
 
-## Ranks websites 2000 and 2012 only
+## Average ranks websites per firm t and 2012 only
+
+```{r}
+
+# change percentile in out.path and mutate(alpha = ifelse(abs(diff_1st)
+
+out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only95_av.png")
+
+df %>% 
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(ladcd, period) %>%
+  mutate(n_by_firm = ifelse(period != 2, mean(n_by_firm), n_by_firm)) %>% 
+  filter(year > 1997 & year < 2011) %>% 
+  group_by(year) %>% 
+  mutate(rank = rank(desc(n_by_firm))) %>% # or n_by_firm
+  ungroup() %>% 
+  filter(year==1998 | year == 2010) %>% 
+  arrange(ladcd, year) %>% 
+  group_by(ladcd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-lag(rank))) %>% 
+  
+  # ungroup() %>% summarise(q = quantile(abs(diff_1st), .1, na.rm = T)) 
+  # q.95 = 253, q.9 = 214, q.1 = 11, q.05 = 3.75. **abs()**
+
+  mutate(alpha = ifelse(abs(diff_1st) > 253, .8, 0.1)) %>% 
+  #mutate(alpha = ifelse(abs(diff_1st) <= 3.75, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
+  mutate(label = ifelse(alpha==.1, "", ladnm)) %>% 
+
+  ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
+  geom_bump(colour = "red") +
+  scale_y_reverse(labels = c(1, 100, 200, 300, 400)) +
+  # geom_text(#data = df %>% filter(year == 2012),
+  #           aes(x = Inf, label = label), size = 4, hjust = 0)  # x = 2012 + .1
+  geom_text_repel(aes(label = label),
+                  na.rm = TRUE, 
+                  size = 2,
+                  nudge_x = 2, nudge_y = 1,
+                  direction = "y", hjust = "left") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position="none") +
+  scale_x_continuous("year", 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2002, 2006, 2010),
+                     labels = c("1996-98","2002", "2006", "2010-12"))
+ggsave(out.path)
+```
+
+## Not used
+
+### Ranks websites 2000 and 2012 only
 
 ```{r}
 out.path <- paste0(path, "/outputs/ranks/web_2000_2012_only95.png")
@@ -212,7 +270,8 @@ ggsave(out.path)
 
 ```
 
-## Websites per year
+
+### Websites per year
 
 ```{r}
 out.path <- paste0(path, "/outputs/ranks/web_per_year.png")
@@ -227,7 +286,7 @@ ggsave(out.path)
 
 ```
 
-## Ranks websites per firm all period
+### Ranks websites per firm all period
 
 ```{r}  
 out.path <- paste0(path, "/outputs/ranks/web_per_firm1996_2012_95.png")
