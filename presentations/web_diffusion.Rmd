@@ -482,14 +482,14 @@ knitr::include_graphics(path.image)
 ------------------------------------------------------------------------
 
 ```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only05.png")
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only05_av.png")
 knitr::include_graphics(path.image)
 ```
 
 ------------------------------------------------------------------------
 
 ```{r , eval=T, fig.height=5, fig.width=5, message=FALSE}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only95.png")
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only95_av.png")
 knitr::include_graphics(path.image)
 ```
 
@@ -576,8 +576,8 @@ read.csv(path.in) %>% dplyr::select(year, morani) %>%
 
 ------------------------------------------------------------------------
 
-```{r lisa_la, results='asis', out.width = "30%"}
-path.images <- paste0(path, "/outputs/la_ggplot/lisa/")
+```{r lisa_la, results='asis', out.width = "60%"}
+path.images <- paste0(path, "/outputs/lisa/la_ggplot/")
 
 list.files(path = path.images, pattern = "^lisa_level_pc1_la", full.names = T) %>% 
   map(image_read) %>% # reads each path file
@@ -588,8 +588,8 @@ list.files(path = path.images, pattern = "^lisa_level_pc1_la", full.names = T) %
 
 ------------------------------------------------------------------------
 
-```{r lisa_oa, eval=T,results='asis', out.width = "30%"}
-path.images <- paste0(path, "/outputs/oa_ggplot/lisa/")
+```{r lisa_oa, eval=T,results='asis', out.width = "60%"}
+path.images <- paste0(path, "/outputs/lisa/oa_ggplot/")
 
 list.files(path = path.images, pattern = "^lisa_level_pc1_oa", full.names = T) %>% 
   map(image_read) %>% # reads each path file
