@@ -46,6 +46,7 @@ knitr::opts_chunk$set(fig.env="figure") # Latex figure environment
 library(rprojroot)
 library(tidyverse)
 library(knitr)
+library(kableExtra)
 
 # This is the project path
 path <- find_rstudio_root_file()
@@ -58,7 +59,7 @@ path <- find_rstudio_root_file()
 
 Geographers were always interested in how new technologies and
 innovations diffuse across space and time and, importantly, how such
-spatio-temporal processes can be modelled. After all, diffusion together
+spatio-temporal processes can be modeled. After all, diffusion together
 with invention and innovation are considered the pillars of
 technological change [@das2022diffusion]. The seminal contribution of
 @hagerstrand1968innovation is illustrative of this early interest.
@@ -138,13 +139,18 @@ $9$ per cent of UK's households had access to the internet in $1998$
 social media and web browsing was happening exclusively from desktop PCs
 as there were no smartphones [@tranosuk]. Hence, it is fair to say that
 the study period captures the very early stages of the diffusion on a
-new technology that is the web. This is key point in the lifecycle of a
+new technology that is the web as well as its maturity. 
+The former is a key point in the lifecycle of a
 new technology. Firstly, during this period new technologies are
 expensive, crude and imperfect [@rosenberg1994exploring; @wilson201281].
 A simple comparison between Web 1.0 and Web 3.0 applications clearly
-illustrates this [@tranos2020social]. During this period the performance
+illustrates this [@tranos2020social]; for instance a static website compared 
+with a platform like `github`, which enables cooperation between users and 
+the creation of new information, meaning, and knowledge 
+[@faraj2016special; @barassi2012does]. 
+During this period the performance
 of a new technology is the main attraction and not the cost to access
-and use it [@wilson2011lessons] There is a broader theoretical
+and use it [@wilson2011lessons]. There is a broader theoretical
 discussion in the literature regarding the motivation behind early
 adoption. As summarised by @perkins2005international, on the one hand,
 epidemic models highlight the role of interpersonal contacts as a way
@@ -163,11 +169,12 @@ the Solow paradox [@acemoglu2014return; @brynjolfsson2018artificial].
 [^1]: <https://www.theguardian.com/global/2015/mar/22/web-browser-came-back-haunt-microsoft>
 
 Importantly, the data used here depicts the *active* engagement with the
-web in the UK as it contains all the commercial websites archived by the
-Internet Archive [^2] that include a mention to at least one valid UK
-postcode in the web text. Websites are identified as commercial ones if
-they are part of the .co.uk second level domain (SLD). Also, the act of
-of creating a website is understood here as active engagement with the
+web in the UK as it contains all commercial websites that 
+(i) are part of the UK's relevant second level domain (SLD, .co.uk), 
+(ii) have been archived by the Internet Archive[^2], and 
+(iii) include a mention to at least one valid UK
+postcode in the web text. 
+The act of creating a website is understood here as active engagement with the
 web vis-à-vis the more passive act of browsing the web or having an
 internet connection [@tranosuk]. Previous studies have focused mostly on
 more passive notions of engaging with digital technologies such as
@@ -246,7 +253,7 @@ the S-shaped diffusion and cumulative adoption pattern
 
 Schmidt's Law empirically illustrates a similar pattern. *Core* and
 usually highly agglomerated regions is where new technologies are
-invented and commercially deployed [@grubler1990rise; @grubler1990rise].
+invented and commercially deployed [@grubler1990rise].
 This is where the first adopters tend to be based. Then, technologies
 spread to the *rim* and eventually to the *periphery*. Although adoption
 pace might be higher when new technologies finally arrive to the
@@ -356,29 +363,139 @@ All in all, ...
 
 # Materials and Methods {#sec3}
 
-**ADD DATA
-DESCRIPTION, WHY .CO.UK, FAMILY OF WEB TECHNOLOGIES**
+**ADD FAMILY OF WEB TECHNOLOGIES**
+
+To capture the diffusion of web technologies, a website density metric is developed 
+for two different geographical scales: the Local Authority Districts (LAD) and the 
+Output Areas (OA). The former is an administrative unit and there are 
+\\textcolor{red}c. 380\\textcolor{black} such units in the UK. The latter is a census-based
+geographical unit, which is very small as there are c. 230,000 of them in the UK.
+This methodological choice will allow the mapping of the diffusion 
+of web technologies and the assessment of the diffusion mechanisms 
+at these two very different spatial scales.
+
+The population of websites is calculated using data from the 
+Internet Archive [^2] and, specifically, the JISC UK Web Domain Dataset [@ukwebarchive]. 
+The Internet Archive is one of the most complete and oldest archive of webpages 
+in the world operating since 1996 [@ainsworth2011much; @holzmann2016dawn].
+It is a web crawler, which discovers webpages by following the hyperlinks
+of every webpage its archives.
+This dataset, which is curated by the British Library, contains all
+the archived webpages from the UK ccTLD (.uk) from the 1996–2012 period. 
+In essence, this is a long list of 2.5 billion URLs of archived webpages including 
+also the archival timestamp. 
 
 [^2]: [https://archive.org/](See%20https://archive.org/).
 
-<!-- from our RS paper -->
-
-For instance, we can approximate digital economic activities in a region
-by measuring the volume of commercial webpages by considering only
-.co.uk websites, which are dedicated to commercial activities (Thelwall,
-2000). Such commercial websites are used to exchange information,
-support online transactions and share opinions (Blazquez & Domenech,
-2018). Although nothing prevents a UK-based company from adopting a
-generic TLD such as.com and, indeed, such cases escape our data, we do
-not expect that such omissions could affect our results given the
-popularity of the .uk ccTLD: UK consumers prefer to visit a .uk website
-when they are searching for products or services (Hope, 2017); and
+Instead of using the whole .uk country code top-level domain (ccTLD), this 
+paper focuses on its commercial subset, the .co.uk SLD. 
+This choice decrease the heterogeneity of the web data as 
+such commercial websites have rather specific aims: they are used to diffuse information,
+support online transactions and share opinions [@THELWALL2000441; @blazquez2018big]. 
+Although a UK company can adopt a generic TLD such as.com and such cases escape 
+the data used here, such omissions should not affect our results given the
+popularity of the .uk ccTLD [@tranosuk]: UK consumers prefer to visit a .uk website
+when they are searching for products or services [@hope]; and
 anecdotal evidence indicates that during the first half of 2000, three
-.co.uk domains were registered every minute (OECD, 2001). Also, as Table
-1 demonstrates, .co.uk was the most popular SLD under the .uk ccTLD in
-2000. Hence, we use the total volume of all the archived webpages in a
-region as a proxy for the level of digitization. We start the analysis
-by focusing on commercial webpages (.co.uk).
+.co.uk domains were registered every minute [@oecd_coms]. 
+Importantly, previous studies illustrated that .co.uk is the most popular UK SLD
+[@tranosuk].
+
+The text from these webpages was scanned using regular expressions (regex) to
+identify strings of text which resemble UK postcodes and one fifth of them included
+a mention to a postcode [@BL2013geo]. This information allows the geolocation of the 
+data and the creation of the LAD and OA counts. 
+
+Before that, the data 
+cleaning process included a data aggregation step, through which
+the webpages were aggregated to the relevant websites. 
+Based on the following example, all three webpages listed below are part of the 
+same website ([http://www.website.co.uk](http://www.website.co.uk)) and at the end 
+only websites and not the nested webpages were considered as otherwise the metric 
+would have been biased towards large websites. 
+
+  - [http://www.website.co.uk/webpage_a](http://www.website.co.uk/webpage_a) B152TT
+
+  - [http://www.website.co.uk/webpage_b](http://www.website.co.uk/webpage_b) BS81TH
+
+  - [http://www.website.co.uk/webpage_c](http://www.website.co.uk/webpage_c) B152TT
+
+\noindent What is challenging is that this aggregation approach,
+which has been used elsewhere [@tranosuk; @shoreditch] may lead to websites with 
+multiple postcodes. As per the above example, ([http://www.website.co.uk](http://www.website.co.uk))
+includes two unique postcodes: B152TT and BS81SS. 
+The distribution of postcodes for 2000 is presented in Table \ref{f2000}, which 
+clearly illustrates the wide range. On one hand, we
+have websites anchored to a unique location (72% of all
+the reconstructed websites), which may represent
+a small company with a single trading location. On the other hand,
+we have websites with thousands of different postcodes.
+Considering the timeperiod of the analysis, such cases can represent directories
+which used to be popular in the pre-search engines early times of internet [@tranosuk].[^3]
+
+The analysis presented here is based on two subsets of these data.
+Firstly, the analysis is based on websites which only contain only one unique postcode
+and, therefore, the geolocation process might suffer from less noise. 
+As a robustness check, the analysis is replicated the analysis for an extended subset 
+of websites, which include up to ten unique postcodes. These websites are geolocated 
+by equally attaching them to multiple locations. This extended sample includes 
+94 percent of all the archived websites in 2000.
+
+[^3]: See Figure A1 in **Appendix A in the supplemental data online for examples**.
+
+```{r eval=T, echo=FALSE, results='asis'}
+
+# load 2000 co.uk
+# path.2000 <- "C:/Users/nw19521/OneDrive - University of Bristol/projects/archive/nuts/all2000couk.csv"
+# path.2000 <- "/Users/nw19521/Library/CloudStorage/OneDrive-UniversityofBristol/projects/archive/nuts/all2000couk.csv"
+path.2000 <- paste0(path, "/data/temp/all2000couk.csv")
+
+all2000.duplicates <- data.table::fread(path.2000) #
+# dim(all2000.duplicates) # 3336162
+# it includes duplicated URLs: if one webpages includes multiple postcodes
+# then it appears multiple times. This is ok for the nuts aggregation, but
+# not for the frequencies
+# This is only .co.uk
+
+# one line for every host
+all2000 <- unique(all2000.duplicates, by = c("host")) # 57897
+
+# unique postcodes per website f table
+f.websites.pc <- DescTools::Freq(all2000$V1, breaks = c(0, 1,2, 10,100,1000,10000,100000), ord = "desc")
+f.websites.pc$level <- factor(f.websites.pc$level, levels = c("[0,1]","(1,2]", "(2,10]", "(10,100]",
+                                                              "(100,1e+03]", "(1e+03,1e+04]",
+                                                              "(1e+04,1e+05]"))
+levels(f.websites.pc$level) <- c("(0,1]","(1,2]", "(2,10]", "(10,100]", "(100,1000]", "(1000,10000]", "(10000,100000]")
+
+f.websites.pc <- f.websites.pc %>% 
+  dplyr::select(-cumfreq) %>% 
+  rename(Postcodes = level,
+         F = freq,
+         'F (%)' = perc,
+         'Cummulative F' = cumperc)
+
+kable(f.websites.pc,
+      format = "latex",
+      digits = 3,
+      booktabs = T,
+      format.args = list(big.mark = ","),
+      caption = "Number of unique postcodes per .co.uk website, 2000.\\label{f2000}") %>%
+  kableExtra::footnote(general = "Tranos et al. 2021",
+                       general_title = "Source: ",
+                       footnote_as_chunk = T)  
+   # kable_classic(full_width = F, html_font = "Cambria")
+```
+
+To create the web density metric, the yearly website counts at the LAD level are
+standardised by the number of firms in LAD to avoid biases associated with LADs 
+hosting a large number of firms. Given that there is no such statistic for the OA,
+the actual OA level counts are used. However, because of the the rather
+consistent spatial definition of OA (they host 40-250 households),[^4] 
+website counts in OA are interpreted as a density metric too.
+
+[^4]: [https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies](https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies)
+
+This website metric...
 
 @wilson201281 growth function description in p. 86
 
@@ -396,45 +513,7 @@ using the total number of websites as we cannot compute a rate.
 
 Moran's I as @ding2010modeling **TODO** for t_0, diffusion speed
 
-# Results {#sec3}
-
-## Old ideas
-
-Hexagon density maps: reflect the spatial structure of Britain. Websites
-are associated in places where people live and work.
-
-**TODO** maps at the local authority level per firms and discuss
-patterns
-
-Neighbourhood effect: diffusion proceeds outwards from innovation
-centers, first "hitting" nearby rather than far-away locations (Grubler
-1990)
-
--   Moran's I: for OA and LAD over time
-
--   LISA maps: for OA and LAD over time More and less expected clusters.
-    Different scales show different results
-
--   Website density regressions: for OA and LAD over time **TODO** add
-    0s Similar pattern
-
-Hierarchy effect: from main centers to secondary ones -- central places
-
--   Gini coefficient. Almost perfect polarisation of web adoption in the
-    early stages at a granular level More equally diffused at the Local
-    Authority level Plateau overtime
-
-S-shaped diffusion curves
-
--   S for LADs per firm and OA.
-
--   Fast and slow LAs map. There is clustering
-
--   s_uk_firm_11
-
--   ranks: there is stability and movement
-
-## New structure
+# Results {#sec4}
 
 1.  S-shaped diffusion curves: S for LADs per firm. UK,
     fast/slow/examples
@@ -449,8 +528,6 @@ S-shaped diffusion curves
 
 -   LISA maps: for OA and LAD over time More and less expected clusters.
     Different scales show different results
-
--   ~~Website density regressions: for OA and LAD over time~~
 
 4.  Hierarchy effect: from main centers to secondary ones -- central
     places
@@ -617,7 +694,7 @@ important at this scale. What is interesting is the almost negligible role of th
 yearly trend and London's website density. While the former probably illustrates 
 the large heterogeneity in how web technologies have been adopted at this very fine 
 scale, the later highlights that the importance of past web adoption rates in large 
-population centres is surpassed by proximity to them and soatial configuration 
+population centres is surpassed by proximity to them and spatial configuration 
 at this scale.
 
 ```{r varimpLA, eval = T, echo=FALSE, message = F, fig.cap="\\label{var.imp.LAD}Variable importance, LAD"}

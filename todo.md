@@ -215,13 +215,15 @@ mtry  splitrule   RMSE      Rsquared     MAE
 
 ## GfR
 - [ ] Infection points because of data structure problems, e.g. 2004
-	  I need to find how the 2004-2005 problem. LAD: E08000006 for 2005 and 2006
+	  I need to find how the 2004-2005 problem. LAD: E08000006 for 2005 and 2006.
+	  Problem postcode is M28 2SL
 - [ ] London and year
 - [ ] End points for S curve
+- [ ] Differentiate hierarchy with neighbourhood, maybe interaction with time these variables
 - [ ] idea for further research: Diffusion distance plumber to plumber
 - [ ] For 2004, emerald said Google fixed their algorithm 
 - [ ] Sensitivity different n postcodes 
 - [ ] Marcus Janser For green (for Emerald)
-- [ ] Rank plots, average start and end
+- [x] Rank plots, average start and end
 - [ ] rerun: train the model in a loop for all but one regions
 

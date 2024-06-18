@@ -37,6 +37,13 @@ knitr::opts_chunk$set(echo = FALSE, message = F, warning = F) # By default, hide
 path <- find_rstudio_root_file()
 ```
 
+------------------------------------------------------------------------
+
+```{r , eval=T, message=FALSE, out.width = "1200px"}
+path.image <- paste0(path, "/presentations/images/past_publications.png")
+knitr::include_graphics(path.image)
+```
+
 ## Contents
 
 ::: {style="margin-left: 50px !important; text-align:left !important"}
@@ -532,7 +539,6 @@ list.files(path = path.images, pattern = "^hex_log1", full.names = T) %>%
 > [@grubler1990rise]
 
 -   Spatial dependency (Moran's I & LISA maps)
-
 <!-- -   Website density regressions -- distance effect -->
 
 -   Websites per firm in Local authorities (c. 400)
@@ -995,5 +1001,9 @@ read.csv(path.table) %>%
 -   Spatially consistent mechanisms at local scale
 
 -   Regional heterogeneity
+
+## New Project: Altas of Economic Activities
+
+![](images/DFA.png)
 
 ## References {.allowframebreaks}
