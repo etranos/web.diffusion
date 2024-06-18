@@ -40,42 +40,6 @@ lookup <- read_csv(path.lookup) %>%
 The internet archive $1996$-$2010$ data is saved on /hdd.
 The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
 
-```{r, eval=FALSE}
-
-data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
-#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
-#This is what we use for the hyperlinks paper as per George's script
-
-df1112 <- read_csv(data.path2011_2012)
-
-df <- bind_rows(df9610, df1112) %>% 
-  filter(
-    #V1.domain < m,             # for multiple pc
-    V1.domain == n,             # for n == 1
-    year > 1995 & year <2013) %>%   
-  left_join(lookup, by = "pc", suffix =c("","")) %>% 
-  group_by(year, ladcd) %>%
-  #summarise(n = n()) %>%            # for multiple pc  
-  summarise(n = sum(V1.domain)) %>% # for n == 1 
-  ungroup()
-
-df <- df %>% filter(!is.na(ladcd)) %>% 
-  complete(ladcd, year) %>% 
-  replace(is.na(.), 0)
-
-# tests for Scotland
-# df %>% filter(substr(oa11cd, 1,1) =="S",
-#               year==2010) %>% summarise(mean(n, na.rm = T))
-# 
-# df %>% filter(oa11cd=="S00090182")
-# 
-# test@data %>% filter(substr(id, 1,1) =="S",
-#                      n!=0)
-# 
-# df %>% filter(substr(oa11cd, 1,1) =="W",
-#               year==2003)
-```
-
 ## Problem postcodes
 
 ```{r}
