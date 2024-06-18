@@ -184,7 +184,7 @@ for (t in 1996:2012){
 }
 ```
 
-# Moran I
+## Moran I
 
 ```{r}
 path.out <- paste0(path, "/outputs/lisa/la_ggplot/morani_la.csv")

@@ -27,6 +27,8 @@ options(scipen=10000)
 path <- find_rstudio_root_file()
 ```
 
+## Load data
+
 Postcode lookup.
 
 [source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
@@ -200,7 +202,7 @@ for (t in 1996:2012){
 }
 ```
   
-Moran I
+## Moran I
 
 ```{r}
 path.out <- paste0(path, "/outputs/lisa/oa_ggplot/morani_oa.csv")
