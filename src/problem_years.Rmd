@@ -13,6 +13,8 @@ library(rprojroot)
 library(plm)
 library(sf)
 library(magick)
+library(ggrepel)
+library(scales)
 
 options(scipen=10000)
 
@@ -44,7 +46,7 @@ The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/dat
 
 ```{r}
 n = 1 #number of unique postcodes. 
-m = 12
+m = 11
 
 data.folder <- "/hdd/internet_archive/archive/data/"
 data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
@@ -57,64 +59,6 @@ df9610 <- read_csv(data.path9610) %>%
       V1.domain == n,             # for n == 1
       year > 1995)   
 
-# df9610 %>% filter(V1.domain == 1) %>% 
-#   left_join(lookup, by = "pc", suffix =c("","")) %>% 
-#   filter(ladcd == "E08000006" & year == 2006) %>% 
-#   group_by(pc) %>% 
-#   summarise(n = n()) %>% 
-#   arrange(desc(n))
-# 
-# df9610 %>% filter(pc == "M28 2SL" & year == 2006 & V1.domain == 1)
-
-problem.pcs <- df9610 %>% filter(year > 1999 & year < 2011) %>% 
-  group_by(pc, year) %>% 
-  summarise(n = n()) %>%
-  ungroup() %>% 
-  # complete(pc, year) %>% 
-  # replace(is.na(n), 0) %>% 
-  arrange(desc(n)) %>% 
-  pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
-  dplyr::select(pc, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010) %>% 
-  slice_head(n=10) %>% 
-  dplyr::select(pc)
-
-# [1] "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"  "EC1V 4PY" "DE21 7BF" "E14 9SR"  "GL16 7YA" "WC1N 3XX"
-# [10] "CB2 1AB" 
-```
-
-## Correct 1996-2010
-
-The above exploratory analysis indicated that there is a huge increase in 2004-2006
-in the above postcodes. I turn them to NAs and then use a regression to impute these
-gaps.
-
-```{r}
-df9610 <- df9610 %>% 
-  group_by(pc, year) %>% 
-  summarise(n = n()) %>% 
-  ungroup() %>% 
-  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2003 & year <2007, NA, n))
-
-df9610 <- pdata.frame(df9610)
-predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
-                                 model = "within", data = df9610), newdata = df9610), 2)
-
-df9610$n[is.na(df9610$n)] <- predictions[is.na(df9610$n)]
-df9610 %>% filter(pc == "M28 2SL") %>% distinct(year)
-```
-
-## LA 
-
-### Load remaining data
-
-```{r}
-df9610 <- as_tibble(df9610) %>% 
-  mutate(year = as.double(as.character(year))) %>% 
-  left_join(lookup, by = "pc", suffix =c("","")) %>%
-  group_by(year, ladcd) %>%
-  summarise(n = n()) %>%            
-  ungroup()
-
 data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
 #Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
 #This is what we use for the hyperlinks paper as per George's script
@@ -122,30 +66,95 @@ data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
 df1112 <- read_csv(data.path2011_2012) %>% 
   filter(
     #V1.domain < m,             # for multiple pc
-    V1.domain == n,             # for n == 1
-    year > 1995 & year <2013) %>%   
+    V1.domain == n)             # for n == 1
+
+df.long <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = n()) %>%
+  ungroup() %>% 
+  #arrange(desc(n)) %>% 
+  pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
+  dplyr::select(pc, n_1996, n_1999, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010, n_2011, n_2012) %>%
+  arrange(desc(n_2004), desc(n_2005)) %>% 
+  slice_head(n=1000) %>% 
+  pivot_longer(!pc, names_to = "year", values_to = "n") %>% 
+  mutate(year = as.integer(sub("n_", "", year, fixed = TRUE))) %>% 
+  replace(is.na(.), 0) %>% 
+  mutate(outlier = ifelse(n > 1000 & (year==2004 | year == 2005), pc, ""))
+
+problem.pcs <- df.long %>% filter(year==2004 | year == 2005, 
+                   n > 1000) %>% 
+  distinct(pc) 
+
+# n > 1500: "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"   
+# n > 1000: SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, M28 2SL, DE21 7BF
+
+df.long %>% 
+  mutate(year = as.double(year)) %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = year, y = n, group = pc), alpha = .3, size = .2) +
+  ylab("N. of websites per postcode") +
+  scale_x_continuous(breaks=seq(1996, 2012, 1)) +
+  scale_y_continuous(labels=scales::comma) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
+
+path.out <- paste0(path, "/outputs/pc_year_1.png")
+ggsave(path.out, bg='#ffffff')  
+```
+
+## Corrected
+
+The above exploratory analysis indicated that there is a huge increase in 2004-2006
+in the above postcodes. I turn them to NAs and then use a regression to impute these
+gaps.
+
+```{r}
+df.corrected <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = n()) %>% 
+  ungroup() %>% 
+  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2003 & year <2007, NA, n))
+
+df.corrected <- pdata.frame(df.corrected)
+predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
+                                 model = "within", data = df.corrected), newdata = df.corrected), 2)
+
+df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
+
+df.corrected %>% 
+  as_tibble() %>% 
+  mutate(year = as.double(as.character(year))) %>% 
+  ggplot() +
+  geom_line(mapping = aes(x = year, y = n, group = pc), alpha = .3, size = .2) +
+  ylab("N. of websites per postcode") +
+  scale_x_continuous(breaks=seq(1996, 2012, 1)) +
+  scale_y_continuous(labels=scales::comma) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+path.out <- paste0(path, "/outputs/pc_year_1_corrected.png")
+ggsave(path.out, bg='#ffffff')  
+```
+
+## LA 
+
+### LA df
+
+```{r}
+df <- df.corrected %>% 
+  mutate(year = as.integer(as.character(year))) %>% 
+  filter(year > 1995 & year < 2013) %>% 
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, ladcd) %>%
-  summarise(n = n()) %>%             # for n == 1  
-  #summarise(n = sum(V1.domain)) %>% # for multiple pc  
-  ungroup()
-
-df <- bind_rows(df9610, df1112) %>% 
-  filter(!is.na(ladcd)) %>% 
+  summarise(n = n()) %>% # for multiple pc  
+  ungroup() %>% 
   complete(ladcd, year) %>% 
-  replace(is.na(.), 0)
-
-# tests for Scotland
-# df %>% filter(substr(oa11cd, 1,1) =="S",
-#               year==2010) %>% summarise(mean(n, na.rm = T))
-# 
-# df %>% filter(oa11cd=="S00090182")
-# 
-# test@data %>% filter(substr(id, 1,1) =="S",
-#                      n!=0)
-# 
-# df %>% filter(substr(oa11cd, 1,1) =="W",
-#               year==2003)
+  filter(!is.na(ladcd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
+  replace(is.na(.), 0) 
 ```
 
 ### Firms
@@ -241,14 +250,14 @@ theme(axis.text.x = element_blank(),
         rect = element_blank())
 
 filename = paste(path.out, t, ".png", sep = "")
-ggsave(filename)
+ggsave(filename, bg='#ffffff')
 }
 ```
 
 ### Moran I
 
 ```{r}
-path.out <- paste0(path, "/outputs/lisa/corrected/LA/morani_la.csv")
+path.out <- paste0(path, "/outputs/lisa/corrected/LA/morani_la_1.csv")
 morani %>% as_tibble() %>% 
   rename('morani'=V1,
                    p = V2,
@@ -259,47 +268,19 @@ morani %>% as_tibble() %>%
 
 ## OA 
 
-### Load remaining data
+### OA df
 
 ```{r}
-df9610 <- as_tibble(df9610) %>% 
-  mutate(year = as.double(as.character(year))) %>% 
-  left_join(lookup, by = "pc", suffix =c("","")) %>%
-  group_by(year, oa11cd) %>%
-  summarise(n = n()) %>%            
-  ungroup()
-
-data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
-#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
-#This is what we use for the hyperlinks paper as per George's script
-
-df1112 <- read_csv(data.path2011_2012) %>% 
-  filter(
-    #V1.domain < m,             # for multiple pc
-    V1.domain == n,             # for n == 1
-    year > 1995 & year <2013) %>%   
+df <- df.corrected %>% 
+  mutate(year = as.integer(as.character(year))) %>% 
+  filter(year > 1995 & year < 2013) %>% 
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, oa11cd) %>%
-  summarise(n = n()) %>%             # for n == 1  
-  #summarise(n = sum(V1.domain)) %>% # for multiple pc  
-  ungroup()
-
-df <- bind_rows(df9610, df1112) %>% 
-  filter(!is.na(oa11cd)) %>% 
+  summarise(n = n()) %>% # for multiple pc  
+  ungroup() %>% 
   complete(oa11cd, year) %>% 
-  replace(is.na(.), 0)
-
-# tests for Scotland
-# df %>% filter(substr(oa11cd, 1,1) =="S",
-#               year==2010) %>% summarise(mean(n, na.rm = T))
-# 
-# df %>% filter(oa11cd=="S00090182")
-# 
-# test@data %>% filter(substr(id, 1,1) =="S",
-#                      n!=0)
-# 
-# df %>% filter(substr(oa11cd, 1,1) =="W",
-#               year==2003)
+  filter(!is.na(oa11cd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
+  replace(is.na(.), 0) 
 ```
 
 ### spatial data
@@ -418,11 +399,11 @@ for (t in 1996:2012){
 ### Moran I
 
 ```{r}
-path.out <- paste0(path, "/outputs/lisa/corrected/OA/morani_oa.csv")
+path.out <- paste0(path, "/outputs/lisa/corrected/OA/morani_oa_1.csv")
 morani %>% as_tibble() %>% 
   rename('morani'=V1,
                    p = V2,
                    year = V3) %>% 
-  kable() %>% 
+  #kable() %>% 
   write_csv(path.out)
 ```
