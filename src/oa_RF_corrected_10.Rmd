@@ -64,6 +64,9 @@ The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/dat
 
 ## Problem postcodes
 
+I use the problem postcodes from n = 1 as these are the true outliers as per the
+line plots.
+
 ```{r}
 n = 1 #number of unique postcodes. 
 m = 11
@@ -79,93 +82,69 @@ df9610 <- read_csv(data.path9610) %>%
       #V1.domain == n,             # for n == 1
       year > 1995)   
 
-# df9610 %>% filter(V1.domain == 1) %>% 
-#   left_join(lookup, by = "pc", suffix =c("","")) %>% 
-#   filter(ladcd == "E08000006" & year == 2006) %>% 
-#   group_by(pc) %>% 
-#   summarise(n = n()) %>% 
-#   arrange(desc(n))
-# 
-# df9610 %>% filter(pc == "M28 2SL" & year == 2006 & V1.domain == 1)
-
-problem.pcs <- df9610 %>% filter(year > 1999 & year < 2011) %>% 
-  group_by(pc, year) %>% 
-  summarise(n = n()) %>%
-  ungroup() %>% 
-  # complete(pc, year) %>% 
-  # replace(is.na(n), 0) %>% 
-  arrange(desc(n)) %>% 
-  pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
-  dplyr::select(pc, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010) %>% 
-  slice_head(n=10) %>% 
-  dplyr::select(pc)
-
-# [1] "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"  "EC1V 4PY" "DE21 7BF" "E14 9SR"  "GL16 7YA" "WC1N 3XX"
-# [10] "CB2 1AB" 
-```
-
-## Correct 1996-2010
-
-The above exploratory analysis indicated that there is a huge increase in 2004-2006
-in the above postcodes. I turn them to NAs and then use a regression to impute these
-gaps.
-
-```{r}
-df9610 <- df9610 %>% 
-  group_by(pc, year) %>% 
-  summarise(n = n()) %>% 
-  ungroup() %>% 
-  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2003 & year <2007, NA, n))
-
-df9610 <- pdata.frame(df9610)
-predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
-                                 model = "within", data = df9610), newdata = df9610), 2)
-
-df9610$n[is.na(df9610$n)] <- predictions[is.na(df9610$n)]
-df9610 %>% filter(pc == "M28 2SL") %>% distinct(year)
-```
-
-## Load remaining data
-
-```{r}
-df9610 <- as_tibble(df9610) %>% 
-  mutate(year = as.double(as.character(year))) %>% 
-  left_join(lookup, by = "pc", suffix =c("","")) %>%
-  group_by(year, oa11cd) %>%
-  summarise(n = n()) %>%            
-  ungroup()
-
 data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
 #Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
 #This is what we use for the hyperlinks paper as per George's script
 
 df1112 <- read_csv(data.path2011_2012) %>% 
   filter(
-    V1.domain < m,               # for multiple pc
-    #V1.domain == n,             # for n == 1
-    year > 1995 & year <2013) %>%   
+    V1.domain < m)               # for multiple pc
+    #V1.domain == n)             # for n == 1
+
+df.long <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = sum(V1.domain)) %>%
+  ungroup() %>% 
+  #arrange(desc(n)) %>% 
+  pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
+  dplyr::select(pc, n_1996, n_1999, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010, n_2011, n_2012) %>%
+  arrange(desc(n_2004), desc(n_2005)) %>% 
+  slice_head(n=1000) %>% 
+  pivot_longer(!pc, names_to = "year", values_to = "n") %>% 
+  mutate(year = as.integer(sub("n_", "", year, fixed = TRUE))) %>% 
+  replace(is.na(.), 0) %>% 
+  mutate(outlier = ifelse(n > 1000 & (year==2004 | year == 2005), pc, ""))
+
+# From n = 1 as these are the 'true' outliers
+problem.pcs <- c("SE24 9HP", "CV8 2ED", "GL16 7YA", "CW1 6GL", "M28 2SL", "DE21 7BF")
+```
+
+## Corrected
+
+The above exploratory analysis indicated that there is a huge increase in 2004-2006
+in the above postcodes. I turn them to NAs and then use a regression to impute these
+gaps.
+
+```{r}
+df.corrected <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = sum(V1.domain)) %>% 
+  ungroup() %>% 
+  # The next line is different than the same for  n = 1: problem.pcs$pc
+  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2003 & year <2007, NA, n))
+
+df.corrected <- pdata.frame(df.corrected)
+predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
+                                 model = "within", data = df.corrected), newdata = df.corrected), 2)
+
+df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
+```
+
+## OA df
+
+```{r}
+df <- df.corrected %>% 
+  mutate(year = as.integer(as.character(year))) %>% 
+  filter(year > 1995 & year < 2013) %>% 
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, oa11cd) %>%
-  summarise(n = n()) %>%             # for n == 1  
-  #summarise(n = sum(V1.domain)) %>% # for multiple pc  
-  ungroup()
-
-df <- bind_rows(df9610, df1112) %>% 
-  filter(!is.na(oa11cd)) %>% 
+  summarise(n = sum(n)) %>% # for multiple pc  
+  ungroup() %>% 
   complete(oa11cd, year) %>% 
-  replace(is.na(.), 0)
-
-# tests for Scotland
-# df %>% filter(substr(oa11cd, 1,1) =="S",
-#               year==2010) %>% summarise(mean(n, na.rm = T))
-# 
-# df %>% filter(oa11cd=="S00090182")
-# 
-# test@data %>% filter(substr(id, 1,1) =="S",
-#                      n!=0)
-# 
-# df %>% filter(substr(oa11cd, 1,1) =="W",
-#               year==2003)
+  filter(!is.na(oa11cd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
+  replace(is.na(.), 0) 
 ```
 
 ## spatial data
@@ -805,19 +784,19 @@ print(model.all)
 # Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
 # Resampling results across tuning parameters:
 # 
-#   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    5.341123  0.3211637  1.294570
-#   2     extratrees  5.114541  0.2727356  1.288928
-#   5     variance    6.248341  0.3136499  1.380152
-#   5     extratrees  5.584957  0.2834177  1.397949
-#   8     variance    6.801851  0.2977672  1.395883
-#   8     extratrees  5.957788  0.2811840  1.444036
+#   mtry  splitrule   RMSE      Rsquared   MAE      
+#   2     variance    1.221299  0.4082199  0.5829598
+#   2     extratrees  1.308769  0.3297824  0.6136490
+#   5     variance    1.203082  0.4241359  0.5703508
+#   5     extratrees  1.280883  0.3513153  0.6124031
+#   8     variance    1.214268  0.4155308  0.5674246
+#   8     extratrees  1.284107  0.3502621  0.6180390
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule
-#  = extratrees and min.node.size = 5.
-
+# The final values used for the model were mtry = 5, splitrule = variance
+#  and min.node.size = 5.
+ 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
