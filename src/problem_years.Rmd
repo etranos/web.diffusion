@@ -46,7 +46,7 @@ The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/dat
 
 ```{r}
 n = 1 #number of unique postcodes. 
-m = 11
+#m = 11
 
 data.folder <- "/hdd/internet_archive/archive/data/"
 data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
@@ -90,18 +90,20 @@ problem.pcs <- df.long %>% filter(year==2004 | year == 2005,
 # n > 1500: "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"   
 # n > 1000: SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, M28 2SL, DE21 7BF
 
+path.out <- paste0(path, "/outputs/pc_year_1.png")
+
 df.long %>% 
   mutate(year = as.double(year)) %>% 
   ggplot() +
   geom_line(mapping = aes(x = year, y = n, group = pc), alpha = .3, size = .2) +
   ylab("N. of websites per postcode") +
-  scale_x_continuous(breaks=seq(1996, 2012, 1)) +
+  scale_x_continuous(NULL, breaks=seq(1996, 2012, 1)) +
   scale_y_continuous(labels=scales::comma) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
+  theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.minor.x = element_blank()) 
+  #geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
 
-path.out <- paste0(path, "/outputs/pc_year_1.png")
 ggsave(path.out, bg='#ffffff')  
 ```
 
@@ -125,18 +127,20 @@ predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual",
 
 df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
 
+path.out <- paste0(path, "/outputs/pc_year_1_corrected.png")
+
 df.corrected %>% 
   as_tibble() %>% 
   mutate(year = as.double(as.character(year))) %>% 
   ggplot() +
   geom_line(mapping = aes(x = year, y = n, group = pc), alpha = .3, size = .2) +
   ylab("N. of websites per postcode") +
-  scale_x_continuous(breaks=seq(1996, 2012, 1)) +
+  scale_x_continuous(NULL, breaks=seq(1996, 2012, 1)) +
   scale_y_continuous(labels=scales::comma) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) 
+  theme(plot.title = element_text(hjust = 0.5),
+          panel.grid.minor.x = element_blank()) 
 
-path.out <- paste0(path, "/outputs/pc_year_1_corrected.png")
 ggsave(path.out, bg='#ffffff')  
 ```
 
@@ -212,8 +216,7 @@ test <- test %>% left_join(df[df$year==t,], by = c("LAD21CD"="ladcd")) %>%
   mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
          year = ifelse(is.na(year), t, year))
   
-#spatial weight matrix
-#moved out of the loop
+#spatial weight matrix moved out of the loop
 
 #Moran's I
 globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
@@ -245,9 +248,10 @@ ggplot(data = la, aes(fill = quadr$median)) +
   theme(legend.title=element_blank()) 
 
 theme(axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks = element_blank(),
-        rect = element_blank())
+      axis.text.y = element_blank(),
+      axis.ticks = element_blank(),
+      rect = element_blank(),
+      plot.margin = unit(c(0, 0, 0, 0), "cm"))
 
 filename = paste(path.out, t, ".png", sep = "")
 ggsave(filename, bg='#ffffff')

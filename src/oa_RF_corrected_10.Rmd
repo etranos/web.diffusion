@@ -899,10 +899,11 @@ time.taken <- round(end.time - start.time,2)
 time.taken
 ```
 
-
 ### Test on one region
 
-THE RESULTS ARE WEIRD. REVISIT.
+THE RESULTS ARE WEIRD. REVISIT. 
+
+The corrected for n = 1 makes sense. Check the name changes below.
 
 ```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
 

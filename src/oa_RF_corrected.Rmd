@@ -895,8 +895,6 @@ time.taken <- round(end.time - start.time,2)
 time.taken
 ```
 
-THE BELLOW HAS NOT BEEN RUN NEITHER THE FILENAMES HAS BEEN CHANGED (add: _corrected)
-
 ### Test on one region
 
 ```{r , include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10}
