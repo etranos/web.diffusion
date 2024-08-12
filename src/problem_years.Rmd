@@ -244,18 +244,33 @@ ggplot(data = la, aes(fill = quadr$median)) +
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
   #guides(fill = guide_legend(reverse = TRUE)) +
-  labs(title = "LISA, websites per firm in a LA") + 
-  theme(legend.title=element_blank()) 
+  labs(title = paste0("LAD, ", t)) + #"LISA, websites per firm in a LA") + 
+  theme(legend.title=element_blank(),
+        plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        plot.title = element_text(hjust = 0.5)) 
 
-theme(axis.text.x = element_blank(),
-      axis.text.y = element_blank(),
-      axis.ticks = element_blank(),
-      rect = element_blank(),
-      plot.margin = unit(c(0, 0, 0, 0), "cm"))
+# theme(axis.text.x = element_blank(),
+#       axis.text.y = element_blank(),
+#       axis.ticks = element_blank(),
+#       rect = element_blank())
 
 filename = paste(path.out, t, ".png", sep = "")
 ggsave(filename, bg='#ffffff')
 }
+
+# legend
+path.out <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc", n, "_la_legend.png") 
+legend <- ggplot(data = la, aes(fill = quadr$median)) +
+  geom_sf() +
+  # scale_fill_discrete_c4a_cat(name = "%", palette = "parks.charmonix",
+  #                             na.translate = FALSE) +
+  scale_fill_manual(values = palette_new, na.value="white", drop = F, name = NULL) +
+  theme_minimal() +
+  theme(legend.position="bottom") 
+    
+legend <- cowplot::get_legend(for.legend)
+plot(legend)  
+ggsave(path.out, bg='#ffffff')
 ```
 
 ### Moran I
