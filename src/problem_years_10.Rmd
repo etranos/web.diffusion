@@ -100,7 +100,7 @@ df.long %>%
   theme(plot.title = element_text(hjust = 0.5)) +
   geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
 
-path.out <- paste0(path, "/outputs/pc_year_1.png")
+path.out <- paste0(path, "/outputs/pc_year_10.png")
 ggsave(path.out, bg='#ffffff')  
 ```
 
@@ -137,7 +137,7 @@ df.corrected %>%
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) 
 
-path.out <- paste0(path, "/outputs/pc_year_1_corrected.png")
+path.out <- paste0(path, "/outputs/pc_year_10_corrected.png")
 ggsave(path.out, bg='#ffffff')  
 ```
 
