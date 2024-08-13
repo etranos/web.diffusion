@@ -251,18 +251,13 @@ ggplot(data = la, aes(fill = quadr$median)) +
         plot.title = element_text(hjust = 0.5)) +
   theme(plot.title = element_text(size=20, face = "bold"))
 
-
-# theme(axis.text.x = element_blank(),
-#       axis.text.y = element_blank(),
-#       axis.ticks = element_blank(),
-#       rect = element_blank())
-
 filename = paste(path.out, t, ".png", sep = "")
 ggsave(filename, bg='#ffffff')
 }
 ```
 
 ### lisa map legend
+
 ```{r}
 path.out <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc", n, "_la_legend.png") 
 legend <- ggplot(data = la, aes(fill = quadr$median)) +
@@ -378,8 +373,7 @@ for (t in 1996:2012){
     mutate(n = ifelse(is.na(n), 0, n),           # 0 for NAs and the same for year
            year = ifelse(is.na(year), t, year))
     
-  #spatial weight matrix
-  #moved out of the loop
+  #spatial weight matrix moved out of the loop
   
   #Moran's I
   globalMoran <- moran.test(test$n, listw, zero.policy = T, na.action = na.exclude)
@@ -396,27 +390,29 @@ for (t in 1996:2012){
   palette_new <- grDevices::colorRampPalette(
             colors = c("blue", "lightsalmon", "lightblue", "red", "white"))(5)
   
-  cities <- maps::world.cities %>%
-    filter(country.etc=="UK") %>% 
-    arrange(pop) %>% tail(10) 
-  tif_sf <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
+  # cities <- maps::world.cities %>%
+  #   filter(country.etc=="UK") %>% 
+  #   arrange(pop) %>% tail(10) 
+  # cities <- st_as_sf(cities, coords = c("long", "lat"), crs = 4326)
 
   ggplot(data = oa.uk, aes(fill = quadr$median)) +
     geom_sf(data = uk, fill = "white", linewidth = .5) +
     geom_sf(linewidth = 0) +
-    geom_sf(data = tif_sf, fill = "black", size = .3) +
-    #geom_sf_text(data = tif_sf, aes(label = name, fill = "black"), size = 4) +
+    #geom_sf(data = cities, fill = "black", size = .3) +
+    #geom_sf_text(data = cities, aes(label = name, fill = "black"), size = 4) +
     scale_fill_manual(values = palette_new, na.value="white", drop = F) +
     theme_minimal() +
     theme(panel.grid.major = element_line(colour = "transparent"),
           axis.text.x = element_blank(),
           axis.text.y = element_blank(),
           axis.ticks = element_blank(),
-          legend.title=element_blank()) +
-          #legend.position="none") +
-    guides(fill = guide_legend(reverse = TRUE)) +
-    labs(title = t,
-        subtitle = "LISA, websites per OA")
+          legend.position="none") +
+    #guides(fill = guide_legend(reverse = TRUE)) +
+    labs(title = paste0("OA, ", t)) +
+    theme(legend.title=element_blank(),
+        plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        plot.title = element_text(hjust = 0.5)) +
+    theme(plot.title = element_text(size=20, face = "bold"))
   
   filename = paste(path.out, t, ".png", sep = "")
   ggsave(filename, bg='#ffffff')

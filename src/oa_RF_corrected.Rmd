@@ -878,9 +878,7 @@ for (i in regions){
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
                    importance = "impurity")
-  #assign(paste0("model.all",as.character(i)), model.all)
-  
-  #file <- paste0(path, "/outputs/rf/models/oa_rf/regions/region_", as.character(i), ".RData")
+
   file <- paste0("/hdd/tmp/regions/corrected/regions_corrected_", as.character(i), ".RData")  
   save(model.all, file = file)  # file name = region not in the training data
   rm(model.all)
