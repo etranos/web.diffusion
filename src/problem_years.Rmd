@@ -248,7 +248,9 @@ ggplot(data = la, aes(fill = quadr$median)) +
   labs(title = paste0("LAD, ", t)) + #"LISA, websites per firm in a LA") + 
   theme(legend.title=element_blank(),
         plot.margin = unit(c(0, 0, 0, 0), "cm"),
-        plot.title = element_text(hjust = 0.5)) 
+        plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(size=20, face = "bold"))
+
 
 # theme(axis.text.x = element_blank(),
 #       axis.text.y = element_blank(),
@@ -267,15 +269,16 @@ legend <- ggplot(data = la, aes(fill = quadr$median)) +
   geom_sf() +
   scale_fill_manual(values = palette_new, na.value="white", drop = F, name = NULL) +
   theme_minimal() +
-  theme(legend.position="bottom",
+  theme(legend.position="right",
         legend.margin=ggplot2::margin(c(1,1,1,1))) 
     
-legend <- cowplot::get_legend(for.legend) 
+legend <- cowplot::get_legend(legend) 
 
 leg <- as_ggplot(legend)
 leg <- leg + theme(
   legend.margin=ggplot2::margin(c(0,0,0,0)))
-ggsave(path.out, width = 5, height = 0.4, bg='#ffffff')
+#ggsave(path.out, width = 5, height = 0.4, bg='#ffffff')
+ggsave(path.out, width = 1, height = 1.4, bg='#ffffff')
 ```
 
 ### Moran I
