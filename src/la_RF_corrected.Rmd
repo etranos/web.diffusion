@@ -140,7 +140,7 @@ df <- df.corrected %>%
   filter(year > 1995 & year < 2013) %>% 
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, ladcd) %>%
-  summarise(n = n()) %>% # for multiple pc  
+  summarise(n = sum(n)) %>% # **********ATTENTION*********    
   ungroup() %>% 
   complete(ladcd, year) %>% 
   filter(!is.na(ladcd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
