@@ -214,16 +214,31 @@ mtry  splitrule   RMSE      Rsquared     MAE
 - Temporal clustering for ranking instead of n: hopefully leapfrogging etc.
 
 ## GfR
-- [ ] Infection points because of data structure problems, e.g. 2004
+- [x] Infection points because of data structure problems, e.g. 2004
 	  I need to find how the 2004-2005 problem. LAD: E08000006 for 2005 and 2006.
 	  Problem postcode is M28 2SL
+- [x] Check the line plot to decide which PC i will impute
+- [x] redo m: replace summarise(n = n()) with summarise(n = 
+- [x] redo the PC line plots as both problem_years.Rmd and problem_years_10_.Rmd pointed to the same .png. Drop year from xlab. 
+- [x] find distinct(postcodes). n=1: 557,808, m=10: 
+- [x] lisa maps
+- [x] S UK the same and title. Ranking remove year and remove mid years
+- [ ] correct Gini and S. For S UK, take the sum() not mean(), theme_minimal()_
+
+- [x] problem_years.Rmd, corrected, run
+- [ ] la_RF_corrected.Rmd, corrected,
+- [ ] oa_RF_corrected.Rmd
+
+- [ ] rerun LAD RF to have a .csv for importance
+- [x] write up the data cleaning process, find examples
+- [ ] to run: OA RF corrected for all but one for n = 1; OA RF for all and for all but one for m < 11. the m < 11 looks weird. reassess after the n = 1 is ready.  
 - [ ] London and year
 - [ ] End points for S curve
 - [ ] Differentiate hierarchy with neighbourhood, maybe interaction with time these variables
 - [ ] idea for further research: Diffusion distance plumber to plumber
 - [ ] For 2004, emerald said Google fixed their algorithm 
-- [ ] Sensitivity different n postcodes 
 - [ ] Marcus Janser For green (for Emerald)
 - [x] Rank plots, average start and end
-- [ ] rerun: train the model in a loop for all but one regions
+- [ ] rerun: train the model in a loop for all but one regions as i deleted the outputs
+- [ ] Spatial variable
 
