@@ -288,6 +288,25 @@ morani %>% as_tibble() %>%
   write_csv(path.out)
 ```
 
+### Gini
+
+```{r}
+
+# No need to add 0s like OAs as there aren't any LA with 0s
+
+gini.df <- data.frame()
+
+for (t in 1996:2012){
+    a <- df %>% filter(year==t)
+  b <- as.data.frame(gini(a$n))
+  b$year = t
+  gini.df <- rbind(gini.df, b)
+}
+
+path.out <- paste0(path, "/outputs/gini/gini_la.csv")
+gini.df %>% write_csv(path.out)
+```
+
 ## OA 
 
 ### OA df
@@ -429,4 +448,23 @@ morani %>% as_tibble() %>%
                    year = V3) %>% 
   #kable() %>% 
   write_csv(path.out)
+```
+
+### Gini
+
+```{r}
+
+# No need to add 0s like OAs as there aren't any LA with 0s
+
+gini.df <- data.frame()
+
+for (t in 1996:2012){
+    a <- df %>% filter(year==t)
+  b <- as.data.frame(gini(a$n))
+  b$year = t
+  gini.df <- rbind(gini.df, b)
+}
+
+path.out <- paste0(path, "/outputs/gini/gini_oa.csv")
+gini.df %>% write_csv(path.out)
 ```
