@@ -120,7 +120,7 @@ df.corrected <- bind_rows(df9610, df1112) %>%
   group_by(pc, year) %>% 
   summarise(n = n()) %>% 
   ungroup() %>% 
-  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2003 & year <2007, NA, n))
+  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2001 & year <2007, NA, n))
 
 df.corrected <- pdata.frame(df.corrected)
 predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 

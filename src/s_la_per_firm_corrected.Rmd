@@ -116,7 +116,7 @@ df.corrected <- bind_rows(df9610, df1112) %>%
   group_by(pc, year) %>% 
   summarise(n = n()) %>% 
   ungroup() %>% 
-  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2003 & year <2007, NA, n))
+  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2001 & year <2007, NA, n))
 
 df.corrected <- pdata.frame(df.corrected)
 predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
@@ -362,7 +362,7 @@ Change percentile in out.path and uncomment `mutate(alpha = ifelse(abs(diff_1st)
 
 t <- 2000
 
-out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only95_av.png")
+out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only05_av.png")
 
 df %>% 
   
@@ -386,8 +386,8 @@ df %>%
   # ungroup() %>% summarise(q = quantile(abs(diff_1st), .05, na.rm = T))
   # q.95 = 253, q.9 = 214, q.1 = 11, q.05 = 3.75. **abs()**
 
-  mutate(alpha = ifelse(abs(diff_1st) > 253, .8, 0.1)) %>% 
-  #mutate(alpha = ifelse(abs(diff_1st) <= 3.75, .8, 0.1)) %>% 
+  #mutate(alpha = ifelse(abs(diff_1st) > 253, .8, 0.1)) %>% 
+  mutate(alpha = ifelse(abs(diff_1st) <= 3.75, .8, 0.1)) %>% 
   
   mutate(alpha = ifelse(is.na(diff_1st), 0.1, alpha)) %>%
   mutate(label = ifelse(alpha==.1, "", LAD21NM)) %>% 

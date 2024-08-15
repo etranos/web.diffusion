@@ -94,11 +94,12 @@ df.long %>%
   ggplot() +
   geom_line(mapping = aes(x = year, y = n, group = pc), alpha = .3, size = .2) +
   ylab("N. of websites per postcode") +
-  scale_x_continuous(breaks=seq(1996, 2012, 1)) +
+  scale_x_continuous(NULL, breaks=seq(1996, 2012, 1)) +
   scale_y_continuous(labels=scales::comma) +
   theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.minor.x = element_blank()) 
+  #geom_text_repel(aes(x = year, y = n, label=outlier), cex = 3) 
 
 path.out <- paste0(path, "/outputs/pc_year_10.png")
 ggsave(path.out, bg='#ffffff')  
@@ -118,7 +119,7 @@ df.corrected <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% 
   ungroup() %>% 
   # The next line is different than the same for  n = 1: problem.pcs$pc
-  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2003 & year <2007, NA, n))
+  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2001 & year <2007, NA, n))
 
 df.corrected <- pdata.frame(df.corrected)
 predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
