@@ -123,7 +123,7 @@ df.corrected <- bind_rows(df9610, df1112) %>%
   summarise(n = sum(V1.domain)) %>% 
   ungroup() %>% 
   # The next line is different than the same for  n = 1: problem.pcs$pc
-  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2003 & year <2007, NA, n))
+  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2001 & year <2007, NA, n))
 
 df.corrected <- pdata.frame(df.corrected)
 predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
@@ -517,17 +517,16 @@ print(model.all)
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE       Rsquared   MAE      
-#   2     variance    0.1881989  0.7750790  0.1223893
-#   2     extratrees  0.1944376  0.7543149  0.1274344
-#   4     variance    0.1906884  0.7730657  0.1256452
-#   4     extratrees  0.1930998  0.7596818  0.1276155
-#   6     variance    0.1937399  0.7677967  0.1282843
-#   6     extratrees  0.1927437  0.7608415  0.1277447
+#   2     variance    0.1877289  0.7762104  0.1222690
+#   2     extratrees  0.1945882  0.7537303  0.1274455
+#   4     variance    0.1899769  0.7754308  0.1253349
+#   4     extratrees  0.1925299  0.7604062  0.1270665
+#   6     variance    0.1926697  0.7707287  0.1277624
+#   6     extratrees  0.1930151  0.7601929  0.1280934
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule = variance and
-#  min.node.size = 5.
+# The final values used for the model were mtry = 2, splitrule = variance and min.node.size = 5.
 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
@@ -542,6 +541,13 @@ varimp_mars$importance <- varimp_mars$importance %>%
 path.out <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected_10.png")
 ggplot(varimp_mars) + theme_minimal() + labs(x="") #+ theme(panel.background = element_rect(fill = "white"))
 ggsave(path.out)
+
+path.out <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected_10.csv")
+varimp_mars$importance %>% 
+  rownames_to_column() %>%
+  rename(variable = rowname,
+         importance = Overall) %>% 
+  write_csv(path.out)
 ```
 
 ### train the model in a loop for all but one regions
@@ -794,17 +800,16 @@ print(model.all)
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE       Rsquared   MAE      
-#   2     variance    0.2773324  0.6169393  0.2025296
-#   2     extratrees  0.2692856  0.6437281  0.1982852
-#   4     variance    0.2836790  0.5992575  0.2060827
-#   4     extratrees  0.2717096  0.6339425  0.2004439
-#   6     variance    0.2899917  0.5806674  0.2100017
-#   6     extratrees  0.2755481  0.6223759  0.2037709
+#   2     variance    0.2773784  0.6171406  0.2025901
+#   2     extratrees  0.2696423  0.6424804  0.1985126
+#   4     variance    0.2834811  0.5991036  0.2058774
+#   4     extratrees  0.2720828  0.6324695  0.2007287
+#   6     variance    0.2902072  0.5801010  0.2101899
+#   6     extratrees  0.2755322  0.6215775  0.2037045
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule = extratrees
-#  and min.node.size = 5.
+# The final values used for the model were mtry = 2, splitrule = extratrees and min.node.size = 5.
 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
