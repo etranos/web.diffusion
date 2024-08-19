@@ -234,8 +234,6 @@ palette_new <- grDevices::colorRampPalette(
 
 ggplot(data = la, aes(fill = quadr$median)) +
   geom_sf() +
-  # scale_fill_discrete_c4a_cat(name = "%", palette = "parks.charmonix",
-  #                             na.translate = FALSE) +
   scale_fill_manual(values = palette_new, na.value="white", breaks = NULL, drop = F) +
   theme_minimal() +
   theme(panel.grid.major = element_line(colour = "transparent"),
@@ -243,13 +241,11 @@ ggplot(data = la, aes(fill = quadr$median)) +
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
   #guides(fill = guide_legend(reverse = TRUE)) +
-  labs(title = "LISA, websites per firm in a LA") + 
-  theme(legend.title=element_blank()) 
-
-theme(axis.text.x = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks = element_blank(),
-        rect = element_blank())
+  labs(title = "LAD", t) + 
+  theme(legend.title=element_blank(),
+        plot.margin = unit(c(0, 0, 0, 0), "cm"),
+        plot.title = element_text(hjust = 0.5)) +
+  theme(plot.title = element_text(size=20, face = "bold"))
 
 filename = paste(path.out, t, ".png", sep = "")
 ggsave(filename, bg='#ffffff')
@@ -408,10 +404,13 @@ for (t in 1996:2012){
           axis.ticks = element_blank(),
           legend.title=element_blank()) +
           #legend.position="none") +
-    guides(fill = guide_legend(reverse = TRUE)) +
-    labs(title = t,
-        subtitle = "LISA, websites per OA")
-  
+    #guides(fill = guide_legend(reverse = TRUE)) +
+    labs(title = "OA", t) + 
+    theme(legend.title=element_blank(),
+          plot.margin = unit(c(0, 0, 0, 0), "cm"),
+          plot.title = element_text(hjust = 0.5)) +
+    theme(plot.title = element_text(size=20, face = "bold"))
+
   filename = paste(path.out, t, ".png", sep = "")
   ggsave(filename, bg='#ffffff')
 }
