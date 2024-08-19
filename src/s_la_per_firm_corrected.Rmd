@@ -413,7 +413,7 @@ df %>%
 ggsave(out.path)
 ```
 
-## Average ranks websites per firm t and 2012 only
+## Average ranks websites per firm t and 2012 only: 05 and 95
 
 ```{r}
 
