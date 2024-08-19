@@ -241,7 +241,7 @@ ggplot(data = la, aes(fill = quadr$median)) +
         axis.text.y = element_blank(),
         axis.ticks = element_blank()) +
   #guides(fill = guide_legend(reverse = TRUE)) +
-  labs(title = "LAD", t) + 
+  labs(title = "LAD, ", t) + 
   theme(legend.title=element_blank(),
         plot.margin = unit(c(0, 0, 0, 0), "cm"),
         plot.title = element_text(hjust = 0.5)) +
@@ -405,7 +405,7 @@ for (t in 1996:2012){
           legend.title=element_blank()) +
           #legend.position="none") +
     #guides(fill = guide_legend(reverse = TRUE)) +
-    labs(title = "OA", t) + 
+    labs(title = paste0("OA, ", t)) + 
     theme(legend.title=element_blank(),
           plot.margin = unit(c(0, 0, 0, 0), "cm"),
           plot.title = element_text(hjust = 0.5)) +
