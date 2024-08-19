@@ -1,9 +1,9 @@
 variable,importance
 "London's wensite density, t-1",0
-"Nearest city's wensite density, t-1",8.274774188201365
-"Nearest retail centre's wensite density, t-1",42.88920344072012
-spatial and temporal lag of wensite density,100
-year,1.2541188561797683
-distance to London,89.8122053400116
-distance to the nearest city,83.83954187245313
-distance to the nearest retail centre,63.16845369862898
+"Nearest city's wensite density, t-1",10.147304774548962
+"Nearest retail centre's wensite density, t-1",49.44788533152025
+spatial and temporal lag of wensite density,70.06356095052485
+year,1.67517720929698
+distance to London,100
+distance to the nearest city,90.55303244189633
+distance to the nearest retail centre,64.73341433675472

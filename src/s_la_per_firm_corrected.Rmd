@@ -28,6 +28,7 @@ library(tidygeocoder)
 # library(raster)
 library(rms)
 library(stargazer)
+library(ggbump)
 
 options(scipen=10000)
 
@@ -409,5 +410,61 @@ df %>%
                      #limits = c(1998, 2010), 
                      breaks=c(1998, 2010),
                      labels = c("1996-98","2010-12"))
+ggsave(out.path)
+```
+
+## Average ranks websites per firm t and 2012 only
+
+```{r}
+
+t <- 2000
+
+out.path <- paste0(path, "/outputs/ranks/web_per_firm", t,"_2012_only0595_av.png")
+
+df %>% 
+  
+  left_join(la %>% as_tibble() %>% dplyr::select(LAD21CD, LAD21NM),
+            by = c("ladcd" = "LAD21CD")) %>% 
+  
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(ladcd, period) %>%
+  mutate(n = ifelse(period != 2, mean(n), n)) %>% 
+  filter(year > 1997 & year < 2011) %>% 
+  group_by(year) %>% 
+  mutate(rank = rank(desc(n))) %>% 
+  ungroup() %>% 
+  filter(year==1998 | year == 2010) %>% 
+  arrange(ladcd, year) %>% 
+  group_by(ladcd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-dplyr::lag(rank))) %>% 
+  
+  # ungroup() %>% summarise(q = quantile(abs(diff_1st), .05, na.rm = T))
+  # q.95 = 253, q.9 = 214, q.1 = 11, q.05 = 3.75. **abs()**
+
+  mutate(alpha = ifelse(abs(diff_1st) <= 3.75 | abs(diff_1st) > 253, 1, 0.5)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
+  
+  mutate(q = ifelse(abs(diff_1st) <= 3.75, "05",
+                    ifelse(abs(diff_1st) > 253, "95", "m"))) %>% 
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  
+  ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
+  geom_bump(aes(colour = q)) + #colour = "red"
+  scale_color_manual(values = c("darkorchid3", "orange", "grey70"),
+                     breaks = c("05", "95"),
+                     labels = c("Stability","Volatility")) + 
+  labs(color = "LAD") +
+  scale_y_reverse(labels = c(1, 100, 200, 300, 400)) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  #theme(legend.position="none") +
+  scale_x_continuous(NULL, 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2010),
+                     labels = c("1996-98","2010-12")) +
+  guides(alpha = "none")
+
 ggsave(out.path)
 ```
