@@ -1011,3 +1011,20 @@ rf.year.all.metrics %>%
   #round(2) %>%
   #kable()
 ```
+
+## Correlations
+
+```{r}
+cor <- df %>% dplyr::select(n, n.London.lag, n.nearest.city.lag, n.l.slag, year, London, dist) 
+cor <- rcorr(as.matrix(cor))
+r <- cor$r
+p <- cor$P
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_LAD_corrected.csv")
+r %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_LAD_corrected_p.csv")
+p %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+```

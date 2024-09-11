@@ -995,3 +995,18 @@ rf.year.all.metrics %>%
   write_csv(path.out)
 ```
 
+## Correlations
+
+```{r}
+cor <- rcorr(as.matrix(df[-(1:3)]))
+r <- cor$r
+p <- cor$P
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected.csv")
+r %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_p.csv")
+p %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+```

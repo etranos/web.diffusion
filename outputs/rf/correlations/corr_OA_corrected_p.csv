@@ -1,0 +1,10 @@
+rowname,n,abs.growth,n.l.slag,n.nearest.city.lag,n.nearest.retail.lag,n.London.lag,London,dist,dist.retail
+n,NA,0,0,0,0,0,0,0,0
+abs.growth,0,NA,0,7.553957459549565e-13,0,0,0,0.14387681539690123,1.0990321297477124e-7
+n.l.slag,0,0,NA,0,0,0,0,0,0
+n.nearest.city.lag,0,7.553957459549565e-13,0,NA,0,0,0,0,0
+n.nearest.retail.lag,0,0,0,0,NA,0,0,0,0
+n.London.lag,0,0,0,0,0,NA,0.9999999853014052,0.9999999889832742,0.9999999939747266
+London,0,0,0,0,0,0.9999999853014052,NA,0,0
+dist,0,0.14387681539690123,0,0,0,0.9999999889832742,0,NA,0
+dist.retail,0,1.0990321297477124e-7,0,0,0,0.9999999939747266,0,0,NA

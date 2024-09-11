@@ -35,6 +35,7 @@ library(plm)
 library(caret)
 library(randomForest)
 library(CAST)
+library(Hmisc)
 
 options(scipen=10000)
 
@@ -1006,3 +1007,18 @@ rf.year.all.metrics %>%
   write_csv(path.out)
 ```
 
+## Correlations
+
+```{r}
+cor <- rcorr(as.matrix(df[-(1:3)]))
+r <- cor$r
+p <- cor$P
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_10.csv")
+r %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_10p.csv")
+p %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+```
