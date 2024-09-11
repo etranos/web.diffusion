@@ -914,15 +914,7 @@ df %>% group_by(year) %>%
 ```{r}
 # train on all but one region, test on that region
 
-# correct for non-England file names
-df <- df %>% 
-  mutate(RGN11CD = ifelse(RGN11CD == "Wales", "W0",
-                          ifelse(RGN11CD == "Scotland", "S1",
-                                 ifelse(RGN11CD == "NI", "N0", RGN11CD)))) 
-
-regions <- df %>% 
-  ungroup() %>% 
-  distinct(RGN11CD)  
+regions <- df %>% ungroup() %>% distinct(RGN11CD) 
 regions <- as.vector(regions$RGN11CD)
 
 new.path <- "/hdd/tmp/regions/corrected_10/"
@@ -995,7 +987,7 @@ lookup.region <- read_csv(path.lookup) %>%
   dplyr::select(RGN21CD, RGN21NM) %>% 
   distinct() %>% 
   rename(RGN11CD = RGN21CD) %>% 
-  add_row(RGN11CD = c("S1", "N0", "W0"), 
+  add_row(RGN11CD = c("Scotland", "NI", "Wales"),
           RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
 path.out <- paste0(path, "/outputs/rf/figures/test_regions_OA_corrected_10.csv")
