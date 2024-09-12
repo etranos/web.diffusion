@@ -165,8 +165,8 @@ web}
 }
  \ead{e.tranos@bristol.ac.uk} 
 
-\affiliation[1]{organization={University of Bristol and The Alan Turing
-Institute},postcode={UK},postcodesep={}}
+\affiliation[1]{organization={University of
+Bristol},postcode={UK},postcodesep={}}
 
 \cortext[cor1]{Corresponding author}
 
@@ -205,54 +205,87 @@ technologies.
     
 \section{Introduction}\label{sec-introduction}
 
-Geographers were always interested in how new technologies and
-innovations diffuse across space and time and, importantly, how such
-spatio-temporal processes can be modeled. After all, diffusion together
-with invention and innovation are considered the pillars of
-technological change \citep{das2022diffusion}. The seminal contribution
-of \citet{hagerstrand1968innovation} is illustrative of this early
-interest. However, the torch of exploring and modelling such processes
-had been passed to other disciplines such as economics, business studies
-and sociology well before the `cultural turn' of economic geography
-\citep{perkins2005international}. A potential explanation of the lack of
-geographical studies exploring the diffusion of new and, more
+Economic geographers were always interested in how new technologies and
+innovations diffuse across space and time with the work of
+\citet{hagerstrand1968innovation}, which demonstrated the importance of
+communications as a mechanism for the diffusion of innovations, being
+the most impactful. It was followed by various empirical studies -- see
+for instance \citet{ormrod1990} and \citet{iso2005}. However, the torch
+of exploring and modelling such diffusion processes had been passed to
+other disciplines such as economics, business studies and sociology well
+before the `cultural turn' of economic geography
+\citep{perkins2005international}. A potential explanation of the recent
+lack of geographical studies exploring the diffusion of new and, more
 specifically for this paper, digital technologies across both space and
 time can be attributed to the scarcity of relevant and granular enough
-data. As \citet{zook2022mapping} highlight, digital activities are
-hardly ever captured in official data.
+data, a problem also highlighted by \citet{iso2005} and
+\citet{kemeny2011international}. As \citet{zook2022mapping} pointed,
+digital activities are hardly ever captured in official data.
 
 This paper offers such a contribution: a geographical study illustrating
-how a new technology that is the web diffused over space and time in the
-UK at a high level of spatial granularity during the \(1996-2012\)
-period. It does so by employing a novel source of big data which
-captures the active engagement with web technologies during that period.
-By addressing this empirical question this paper exemplifies how the
-combination of data sources which escape the traditional social science
-domain and adequate research methods can offer new lenses to
-geographical research regarding the understanding of technological
-diffusion.
-
-\textbf{SAY SOMETHING ABOUT SPATIAL ANALYTICS, DIST PAPER BY ARP, NOT
-SPECIFIC EXPLANATORY VARIABLES, INTANGIBLE}
+how a new technology that is the Web diffused over space and time in the
+UK at a high level of spatial granularity during the 1996-2012 period.
+It does so by employing a novel source of big data and machine learning
+algorithms to model the \emph{active} engagement with Web during that
+period and tests how different spatial and temporal mechanisms shaped
+its diffusion. This paper exemplifies how the combination of data
+sources which escape the traditional social science domain and adequate
+research methods can offer new lenses to geographical research regarding
+the understanding of technological diffusion.
 
 The motivation for this paper lies in the fact that there are various
 stakeholders who are interested in knowing how new digital technologies
 diffused over space and time and use this knowledge to make predictions
-regarding the diffusion of related \emph{future} technologies. As per
+about the diffusion of related \emph{future} technologies. As per
 \citet{leibowicz2016representing}, historical studies agree that
 technologies diffuse differently in terms of times, rates, and
 geographies and can be driven by related policies \citep{victor1993}.
 \citet{meade2021modelling} highlight that a variety of actors have a
 direct interest in gaining such knowledge including network equipment
-suppliers; network operators, regulatory and local authorities. These
+suppliers, network operators, regulatory and local authorities. These
 processes and their effects vary a lot across scales: although the
 diffusion of a new technology might not be optimal at a local level, it
 might be beneficial from a global perspective as it could lead to faster
 diffusion to less advantaged places \citep{leibowicz2016representing}.
 Despite the spatial heterogeneity of such diffusion mechanisms and the
-policy relevance, there are very limited attempts in the literature to
-analyse the diffusion of new digital technologies at a detailed
-geographical level.
+policy relevance, there is a scarcity of empirical studies analysing the
+diffusion of new digital technologies at a detailed geographical level.
+
+This gap becomes even more prominent if we consider the importance of
+technology and its adoption in economic geography and macroeconomic
+growth theories. Simply put, differences in technological adoption and
+sophistication may lead to uneven development as new technologies can
+increase productivity and allow firms to introduce new products
+\citep{solow1957technical, aghion1990model, kemeny2011international}.
+Linked to the subject of this paper, the Web -- and the active
+engagement with this technology that is creating instead of just
+browsing a website -- can be considered as the underpinning technology
+for the transformative process known as the \emph{digital service
+economy} \citep{capello2024nexus}. After all, diffusion together with
+invention and innovation are considered the pillars of technological
+change \citep{das2022diffusion}. Findings from previous empirical work
+illustrated that early engagement with digital technologies such as the
+Web led to longstanding positive productivity gains for these regions
+that hosted early adopters \citep{tranosuk}.
+
+Another line of motivation has to do with the intangible nature of the
+Web and the debate about the footloose nature of digital technologies,
+which contrary to several earlier general purpose technologies are light
+in weight \citep{coyle1999weightless}. Following the seminal work of
+\citet{gaspar1998information}, which demonstrated that technological
+improvements in telecommunications lead to increased demand for
+face-to-face communications and, consequently, enhance the importance of
+cities, empirical studies from economic geography and urban economics
+explored whether digital technologies substitute or complement
+agglomeration externalities and spatial structure
+\citep{kolko_death_2000, ioannides2008effect, tranos2021ubiquitous}.
+With the exception of \citet{sinai2004geography}, who focused, among
+other things, on web content and demonstrated that more such content is
+available in larger markets, this strand of literature has been mostly
+concerned with the spatiality of the internet's hard and tangible
+infrastructure and shied away from exploring the spatial dimensions of
+one of the most distinct software layers of the internet infrastructure,
+the Web.
 
 Technological diffusion, which is by definition an aggregated process,
 can be discussed in parallel with individual adoption mechanisms. On the
@@ -266,78 +299,85 @@ governed by distance, proximity and social interactions, and (ii)
 economic mechanisms as new innovations are adopted by users as they
 become more profitable, valueable and useful.
 
-This paper focuses on the diffusion of the web as new technology during
-the \(1996-2012\) period. This was an exciting period for digital
+This paper focuses on the diffusion of the Web as new technology during
+the 1996-2012 period. This was an exciting period for digital
 technologies as it corresponds with the commercialisation of the
 internet and, consequently, its almost universal adoption. The reader is
 reminded that it was only in 1994 when Netscape Navigator was
 introduced, a year before Microsoft's Internet Explorer.\footnote{\url{https://www.theguardian.com/global/2015/mar/22/web-browser-came-back-haunt-microsoft}}
-Also, only \(9\) per cent of UK's households had access to the internet
-in \(1998\) \citep{ons2018}, the web included mostly static webpages,
-there were no social media and web browsing was happening exclusively
-from desktop PCs as there were no smartphones \citep{tranosuk}. Hence,
-it is fair to say that the study period captures the very early stages
-of the diffusion on a new technology that is the web as well as its
-maturity. The former is a key point in the lifecycle of a new
-technology. Firstly, during this period new technologies are expensive,
-crude and imperfect \citep{rosenberg1994exploring, wilson201281}. A
-simple comparison between Web 1.0 and Web 3.0 applications clearly
-illustrates this \citep{tranos2020social}; for instance a static website
-compared with a platform like \texttt{github}, which enables cooperation
-between users and the creation of new information, meaning, and
-knowledge \citep{faraj2016special, barassi2012does}. During this period
-the performance of a new technology is the main attraction and not the
-cost to access and use it \citep{wilson2011lessons}. There is a broader
-theoretical discussion in the literature regarding the motivation behind
-early adoption. As summarised by \citet{perkins2005international}, on
-the one hand, epidemic models highlight the role of interpersonal
-contacts as a way for new technologies to diffuse. On the other hand,
-economic models underline the importance of heterogeneity. Different
-firms have different structures and business plans, which define the
-potential economic returns of the adoption of a new technology and,
-therefore, the choice to adopt a new technology becomes an individual
-option. From a broader and evolutionary perspective, initial conditions
-are essential for the creation and evolution of path-dependent
-technological development trajectories
-\citep{neffke2011regions, simmie2014new}. This argument is even more
-relevant when the focus is on digital technologies because of the
-commonly found lag between investment and economic returns as reflected
-in the Solow paradox
+Also, only 9 per cent of UK's households had access to the internet in
+1998 \citep{ons2018}, the web included mostly static webpages, there
+were no social media and web browsing involved exclusively a desktop PCs
+as there were no smartphones \citep{tranosuk}. Hence, it is fair to say
+that the study period captures the very early stages of the diffusion of
+a new technology that is the Web as well until its maturity. The former
+is a key point in the lifecycle of a new technology. Firstly, during
+this period new technologies are expensive, crude and imperfect
+\citep{rosenberg1994exploring, wilson201281}. A simple comparison
+between Web 1.0 and Web 3.0 applications clearly illustrates this
+\citep{tranos2020social}: while a static website facilitates one-way
+information dissemination, a platform like \texttt{github} enables
+cooperation between users and the creation of new information, meaning,
+and even knowledge \citep{faraj2016special, barassi2012does}. During
+this period the performance of a new technology is the main attraction
+and not the cost to access and use it \citep{wilson2011lessons}. There
+is a broader theoretical discussion in the literature about the early
+adoption motives. As summarised by \citet{perkins2005international}, on
+one hand, epidemic models highlight the role of interpersonal contacts
+as a way for new technologies to diffuse. On the other hand, economic
+models underline the importance of heterogeneity. Different firms have
+different structures and business plans, which define the potential
+economic returns of the adoption of a new technology and, therefore, the
+choice to adopt a new technology becomes an individual option. From a
+broader and evolutionary perspective, initial conditions are essential
+for the creation and evolution of path-dependent technological
+development trajectories \citep{neffke2011regions, simmie2014new}. This
+argument is even more relevant when the focus is on digital technologies
+because of the commonly found lag between investment and economic
+returns as reflected in the Solow paradox
 \citep{acemoglu2014return, brynjolfsson2018artificial}.
 
-Importantly, the data used here depicts the \emph{active} engagement
-with the web in the UK as it contains all commercial websites that (i)
-are part of the UK's relevant second level domain (SLD, .co.uk), (ii)
-have been archived by the Internet Archive\footnote{\href{See\%20https://archive.org/}{https://archive.org/}.},
-and (iii) include a mention to at least one valid UK postcode in the web
-text. The act of creating a website is understood here as active
-engagement with the web vis-à-vis the more passive act of browsing the
-web or having an internet connection \citep{tranosuk}. Previous studies
-have focused mostly on more passive notions of engaging with digital
-technologies such as internet adoption and internet speeds
-\citep[e.g.][]{blank2018local, riddlesden2014broadband}. More details
-about the data and the data generation process can be found in
-Section~\ref{sec-datamethods}.
+The data used here depict the active engagement with the Web as they
+contain geolocated and time-stamped counts of commercial websites from
+the UK. Instead of adopting metrics reflecting the passive engagement
+with the internet such as internet adoption and speeds
+\citep[e.g.][]{blank2018local, destefano2022fuzzy}, this paper observes
+yearly counts of geolocated websites, which reflect the creation and
+maintenance of websites. It needs to be highlighted here that although
+there are various types of underpinning web technologies -- namely
+markup, stylesheet, client- and server-side coding languages as well as
+different web browsers and other related programming language -- the
+focus here is on the diffusion of the Web in its totality. For a more
+detailed and cross-country technological diffusion study, see
+\citet{PAPAGIANNIDIS2015308}.
 
-\textbf{S curve??}
+To analyse these data, a diverse set of methods are employed. Firstly,
+cumulative adoption curves are estimated for the UK as a whole and for
+the Local Authority Districts (LAD), illustrating, for the first time,
+such S-shaped diffusion patterns for local areas. This system level
+analysis also reveals insights about the volatility of the adoption of
+the Web. Then, exploratory spatial data analysis offers some first
+indications of the importance of the different spatial diffusion
+mechanisms in shaping the diffusion of the Web in the UK. Importantly,
+the analysis adopts two distinct geographical scales: the LAD and the
+much more detailed scale of the smallest census areas in the UK, the
+Output Areas. Lastly, a novel methodological framework based on
+well-established Machine Learning (ML) algorithms is developed to test
+the role of such mechanisms at these two scales. The results reveal for
+the first time the importance and relevance of different spatial
+diffusion mechanisms for the diffusion of a tangible, digital technology
+at very granular geographical scales.
 
-\citet{grubler1990rise} Later Hagerstrand conceptualized physical
-``barrier'' effects like lakes or uninhabited areas, which, in addition
-to distance, act as further retarding effects on diffusion. These are
-formalized in the form of ``zero'' or ``half'' contact multiplicators on
-the (distance decaying) message flows.
+The structure of the paper goes as follows. Section~\ref{sec-litreview}
+reviews the key concepts in the diffusion literature as well as relevant
+empirical studies. Then, Section~\ref{sec-datamethods} describes the
+data and methods used in this paper. The results of the different stages
+of the analysis are presented in Section~\ref{sec-results}. The
+discussion of the results and the conlcusions of the paper are offered
+in Section~\ref{sec-conclusions}.
 
-\citet{grubler1990rise} With respect to the formalization of the
-communication flows Hagerstrand defines a ``mean information field''
-(MIF), in which the probability of communication is a negative function
-of distance between individuals
-
-\citet{wilson201281} Logistic growth describes an initial period of
-gradual diffusion as a technology is introduced as a new commercial
-application, moving then through a rapid, exponential growth phase,
-before slowing and eventually saturating \citep{grubler1999dynamics}.
-The substitution of incumbent technologies by new competitors leads to
-subsequent decline and eventual obsolescence.
+\textbf{SAY SOMETHING ABOUT DIST PAPER BY ARP, NOT SPECIFIC EXPLANATORY
+VARIABLES}
 
 \section{Literature review}\label{sec-litreview}
 
@@ -347,11 +387,11 @@ identified. Adjacency and, more broadly, distance are the key drivers of
 diffusion. This perspective draws similarities with epidemics:
 innovation just like pathogens spreads because of contagion and,
 consequently, proximity and exposure \citep{hivner2003facilitating}. On
-the other hand, there is a hierarchical processes. Instead of horizontal
-distance-based diffusion mechanisms, the top-down hierarchy of urban
-systems shapes technological diffusion. In reality, the synthesis of
-these two processes represents how new technologies diffuse over space
-and time \citep{morrill2020spatial}.
+the other hand, there is a hierarchical processes. Instead of a
+horizontal distance-based diffusion mechanism, the top-down hierarchy of
+urban systems shapes technological diffusion. In reality, the synthesis
+of these two processes better reflects how new technologies diffuse over
+space and time \citep{morrill2020spatial}.
 
 These ideas were firstly introduced by Torsten Hägerstrand and his
 thesis entitled `Innovation Diffusion as a Spatial Process'
@@ -359,7 +399,7 @@ thesis entitled `Innovation Diffusion as a Spatial Process'
 identify diffusion as a geographical process. The starting point was the
 idea that diffusion is based on passing information through social
 networks, which themselves tend to be defined by geography. Hence, he
-identified the `neighbourhood' effect of how information, and
+identified a `neighbourhood' mechanism of how information, and
 consequently, innovation diffuse. He used agricultural innovations to
 test and model his ideas using Monte Carlo simulations. Hägerstrand also
 incorporated the role of hierarchy and how some phenomena maybe firstly
@@ -380,8 +420,9 @@ decisions behind adoption. He identified five groups of individuals
 regarding their adoption speed: innovators, early adopters, early
 majority, late majority and laggards. The key mechanism of diffusion and
 adoption is communication and how knowledge is transferred within a
-social system. Therefore, all approaches agree on the S-shaped diffusion
-and cumulative adoption pattern \citep{grubler1990rise}.
+social system. All above approaches agree that diffusion and the
+cumulative adoption of a new technology are represented by an S-shaped
+line plot \citep{grubler1990rise}.
 
 Schmidt's Law empirically illustrates a similar pattern. \emph{Core} and
 usually highly agglomerated regions is where new technologies are
@@ -391,44 +432,47 @@ the \emph{rim} and eventually to the \emph{periphery}. Although adoption
 pace might be higher when new technologies finally arrive to the
 periphery, the saturation levels there may never reach the ones in the
 core because of the lack of infrastructure or other necessary
-institutions \citep{leibowicz2016representing}. \citet{grubler1990rise}
-effectively summarises the three key characteristics of the spatial
-diffusion process: (i) the cumulative level of adoption follows an
+institutions \citep{leibowicz2016representing}.
+
+\citet{grubler1990rise} effectively summarises the three key spatial
+diffusion mechanisms: (i) the cumulative level of adoption follows an
 S-shaped pattern just like purely temporal models; (ii) diffusion is
-shaped by a hierarchy effect in a form of a centrifugal force: from core
-to periphery; and (iii) diffusion is also shaped by distance and a
-neighbourhood effect and contaminate nearby locations. These are the
-three mechanisms that the empirical analysis in
+shaped by a hierarchy mechanisms in a form of a centrifugal force: from
+core to periphery; and (iii) diffusion is also shaped by distance and
+proximity. These are the three mechanisms that the empirical analysis in
 Section~\ref{sec-results} investigates.
 
 The remaining of this section reviews empirical studies which analysed
 the diffusion on new technologies over space and time. Although the
 spatial dimension is present in most of the following studies, the level
-of spatial detail is always more coarse than the one adopted here.
-\citet{beardsell1999spatial} studied the evolution of the computer
-industry in \(317\) US metro areas during the \(1977-1992\) period using
-employment data. Their analysis indicated that the relative size
+of spatial detail is always more coarse than the one adopted in this
+paper. \citet{beardsell1999spatial} studied the evolution of the
+computer industry in 317 US metro areas during the 1977-1992 period
+using employment data. Their analysis indicated that the relative size
 distribution holds for urban computer employment and also urban
 heterogeneity is essential in explaining this distribution. In a recent
-study, \citet{bednarz2020pulled} focused on wind turbines and modelled
-their spatial diffusion across \(402\) German regions during
-\(1970-2015\). Their key finding is that local demand than local supply
-was the main driving factor.
+study, \citet{bednarz2020pulled} focused on wind turbines and modeled
+their spatial diffusion across 402 German regions during 1970-2015.
+Their key finding is that local demand than local supply was the main
+driving factor. \citet{haller2011determinants} employed firm panel data
+for Ireland during 2003-2005 and illustrated that when firms are located
+in a region or industry with high share of firms having a website, they
+are more likely to have a website too.
 
-At a global scale \citet{perkins2005international} explored whther the
+At a global scale \citet{perkins2005international} explored whether the
 diffusion rate of new technologies is driven by a latecomer advantage
 and the engagement with the global economy via foreign direct
 investments and trade. Their results illustrate that indeed latecomers
 and developing countries experience diffusion of new technologies more
 rapidly than early adopters and developed countries. At the same scale,
 \citet{perkins2011internet} explored whether the adoption of previous
-communication technologies that is mail, telegrams and telephones was
+communication technologies that is mail, telegrams and telephones were
 shaped by similar socioeconomic factors as the internet. Their results
 indicated common patterns regarding the drivers behind the adoption of
 different communication technologies.
 
 Turning to studies that share more technological and scalar similarities
-with this paper, \citet{ding2010modeling} modelled the spatial diffusion
+with this paper, \citet{ding2010modeling} modeled the spatial diffusion
 of mobile telecommunications across regions in China. Their analysis
 indicated that socioeconomic characteristics are important determinants
 of the timing, speed and the level of mobile diffusion within China.
@@ -437,54 +481,54 @@ Using data from a Hungarian online social network,
 granular spatial level. Their results are in agreement with early
 theoretical and empirical contributions reviewed here: assortativity,
 urban scaling and distance are the key drivers of spatial diffusion. At
-a global scale \citet{PAPAGIANNIDIS2015308} modelled the diffusion of
-different web technologies technologies and practices. Interestingly,
-they did so by using similar, but less extensive data as the one used
-here. Their analysis illustrated how the diffusion of different web
+a global scale \citet{PAPAGIANNIDIS2015308} modeled the diffusion of
+different web technologies and practices across countries.
+Interestingly, they used similar, but less extensive data as the ones
+used here. Their analysis illustrated how the diffusion of different web
 technologies and practices follow an S-shaped pattern as well as the
 different diffusion rates of the different technologies and practices.
 
-All in all, \ldots{}
+All in all, this paper tests whether the three distinct spatial
+diffusion mechanisms shaped the diffusion of the Web in the UK at very
+granular spatial scales from the Web's early stages onwards.
 
 \section{Data and Methods}\label{sec-datamethods}
 
-\textbf{ADD FAMILY OF WEB TECHNOLOGIES}
-
-To capture the diffusion of web technologies, a website density metric
-is developed for two different geographical scales: the Local Authority
+To capture the diffusion of the Web, a website density metric is
+developed for two different geographical scales: the Local Authority
 Districts (LAD) and the Output Areas (OA). The former is an
-administrative unit and there are c.~374 such units in the UK. The
-latter is a census-based geographical unit, which is very small as there
-are c.~230,000 of them in the UK. This methodological choice will allow
-the mapping of the diffusion of web technologies and the assessment of
-the diffusion mechanisms at these two very different spatial scales.
+administrative unit and there are 374 LAD in the UK. The latter is the
+smallest census-based geographical unit and there are c.~230,000 of them
+in the UK. This methodological choice will allow the mapping of the
+diffusion of web technologies and the assessment of the diffusion
+mechanisms at these two very different spatial scales.
 
 The counts of websites at these scales are calculated using data from
-the Internet Archive \footnote{\href{See\%20https://archive.org/}{https://archive.org/}.}
+the Internet Archive\footnote{\href{See\%20https://archive.org/}{https://archive.org/}.}
 and, specifically, the JISC UK Web Domain Dataset \citep{ukwebarchive}.
 The Internet Archive is one of the most complete and oldest archive of
 webpages in the world operating since 1996
 \citep{ainsworth2011much, holzmann2016dawn}. It is a web crawler, which
-discovers webpages by following the hyperlinks of every webpage its
+discovers webpages by following the hyperlinks of every webpage it
 archives. This dataset, which is curated by the British Library,
 contains all the archived webpages from the UK ccTLD (.uk) from the
 1996--2012 period. In essence, this is a long list of 2.5 billion URLs
 of archived webpages including also the archival timestamp.
 
-Instead of using the whole .uk country code top-level domain (ccTLD),
-this paper focuses on its commercial subset, the .co.uk SLD. This choice
+Instead of using the whole .uk ccTLD, this paper focuses on its
+commercial subset, the .co.uk second level domain (SLD). This choices
 decrease the heterogeneity of the web data as such commercial websites
-have rather specific aims: they are used to diffuse information, support
-online transactions and share opinions
+have specific aims: they are used to diffuse information, support online
+transactions and share opinions
 \citep{THELWALL2000441, blazquez2018big}. Although a UK company can
 adopt a generic TLD such as .com and these cases escape the data used
-here, such omissions should not affect our results given the popularity
-of the .uk ccTLD \citep{tranosuk}: UK consumers prefer to visit a .uk
-website when they are searching for products or services \citep{hope};
-and anecdotal evidence indicates that during the first half of 2000,
-three .co.uk domains were registered every minute \citep{oecd_coms}.
-Importantly, previous studies illustrated that .co.uk is the most
-popular UK SLD \citep{tranosuk}.
+here, such omissions should not affect the validity of the results given
+the popularity of the .uk ccTLD \citep{tranosuk}: UK consumers prefer to
+visit a .uk website when they are searching for products or services
+\citep{hope}; and canecdotal evidence indicates that during the first
+half of 2000, threec .co.uk domains were registered every minute
+\citep{oecd_coms}. Importantly, previous studies illustrated that .co.uk
+is the most popular UK SLD \citep{tranosuk}.
 
 The text from these webpages was scanned using a regular expression
 (regex) to identify strings of text which resemble UK postcodes and one
@@ -492,17 +536,17 @@ fifth of them included a mention to a postcode \citep{BL2013geo}. This
 information allows the geolocation of the data and the creation of the
 LAD and OA counts.
 
-The data cleaning process included an aggregation step, through which
-the archived webpages were aggregated to the parent websites. This
-website reconstruction allows the creation of a \emph{website} instead
-of a \emph{webpage} density metric. Websites, which are hierarchical
-structures, tend to represent specific orgnanisations or entities, and,
-arguably, are more meaningful observational units than webpages, which
-ignore the upstream dependencies. Based on the following example, all
-three webpages are part of the same website
-(\url{http://www.website.co.uk}) and at the end only websites and not
-the nested webpages were considered as otherwise the metric would have
-been biased towards large, place specific, websites.
+The data cleaning process includes an aggregation step, through which
+the archived webpages are aggregated to the parent websites. This
+website reconstruction process lend itself to the consteruction of
+\emph{website} instead of \emph{webpage} density metrics. Websites tend
+to represent specific orgnanisations or entities, and, arguably, are
+more meaningful observational units than webpages, which can ignore the
+upstream dependency of the website they belong to. Based on the
+following example, all three webpages are part of the same website
+(\url{http://www.website.co.uk}). Only the overall website and not the
+nested webpages are considered for the counts as otherwise the density
+metrics would have been biased towards large, place specific, websites.
 
 \begin{itemize}
 \item
@@ -517,26 +561,24 @@ been biased towards large, place specific, websites.
 has been used elsewhere \citep{tranosuk, shoreditch} may lead to
 websites with multiple postcodes. As per the above example,
 \href{http://www.website.co.uk}{www.website.co.uk} includes two unique
-postcodes: B15 2TT and BS8 1SS. The distribution of postcodes for 2000
-is presented in Table \ref{f2000}, which clearly illustrates the wide
-range. At the left end of the distribution, there are websites anchored
-to a unique location (72\% of all the reconstructed websites in 2000),
-which may represent a small company with a single trading location. At
-the right end, we have websites with thousands of different postcodes.
-Considering the time period of the analysis, such cases can represent
-directories which used to be popular in the pre-search engines early
-times of the commercial internet \citep{tranosuk}.\footnote{See Figure
-  A1 in \textbf{Appendix A in the supplemental data online for
-  examples}.}
+postcodes: B15 2TT and BS8 1SS. The distribution of the number of
+postcodes per website for 2000 is presented in Table \ref{f2000}, which
+clearly illustrates a wide range. At the left end of the distribution,
+there are websites anchored to a unique location (72\% of all the
+reconstructed websites in 2000), which may represent a small company
+with a single trading location. At the right end, there are websites
+with thousands of different postcodes. Considering the time period of
+the analysis, such cases can represent directories which used to be
+popular in the pre-search engines early times of the commercial internet
+as well as real estate websites \citep{tranosuk}.
 
 The analysis presented here is based on two subsets of these data.
-Firstly, on websites, which only contain only one unique postcode and,
-therefore, the geolocation process does not suffer from noise. As a
+Firstly, on websites, which only contain one unique postcode. As a
 robustness check, the analysis is replicated for an extended subset of
-websites, which include up to ten unique postcodes. These websites are
-geolocated by equally attaching them to multiple locations. This
-extended sample includes 94 percent of all the archived websites in
-2000.
+websites, which include up to 10 unique postcodes to capture commercial
+websites which point to multiple locations. They are geolocated by
+equally attaching them to these locations. This extended sample includes
+94 percent of all the archived websites in 2000.
 
 \begin{table}
 
@@ -559,26 +601,33 @@ Postcodes & F & F (\%) & Cummulative F\\
 \end{tabular}
 \end{table}
 
-Another data cleaning step dealt with some extreme outliers. Figure
-\ref{pc1} plots the website counts for the top 1000 postcodes. Some
-obvious outliers can be observed for the 2004-2006 period, which can be
-attributed to a link farm \citep{BL2013links}.\\
-The website counts for these six postcodes (SE24 9HP, CV8 2ED, GL16 7YA,
-CW1 6GL, M28 2SL, DE21 7BF), which in 2004 or 2005 had more than 1000
+Another data cleaning step deals with some extreme outliers. Figure
+\ref{correct} plots the website counts for the top 1000 postcodes. Some
+obvious outliers can be observed for the 2002-2006 period for a handful
+of postcodes, which can be attributed to link farms \citep{BL2013links}.
+The website counts for these postcodes (SE24 9HP, CV8 2ED, GL16 7YA, CW1
+6GL, M28 2SL, DE21 7BF), which in 2004 or 2005 had more than 1000
 websites pointing to them, were replaced with predicted values based on
 a simple panel regression model with postcode fixed effects and yearly
-dummy variables. As the Section~\ref{sec-results} illustrates, this led
-to a small increase of the model predictive capability. To put the
-magnitude of the data imputation into perspective, this process affected
-6 out of the 557,808 postcodes present in the data.
+dummy variables. These postcodes refer to a residential area with a
+small park in South London, residential areas outside Warwick and
+Manchester, a rural area in the south border of England and Wales and
+small business parks in Crew and Derby. Hence, it is difficult to
+believe that these postcodes genuinely hosted such a large amounts of
+websites, which were later extensively declined. To put the magnitude of
+the data imputation into perspective, this process affected 6 out of the
+557,808 postcodes included in the data. As the Section~\ref{sec-results}
+illustrates, this led to a small increase of the model predictive
+capability.
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1\textwidth,height=0.6\textheight]{../../outputs/pc_year_1.png}
+{\centering \includegraphics[width=1\textwidth,height=0.7\textheight]{tranos2023_files/figure-pdf/unnamed-chunk-2-1.pdf}
 
 }
 
-\caption{\label{pc1}Yearly website counts per postcode (top 1000)}
+\caption{\label{correct}Yearly website counts per postcode (top 1000)
+before (top) and after (down) data imputation}
 
 \end{figure}%
 
@@ -590,7 +639,7 @@ However, because of the the consistent spatial definition of OA (they
 host 40-250 households),\footnote{\url{https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies}}
 website counts in OA are interpreted as a density metric too.
 
-These website density metrics are used for the three different steps of
+These website density metrics are used for the three different stages of
 the analysis. Firstly, a system-level analysis explores how the
 diffusion of web technologies in the UK fits with the well-established
 S-curve. To do so, the following logistic function (Equation \ref{eq:s})
@@ -603,52 +652,54 @@ y = k /(1 + e^{-(t-t_{o})})\label{eq:s}
 \noindent \(k\) is the asymptote or, in other words, the saturation
 level, \(b\) the overall growth rate, and \(t_{0}\) the \emph{inflection
 point} of maximum growth at \(k/2\), where the logistic function is
-symmetrical \citep{wilson201281}. We compare the LAD \(t_0\) of each LAD
+symmetrical \citep{wilson201281}. The \(t_0\) of each LAD is compared
 against the \(t_0\) of the UK to delineate whether a LAD reached that
 point faster or slower than the country average. Importantly, an
-accuracy criterion was imposed and only S-curves with \(R^2 > 0.9\) were
-included in the analysis. To estimate Equation \ref{eq:s} a
+accuracy criterion was imposed and only LAD with \(R^2 > 0.9\) were
+included in this analysis. To estimate Equation \ref{eq:s} a
 self-starting logistic growth model was employed using the \texttt{nls}
-and \texttt{SSlogis} functions in \texttt{R}.
+and \texttt{SSlogis} functions in \texttt{R}. This logistic growth model
+depicts the initial period of slow diffusion of a new technology, which
+is followed by the fast, exponential growth stage to then eventually
+slow down and saturate \citep{wilson201281, grubler1999dynamics}.
 
 The system-level analysis also focuses on the volatility of the web
 adoption to depict places with high concentration of early adopters and,
 equally, latecomers. To do so, the change of the ranking of the UK LAD
 over time is plotted and discussed. Both the S-curve and the volatility
 analysis focus only on LAD as the very large number of OA would have
-made such analysis diffucult to visualise and interpret.
+made such analysis difficult to visualise and interpret.
 
 Next, exploratory spatial data analysis depicts whether the two main
 drivers of spatial diffusion -- namely neighbourhood and hierarchy --
-underpin the diffusion of web technologies in the UK. To capture the
+underpin thediffusion of web technologies in the UK. To capture the
 former and following \citet{ding2010modeling} the Moran's I and the
-Local Index of Spatial Association (LISA) are estimated for website
+Local Index of Spatial Association (LISA) are estimated for the website
 density. To address the hierarchy mechanism, the Gini coefficient -- a
 well established metric of inequality -- is calculated. All the above
 are computed and plotted longitudinally both for the LAD and the OA.
 
 Lastly, a modelling framework is developed to test the above diffusion
 mechanisms. The overarching aim is to build a model that can test the
-relationship between the website density and these mechanisms:
+relationship between website density and these mechanisms:
 
 \begin{align}
 Website\,Density_{t} \sim Hierarchy_{t-1} + Neighbourhood_{t-1} + S-curve_{t}\label{eq:rf.generic}
 \end{align}
 
-To estimate Equation \ref{eq:rf.generic}, Random Forest (RF) models were
-built. This is a popular machine learning algorith for both regression
-and classification problems \citep{biau2012analysis}. It was introduced
-by \citet{breiman2001random} and has\\
-gained popularity, becoming a go-to data science tool. RF can
-effectively handle skewed distributions and outliers, model non-linear
-relationships, require minimal hyperparameter tuning, exhibit low
-sensitivity to these parameters, and have relatively short training
+\noindent Equation \ref{eq:rf.generic} is estimated using Random Forest
+(RF). This is a popular ML algorithm for both regression and
+classification problems \citep{biau2012analysis}. It was introduced by
+\citet{breiman2001random} and has become a go-to data science tool. RF
+can effectively handle skewed distributions and outliers, model
+non-linear relationships, require minimal hyperparameter tuning, exhibit
+low sensitivity to these parameters, and have relatively short training
 times \citep{Caruana2008, liaw2002classification, yan2020using}. These
 attributes match well with the website density data characteristics
-including skewness especially for OA. Also, the large data size (c.~230k
-data points for each of the 17 years) call for fast training times.
-Importantly, RF predictions tend to be more accurate than those from
-single regression trees and outperform Ordinary Least Squares in
+including skewness especially for the OA. Also, the large data size
+(c.~230k data points for each of the 17 years) calls for fast training
+times. Importantly, RF predictions tend to be more accurate than those
+from single regression trees and outperform Ordinary Least Squares in
 out-of-sample predictions, even with moderate-sized training data and a
 small number of predictors
 \citep{mullainathan2017machine, athey2019machine, sulaiman2011intelligent, pourebrahim2019trip, biau2012analysis}.
@@ -683,85 +734,7 @@ key predictors of obesity differ across English cities.
 
 \section{Results}\label{sec-results}
 
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\item
-  S-shaped diffusion curves: S for LAD per firm. UK, fast/slow/examples
-\item
-  ranks: there is stability and movement
-\item
-  Neighbourhood effect: diffusion proceeds outwards from innovation
-  centers, first ``hitting'' nearby rather than far-away locations
-  (Grubler 1990)
-\end{enumerate}
-
-\begin{itemize}
-\item
-  Moran's I: for OA and LAD over time
-\item
-  LISA maps: for OA and LAD over time More and less expected clusters.
-  Different scales show different results
-\end{itemize}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{3}
-\tightlist
-\item
-  Hierarchy effect: from main centers to secondary ones -- central
-  places
-\end{enumerate}
-
-\begin{itemize}
-\tightlist
-\item
-  Gini coefficient. Almost perfect polarisation of web adoption in the
-  early stages at a granular level More equally diffused at the Local
-  Authority level Plateau overtime
-\end{itemize}
-
-\begin{enumerate}
-\def\labelenumi{\arabic{enumi}.}
-\setcounter{enumi}{4}
-\tightlist
-\item
-  RF
-\end{enumerate}
-
-\begin{itemize}
-\tightlist
-\item
-  ideal: (i) train RF for all years and all (1) LAD and (2) OA with CAST
-  and report metrics. (ii) train for all years and all but one region
-  for (1) LAD and (2) OA to predict to the holdout region. Reports
-  predictions as region similarities.
-\end{itemize}
-
-Figure \ref{s_uk} plots the S curve for the cumulative adoption of
-website technologies in the UK during the 1996-2012 period. It
-demonstrates a pattern well aligned with previous studies discussed in
-Section~\ref{sec-litreview}. The vertical line for year 2003 illustrates
-the point where the modeled cumulative adoption was equal to 50\% of the
-maximum. This \(t_0\) \emph{inflection} point signals the maximum
-adoption speed and is used here to determine whether the UK LAD reached
-that inflection point earlier or later than the UK average.
-Specifically, the S curve and the inflection point are estimated for
-every LAD individually and then compared with the UK average. LAD that
-reached their inflection point earlier than the country average are
-labelled as \emph{fast} and the rest as \emph{slow}. Figure \ref{s_map}
-maps this pattern and the picture is not entirely clear. On the one
-hand, there are some expected examples of LAD with relevant industrial
-backgrounds delineated as fast: the City of London, a world-renowned
-cluster of finance industries \citep{cook2007role}, and Reading, a town
-with high-tech service industries in proximity to London and its main
-airport, Heathrow \citep{england2005polynet}. On the other hand, LAD
-which were expected to appear as fast -- e.g.~Hackney in central London
-and Bristol, a well-established creative cluster
-\citep{oatley1999cultural, bassett2002cultural} -- were delineated as
-slow. Nevertheless, out of the 10 fastest LAD, eight were located in
-Greater London and one in Cambridge (see \textbf{Appendix}), but in
-overall there is a spatially heterogenous and not easy to explain
-spatial pattern.
+\subsection{System-level analysis}\label{system-level-analysis}
 
 \begin{figure}[H]
 
@@ -773,6 +746,37 @@ spatial pattern.
 
 \end{figure}%
 
+Figure \ref{s_uk} plots the S curve for the cumulative adoption of
+website technologies in the UK during the 1996-2012 period. It
+demonstrates a pattern well aligned with previous studies discussed in
+Section~\ref{sec-litreview}. The vertical line around year 2003
+illustrates the point where the modeled cumulative adoption is equal to
+50\% of the maximum. This \(t_0\) \emph{inflection} point signals the
+maximum adoption speed and is used here to determine whether a UK LAD
+reached that inflection point earlier or later than the UK average.
+Specifically, the S curve and the inflection point are estimated for
+every LAD individually and then compared against the UK average. LAD
+that reached their inflection point earlier than the country average are
+labelled as \emph{fast} and the rest as \emph{slow}. Figure \ref{s_map}
+maps this pattern. There is a clear high concentration of fast adopting
+LAD in the South and East of England as expected. However, there is also
+such a concentration in Wales, Scotland and the North West of England.
+At a more detailed level, there are some expected examples of LAD with
+relevant industrial backgrounds delineated as fast: the City of London,
+a world-renowned cluster of finance industries \citep{cook2007role}, and
+Reading, a town with high-tech service industries in proximity to London
+and its main airport, Heathrow \citep{england2005polynet}. However,
+there are also LAD which were expected to appear as fast -- e.g.~Hackney
+in central London and Bristol, a well-established creative cluster
+\citep{oatley1999cultural, bassett2002cultural} -- but were delineated
+as slow. Nevertheless, there is obvious spatial clustering of fast and
+slow LAD. Importantly, out of the ten fastest LAD, nine were located in
+the South East of England and London and one in Cambridge (see Table
+\ref{table.s.lads} in the Appendix). The above observations remain
+almost unchanged when the analysis includes websites with up to 10
+unique postcodes -- see Figures \ref{s_uk10} and \ref{s_map10} in the
+Appendix -- advocating towards the robustness of the analysis.
+
 \begin{figure}[H]
 
 {\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/s/speed_map.png}
@@ -783,75 +787,74 @@ spatial pattern.
 
 \end{figure}%
 
-The next step is to assess the stability and volatility of the LAD in
+The next step is assesses the stability and volatility of the LAD in
 terms of their adoption of web technologies. As we know from the
 literature \citep{risk_perceptions}, different agents have different
 perceptions about and levels of acceptance of the risks and the
 potential economic returns associated with the adoption of new
 technologies -- see for instance the seminal work of
 \citet{venkatesh2000theoretical}. To reveal such aggregated patterns,
-Figures \ref{rank_stable} and \ref{rank_unstable} plot the ranking of UK
-LAD based on website density. To decrease noise, the average ranking of
-1996-1998 and 2010-2012 is plotted instead of the individual years.
-While there are quite a few obvious cases of LAD that maintained their
-position between the beginning and the end of the study period either at
-the top or at the bottom of the hierarchy (Figure \ref{rank_stable}),
+Figure \ref{rank} plots the ranking of UK LAD based on website density.
+To decrease noise, the average ranking of 1996-1998 and 2010-2012 is
+plotted instead of the individual years. The colours depict the 5th and
+95th percentile of the absolute difference of the LAD ranking between
+1996-1998 and 2010-2012. While there are quite a few obvious cases of
+LAD that maintained their position between the beginning and the end of
+the study period both at the top or at the bottom of the hierarchy,
 there are also quite a few LAD that changed drastically their position.
 Some of these LAD enjoyed a process that at the first instance looks
-like leapfrogging since they managed to jump at the top of the hierarchy
-despite their slow start (top of Figure \ref{unstable}). There is
-extensive literature regarding the potential benefits of technological
-leapfrogging. The underpinning argument is that latecomers can adopt and
-benefit from new technologies that have been developed elsewhere without
-incurring the hefty initial R\&D costs \citep{teece2008firm}. Although
-the leapfrogging literature does not pay much attention to cities and
+like \emph{leapfrogging} since they managed to jump at the top of the
+hierarchy despite their slow start. There is extensive literature
+regarding the potential benefits of technological leapfrogging. The
+underpinning argument is that latecomers can adopt and benefit from new
+technologies that have been developed elsewhere without incurring the
+hefty initial R\&D costs \citep{teece2008firm}. Although the
+leapfrogging literature does not pay much attention to cities and
 regions \citep{yu2018sustainability}, previous research highlighted the
 long term and sustained productivity benefit of the early adopters of
 web technologies in the UK \citep{tranosuk}. So, although the LAD system
 is volatile, it is not clear whether the LAD with high concentration of
 late adopters will gain any latecomer benefits in a way similar to
-countries experiencing such technological leapfrogging.
+countries experiencing such technological leapfrogging. As previously,
+this is consistent with including websites with up to 10 postcodes (see
+Figure \ref{rank10}).
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/ranks/web_per_firm2000_2012_only05_av.png}
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/ranks/web_per_firm2000_2012_only0595_av.png}
 
 }
 
-\caption{\label{rank_stable}Dynamics of wed diffusion: stability of LAD}
+\caption{\label{rank}Dynamics of wed diffusion (LAD)}
 
 \end{figure}%
 
-\begin{figure}[H]
+\subsection{Exploratory analysis}\label{exploratory-analysis}
 
-{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/ranks/web_per_firm2000_2012_only95_av.png}
-
-}
-
-\caption{\label{rank_unstable}Dynamics of wed diffusion: volatility LAD}
-
-\end{figure}%
-
-Then, figures \ref{morani} and \ref{lisa} offer a first insight into
-whether a neighbourhood effect underpins the diffusion of web
-technologies in the UK as they plot the Moran's I and the LISA maps of
-website density respectively for LAD and OA. Starting from the former,
-spatial autocorrelation was higher in the beginning and then around year
-2000 dropped slightly and stabled at 0.2. This reflects the early
-concentration of high website density around London, which over time
-diffused as high-high clusters can be seen in other parts of the country
-away from London as seen in Figure \ref{lisa}. An almost reverse pattern
+Figures \ref{morani} and \ref{lisa} offer a first insight into whether a
+neighbourhood mechanism underpins the diffusion of the Web in the UK as
+they plot the Moran's I and the LISA maps of website density
+respectively for LAD and OA. Starting from the former, spatial
+autocorrelation was higher in the beginning of the study period and then
+after 2000 dropped slightly and stabilised around 0.2. This reflects the
+early concentration of high website density around London, which over
+time diffused as high-high clusters can be seen in other parts of the
+country away from London (Figure \ref{lisa}). An almost reverse pattern
 can be observed for OA. At the beginning of the study period Moran's I
-was around 0.1 and it plateaued after 2000-2001 around 0.2. Because of
-the very small size of OA, at the early stages of the diffusion of web
+was around 0.5 and it plateaued after 2000 around 0.2. Because of the
+very small size of OA, at the early stages of the diffusion of web
 technologies their adoption was spatially scattered. This is reflected
-in the lack of any significant clusters in 1996. Eventually, as the
-adoption rate increased, more such clusters of high website density were
-formed and this is reflected both in the Moran's I and the LISA maps in
-Figures \ref{morani} and \ref{lisa}. All in all, the exploratory spatial
-data analysis advocates towards an underpinning neighbourhood effect and
-the different scales of analysis illustrate how it evolved differently
-over time.
+in the lack of any significant clusters in 1996 (Figure \ref{lisa}).
+Eventually, as the adoption rate increased, more such clusters of high
+website density were formed and this is reflected both in the Moran's I
+and the LISA maps in Figures \ref{morani} and \ref{lisa}. A similar
+pattern is observed for the extended dataset (see Figures\ref{morani10}
+and \ref{lisa10}). In this case, the magnitude of spatial
+autocorrelation is slightly higher illustrating a stronger spatial
+clustering mechanism. All in all, the exploratory spatial data analysis
+advocates towards an underpinning neighbourhood mechanism and the
+different scales of analysis illustrate how it evolved differently over
+time.
 
 \begin{figure}[H]
 
@@ -863,11 +866,9 @@ over time.
 
 \end{figure}%
 
-Figure \ref{lisa}
-
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1\textwidth,height=0.8\textheight]{tranos2023_files/figure-pdf/unnamed-chunk-7-1.pdf}
+{\centering \includegraphics[width=1\textwidth,height=0.8\textheight]{tranos2023_files/figure-pdf/unnamed-chunk-6-1.pdf}
 
 }
 
@@ -875,24 +876,22 @@ Figure \ref{lisa}
 
 \end{figure}%
 
-To illustrate whether a hierarchical process underpins the diffusion of
-web technologies, the Gini coefficient is calculated yearly both for LAD
-and OA. As a metric of inequality, the Gini coefficient demonstrates
-whether website density is concentrated in a small number of LAD/OA, or
-whether it is more equally spread across the country. Both scales of
-analysis in Figure \ref{gini} illustrate the same picture. At the
-beginning of the commercial internet website density was extremely
-unequal, or in other words, only a few places had websites associated
-with them. Inequality dropped and plateaued after 2000 for both scales
-illustrating that at the first stages of the commercial internet,
-website density was concentrated in a limited number of places. This is
-an indication of a hierarchical diffusion mechanism that led over time
-to a more equal spread. Interestingly, the year 2000 is again a period
-of change for this diffusion mechanisms as it was for the neighbourhood
-process. There is a substantial difference between the Gini coefficient
-magnitude for LAD and OA, but this is well expected as the very small
-size of OA equates to a lot polygons without any websites pointing to
-them -- for instance residential OA. LAD/OA
+To illustrate whether a hierarchical process also underpins the
+diffusion of web technologies, the Gini coefficient is calculated yearly
+both for LAD and OA. As a metric of inequality, the Gini coefficient
+demonstrates whether website density is concentrated in a small number
+of LAD or OA, or whether it is more equally spread across the country.
+Both scales of analysis in Figure \ref{gini} illustrate the same
+picture. At the beginning of the commercial internet website density was
+extremely unequal, or, in other words, only a few places had websites
+associated with them. Inequality dropped and plateaued after 2000 for
+both scales. This is illustrative of a hierarchical diffusion mechanism
+that led over time to a more equal spread. Interestingly, the year 2000
+is again a period of change for this diffusion mechanism as it was for
+the neighbourhood process. There is a substantial difference between the
+Gini coefficient magnitude for LAD and OA, but this is expected as the
+very small size of OA equates to a lot of polygons without any websites
+pointing to them -- for example residential OA.
 
 \begin{figure}[H]
 
@@ -904,39 +903,42 @@ them -- for instance residential OA. LAD/OA
 
 \end{figure}%
 
-The next section incorporates the above discussed spatial processes of
-the diffusion of web technologies into a modelling framework. The aim is
-to use variables depicting these spatial processes in order to predict
-the diffusion of web technologies in the UK over space and time and
-across different scales. Specifically, four different models are
-estimated. Firstly, all the data points for the OA and LAD are utilised
-in order to build two respective RF models and assess their capacity to
-predict the adoption of web technologies. These two models will reveal
-the predictive capacity of the diffusion mechanisms and also allow to
-see how the importance of such variables changes across scales. The next
-two sets of models will be again trained on web diffusion at the two
-working scales: OA and LAD. However, instead of using all the data
-points, the OA and the LAD from one of the twelve UK regions are held
-out and then the trained model is used to predict website density in the
-OA or the LAD of the held-out region. This process takes place
-recursively for all UK regions. The difference in the predictive
-capacity of the different samples will reveal how dissimilar are these
-spatial process across regions and, importantly, at different scales.
+\subsection{Modelling results}\label{modelling-results}
+
+The next section incorporates the above mechanisms of the spatial
+diffusion of the Web into a modelling framework. The aim is to use
+variables depicting these spatial processes in order to predict the
+diffusion of web technologies in the UK over space and time and across
+different scales. Specifically, four different models are estimated.
+Firstly, all the data points for the OA and LAD are utilised in order to
+build two RF models and assess their capacity to predict the adoption of
+web technologies at the two different scales. These two models will
+reveal the predictive capacity of the diffusion mechanisms and also
+demonstrate how the importance of such variables changes across scales.
+The next two sets of models are again trained at the two working scales:
+OA and LAD. However, instead of using all the data points, the OA and
+the LAD from one of the twelve UK regions are held out for the model
+training. Then the trained model is used to predict website density for
+the OA or the LAD of the held-out region. This process takes place
+recursively for all twelve UK regions. The regional difference in the
+predictive capacity of the different samples will reveal how dissimilar
+these spatial process are across regions and, importantly, at different
+scales.
 
 It needs to be highlighted here that the cross-validation for all models
-is spatially and temporally sensitive. Instead of using 10 random folds,
-we employ the \texttt{CAST} package which allows holding back data
-points from specific years and spatial units and use them for testing in
-order to estimate the model performance \citep{meyer2018improving}.
+is spatially and temporally sensitive. Instead of using 10 random
+folds,the \texttt{CAST} package is employed which allows holding back
+data points from specific years and spatial units and use them for
+testing in order to estimate the model performance
+\citep{meyer2018improving}.
 
 The models include variables that capture the three processes that the
-relevant literature and the descriptive analysis presented above
-highlighted. Namely, the models capture: (i) a hierarchy effect with
-diffusion running from main centres to secondary ones, (ii) a
-neighborhood effect according to which diffusion first hits nearby
-locations, and (iii) the rather canonical pattern of diffusion over time
-as reflected in the S-shaped pattern in the cumulative level of
-adoption.
+relevant literature and the descriptive analysis highlighted. Namely,
+the models capture: (i) a hierarchy mechanism with diffusion running
+from main centres to secondary ones, (ii) a neighborhood mechanism
+according to which diffusion first hits nearby locations, and (iii) the
+rather canonical pattern of diffusion over time as reflected in the
+S-shaped pattern in the cumulative level of adoption.
 
 To capture the hierarchy effect the models include as predictors a one
 year lag of website density in London, the largest city in the UK, a one
@@ -949,15 +951,15 @@ spatial unit depends on the level of the adoption in places further up
 in the urban hierarchy the previous year. The inclusion of the distance
 variables incorporates spatial structure into the hierarchy argument. To
 depict the neighbourhood effect, the website density of the neighbouring
-spatial units in the previous year is employed. Again, the underpinning
-rationale is that the level of web adoption within a spatial unit
-depends on the level of web adoption in the neighbouring spatial units
-the year before. This represents the `hitting nearby locations first'
-argument. Therefore, the spatial and temporal lag of the website density
-in LAD and OA is calculated. Lastly, the time effect which is reflected
-on the S-curve for the cumulative adoption is captured by a time trend
-variable. Hence, all four model will follow the following generic form
-(Eq. \ref{model}):
+spatial units in the previous year is employed (rook continuity). Again,
+the underpinning rationale is that the level of web adoption within a
+spatial unit depends on the level of web adoption in the neighbouring
+spatial units the year before. This represents the `hitting nearby
+locations first' argument. Therefore, the spatial and temporal lag of
+the website density in LAD and OA is calculated. Lastly, the temporal
+pattern of the cumulative adoption is captured by a time trend variable.
+Hence, all four models will follow the following generic form (Eq.
+\ref{model}):
 
 \begin{align} \label{model}
 Website\,Density_{t} \sim Distance\,London +
@@ -986,19 +988,19 @@ MAE = \frac{1}{N} \sum_{k = 1}^{N} |\hat{y_{k}} - y_{k}| \label{eq:mae}
 RMSE =  \sqrt{\frac{\sum_{k = 1}^{N} (\hat{y_{k}} - y_{k})^2} {N}} \label{eq:rmse}
 \end{align}
 
-\(y_{k}\) is the \(k^{th}\) observation of the dataset, which consists
-of \(N\) observations in total. \(\hat{y_{k}}\) is the \(k_{th}\)
-predicted value for the dependent variable and \(\overline{y_{k}}\) is
-the average value of \(y\). The last two metrics are expressed in the
-same units as the dependent variable -- websites per firm for the LAD
-modes and the number of websites for the OA models -- while the first
-one is the coefficient of determination between the observed and the
-predicted values of website adoption. Regarding \(MAE\), it is the
-absolute difference between the observed and the predicted website
-adoption. While \(MAE\) does not penalise for large errors, \(RSME\)
-does so as it is proportional to the squared difference between the
-observed and the predicted trade flows. Hence larger errors weigh more
-for \(RMSE\) \citep{pontius2008components}.
+\noindent \(y_{k}\) is the \(k^{th}\) observation of the dataset, which
+consists of \(N\) observations in total. \(\hat{y_{k}}\) is the
+\(k_{th}\) predicted value for the dependent variable and
+\(\overline{y_{k}}\) is the average value of \(y\). The last two metrics
+are expressed in the same units as the dependent variable -- websites
+per firm for the LAD modes and the number of websites for the OA models
+-- while the first one is the coefficient of determination between the
+observed and the predicted values of website adoption. Regarding
+\(MAE\), it is the absolute difference between the observed and the
+predicted website adoption. While \(MAE\) does not penalise for large
+errors, \(RSME\) does so as it is proportional to the squared difference
+between the observed and the predicted trade flows. Hence larger errors
+weigh more for \(RMSE\) \citep{pontius2008components}.
 
 Table~\ref{tbl-model-metrics} presents the model performance for the
 first set of models, for which all data points are employed for training
@@ -1006,13 +1008,13 @@ and testing via cross validation. The first one is trained and tested on
 374 LAD and the second on 232,296 OA, both for a 16 year period
 (1997-2012). The results are remarkably good considering that the are
 the outcome of space and time sensitive CV, so the the model does not
-suffer from overfitting. At the LAD level the model predicts 81\% of the
+suffer from overfitting. At the LAD level the model predicts 85\% of the
 variation of website density. Both error metrics indicate that the model
 error is \((\frac{1}{20}, \frac{1}{30})\) of a website per firm. At the
-OA the \(R^2\) drops down to 21\%. Considering its granularity, this is
+OA the \(R^2\) drops down to 32\%. Considering its granularity, this is
 still a remarkable performance. To contextualise it, the model results
 in a MAE of one website for areas small enough to host less than 140
-households.\footnote{According to the Office for National Statistics,
+households. \footnote{According to the Office for National Statistics,
   80\% of OA in England and Wales host 110-139 households,
   \href{https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/outputgeography/outputareas}{www.ons.gov.uk}.}
 Because of the small size of the spatial units, the distribution is
@@ -1028,11 +1030,39 @@ granularity of the data this should not come as a surprise.
 \begin{longtable}[]{@{}llll@{}}
 \caption{Model metrics}\label{tbl-model-metrics}\tabularnewline
 \toprule\noalign{}
-& RMSE & \(R^{2}\) & MAE \\
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
 \midrule\noalign{}
 \endfirsthead
 \toprule\noalign{}
-& RMSE & \(R^{2}\) & MAE \\
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Local Authorities & 0.028 & 0.850 & 0.019 \\
+Output Areas & 3.284 & 0.320 & 1.034 \\
+\end{longtable}
+
+The results in Table~\ref{tbl-model-metrics} are robust against
+different specification. As noted earlier, the data imputation process
+resulted in a modest improvement of the predictive capacity of the
+model. As per Table~\ref{tbl-model-metrics-no-correction} all accuracy
+metrics are slightly worst when the data imputation is applied. Then,
+Table~\ref{tbl-model-metrics-10} presents the model results for the
+extended dataset, which includes websites with up to 10 unique
+postcodes. While the results for the LAD are slightly less accurate, the
+\(R^{2}\) of the OA model is more than double in comparison to the base
+results in Table~\ref{tbl-model-metrics}.
+
+\begin{longtable}[]{@{}llll@{}}
+\caption{Model metrics without data
+imputation}\label{tbl-model-metrics-no-correction}\tabularnewline
+\toprule\noalign{}
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
 \midrule\noalign{}
 \endhead
 \bottomrule\noalign{}
@@ -1041,58 +1071,61 @@ Local Authorities & 0.032 & 0.810 & 0.019 \\
 Output Areas & 5.000 & 0.205 & 1.047 \\
 \end{longtable}
 
-Figures \ref{var.imp.LAD} and \ref{var.imp.OA} plot the importance of
-the different predictors. When the focus is on the LAD, the website
-density in the nearest city, in London and in the neighbouring LAD the
-year before are the most important predictors. They are followed by the
-yearly trend, while the spatial configuration as reflected in distances
-to London or the nearest city only play a minor role. This can be
-attributed to the rather coarse spatial scale of analysis. Nevertheless,
-all previously discussed spatial processes are at play in the diffusion
-of web technologies at the LAD level: the first two predictors depict
-the hierarchical effect, the spatial and temporal lag of website density
-depict the neighbourhood effect and the yearly trend the time-sensitive
-cumulative adoption pattern.
+\begin{longtable}[]{@{}llll@{}}
+\caption{Model metrics for the extended
+dataset}\label{tbl-model-metrics-10}\tabularnewline
+\toprule\noalign{}
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+& \(RMSE\) & \(R^{2}\) & \(MAE\) \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+Local Authorities & 0.188 & 0.77 & 0.122 \\
+Output Areas & 22.467 & 0.478 & 5.681 \\
+\end{longtable}
+
+Figure \ref{var.imp} plots the importance of the different predictors.
+When the focus is on LAD, the website density in the nearest city, in
+London and in the neighbouring LAD the year before are the most
+important predictors. They are followed by the yearly trend, while the
+spatial configuration as reflected in distances to London or the nearest
+city only plays a minor role. This can be attributed to the relatively
+coarse spatial scale of LAD. Nevertheless, all previously discussed
+spatial processes are at play in the diffusion of web technologies at
+the LAD level: the first two predictors depict the hierarchy mechanism,
+the spatial and temporal lag of website density the neighbourhood
+mechanism, and the yearly trend the time-sensitive cumulative adoption
+pattern.
 
 When the much more granular scale of OA is adopted, the picture is
-reversed. The most important predictors are the three distance variables
-to London, the nearest city and the nearest retail centre. They stil
-depict the hierarchical effect, but proximity to the different
+almost reversed. The two most important predictors are the distance to
+London and to the nearest city followed by the spatial and temporal lag
+of website density and the distance to the nearest retail centre. They
+still depict a hierarchical mechanism, but proximity to the different
 population centres is more important than their lagged web densities in
-predicting website diffusion. The neighbouring effect is less important
-at this scale. What is interesting is the almost negligible role of the
-yearly trend and London's website density. While the former probably
-illustrates the large heterogeneity in how web technologies have been
-adopted at this very fine scale, the later highlights that the
-importance of past web adoption rates in large population centres is
+predicting website diffusion. The neighbourhood mechanism is still
+strong but less important at this scale. What is interesting is the
+almost negligible role of the yearly trend and London's website density.
+While the former probably illustrates the large heterogeneity in how the
+Web has been adopted at this very fine scale, the latter highlights that
+the importance of past web adoption rates in large population centres is
 surpassed by proximity to them and spatial configuration at this scale.
 
-\begin{figure}[H]
-
-{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/rf/figures/varimp_LA.png}
-
-}
-
-\caption{\label{var.imp.LAD}Variable importance, LAD}
-
-\end{figure}%
+The above pattern of variable importance is largely in accordance with
+the models estimated for the extended dataset. A comparison with Figure
+\ref{var.imp10} illustrates that the main difference is the importance
+of the neighbourhood mechanism for the OA as the space and time lag of
+the website density is by far the most important predictor when the
+extended dataset is employed. But still, the variable importance
+patterns for the two datasets are not dissimilar.
 
 \begin{figure}[H]
 
-{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/rf/figures/varimp_OA.png}
-
-}
-
-\caption{\label{var.imp.OA}Variable importance, OA}
-
-\end{figure}%
-
-Figure \ref{var.imp} to replace Figures \ref{var.imp.LAD} and
-\ref{var.imp.OA} once I have the variable importance for LAD.
-
-\begin{figure}[H]
-
-{\centering \includegraphics[width=1\textwidth,height=\textheight]{tranos2023_files/figure-pdf/varimp-1.pdf}
+{\centering \includegraphics[width=1\textwidth,height=0.6\textheight]{tranos2023_files/figure-pdf/varimp-1.pdf}
 
 }
 
@@ -1147,18 +1180,18 @@ Region & \(R^2\) LAD & Rank LAD & \(R^2\) OA & Rank OA \\
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-South East & 0.947 & 1 & 0.134 & 2 \\
-Wales & 0.916 & 2 & 0.131 & 3 \\
-Yorkshire and The Humber & 0.906 & 3 & 0.144 & 1 \\
-North East & 0.895 & 4 & 0.128 & 4 \\
-West Midlands & 0.883 & 5 & 0.070 & 9 \\
-East Midlands & 0.882 & 6 & 0.088 & 8 \\
-East of England & 0.876 & 7 & 0.106 & 6 \\
-South West & 0.864 & 8 & 0.117 & 5 \\
-London & 0.805 & 9 & 0.055 & 10 \\
-Scotland & 0.770 & 10 & 0.035 & 11 \\
-North West & 0.664 & 11 & 0.017 & 12 \\
-Nortern Ireland & 0.576 & 12 & 0.101 & 7 \\
+South East & 0.945 & 1 & 0.183 & 7 \\
+West Midlands & 0.922 & 2 & 0.190 & 5 \\
+Wales & 0.915 & 3 & 0.193 & 4 \\
+Yorkshire and The Humber & 0.909 & 4 & 0.200 & 2 \\
+East Midlands & 0.903 & 5 & 0.187 & 6 \\
+North East & 0.896 & 6 & 0.156 & 9 \\
+South West & 0.894 & 7 & 0.221 & 1 \\
+London & 0.881 & 8 & 0.104 & 10 \\
+East of England & 0.874 & 9 & 0.170 & 8 \\
+North West & 0.837 & 10 & 0.194 & 3 \\
+Scotland & 0.780 & 11 & 0.091 & 12 \\
+Nortern Ireland & 0.579 & 12 & 0.099 & 11 \\
 \end{longtable}
 
 \section{Discussion and conclusions}\label{sec-conclusions}
@@ -1176,24 +1209,128 @@ from a central location.
 \setcounter{figure}{0}
 \renewcommand{\thefigure}{A\arabic{figure}}
 
-\section{Appendices}\label{appendices}
+\section{Appendix}\label{appendix}
 
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
 
-\subsection{\texorpdfstring{\(t_0\) estunates for all
-LAD}{t\_0 estunates for all LAD}}\label{t_0-estunates-for-all-lad}
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/s/s_uk_per_firm.png}
+
+}
+
+\caption{\label{s_uk10}Grwoth curve, UK; up to 10 postcodes per website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/s/speed_map_10.png}
+
+}
+
+\caption{\label{s_map10}LAD adoption rates; up to 10 postcodes per
+website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{../../outputs/ranks/web_per_firm2000_2012_only0595_av_10.png}
+
+}
+
+\caption{\label{rank10}Dynamics of wed diffusion (LAD); up to 10
+postcodes per website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{tranos2023_files/figure-pdf/morani10-1.pdf}
+
+}
+
+\caption{\label{morani10}Website density Moran's I; up to 10 postcodes
+per website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=0.8\textheight]{tranos2023_files/figure-pdf/unnamed-chunk-10-1.pdf}
+
+}
+
+\caption{\label{lisa10}\centering Website density LISA maps; up to 10
+postcodes per website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=\textheight]{tranos2023_files/figure-pdf/gini10-1.pdf}
+
+}
+
+\caption{\label{gini10}Website density Gini coefficient; up to 10
+postcodes per website}
+
+\end{figure}%
+
+\begin{figure}[H]
+
+{\centering \includegraphics[width=1\textwidth,height=0.6\textheight]{tranos2023_files/figure-pdf/varimp10-1.pdf}
+
+}
+
+\caption{\label{var.imp10}Variable importance; up to 10 postcodes per
+website}
+
+\end{figure}%
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Regional differences; up to 10 postcodes per
+website\label{table.regions.no.imp}}\tabularnewline
+\toprule\noalign{}
+Region & \(R^2\) LAD & Rank LAD & \(R^2\) OA & Rank OA \\
+\midrule\noalign{}
+\endfirsthead
+\toprule\noalign{}
+Region & \(R^2\) LAD & Rank LAD & \(R^2\) OA & Rank OA \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+South East & 0.947 & 1 & 0.134 & 2 \\
+Wales & 0.916 & 2 & 0.131 & 3 \\
+Yorkshire and The Humber & 0.906 & 3 & 0.144 & 1 \\
+North East & 0.895 & 4 & 0.128 & 4 \\
+West Midlands & 0.883 & 5 & 0.070 & 9 \\
+East Midlands & 0.882 & 6 & 0.088 & 8 \\
+East of England & 0.876 & 7 & 0.106 & 6 \\
+South West & 0.864 & 8 & 0.117 & 5 \\
+London & 0.805 & 9 & 0.055 & 10 \\
+Scotland & 0.770 & 10 & 0.035 & 11 \\
+North West & 0.664 & 11 & 0.017 & 12 \\
+Nortern Ireland & 0.576 & 12 & 0.101 & 7 \\
+\end{longtable}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.4091}}
-  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.1818}}
-  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.1364}}
-  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.0795}}
-  >{\centering\arraybackslash}p{(\columnwidth - 8\tabcolsep) * \real{0.1932}}@{}}
-\caption{S-curve estiamtes for LAD\label{table.s.lads}}\tabularnewline
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.3186}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.2212}}
+  >{\centering\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1416}}
+  >{\centering\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1062}}
+  >{\centering\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0619}}
+  >{\centering\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.1504}}@{}}
+\caption{S-curve estiamtes for LAD; up to 10 postcodes per
+website\label{table.s.lads}}\tabularnewline
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 LAD
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Region
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
 \(t_0\) estimate
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
@@ -1208,6 +1345,8 @@ Diffusion speed
 \toprule\noalign{}
 \begin{minipage}[b]{\linewidth}\raggedright
 LAD
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Region
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
 \(t_0\) estimate
 \end{minipage} & \begin{minipage}[b]{\linewidth}\centering
@@ -1221,343 +1360,373 @@ Diffusion speed
 \endhead
 \bottomrule\noalign{}
 \endlastfoot
-Horsham & 2001.423 & 0.254 & 0.950 & fast \\
-Fareham & 2001.443 & 0.346 & 0.925 & fast \\
-Kingston upon Thames & 2001.513 & 0.354 & 0.933 & fast \\
-Kensington and Chelsea & 2001.581 & 0.341 & 0.943 & fast \\
-Runnymede & 2001.582 & 0.266 & 0.943 & fast \\
-Bracknell Forest & 2001.586 & 0.324 & 0.928 & fast \\
-Elmbridge & 2001.656 & 0.333 & 0.932 & fast \\
-Reigate and Banstead & 2001.665 & 0.253 & 0.964 & fast \\
-South Cambridgeshire & 2001.680 & 0.433 & 0.905 & fast \\
-Walsall & 2001.715 & 0.413 & 0.901 & fast \\
-Surrey Heath & 2001.718 & 0.333 & 0.933 & fast \\
-Woking & 2001.759 & 0.292 & 0.951 & fast \\
-South Norfolk & 2001.874 & 0.358 & 0.931 & fast \\
-City of London & 2001.874 & 0.499 & 0.930 & fast \\
-Wokingham & 2001.891 & 0.287 & 0.958 & fast \\
-Reading & 2001.900 & 0.318 & 0.948 & fast \\
-Sevenoaks & 2001.904 & 0.407 & 0.926 & fast \\
-Huntingdonshire & 2001.912 & 0.402 & 0.925 & fast \\
-Pendle & 2001.924 & 0.407 & 0.923 & fast \\
-St Albans & 2001.933 & 0.396 & 0.927 & fast \\
-Perth and Kinross & 2001.943 & 0.228 & 0.970 & fast \\
-Bromley & 2001.945 & 0.396 & 0.919 & fast \\
-Rushmoor & 2001.962 & 0.518 & 0.912 & fast \\
-Powys & 2001.969 & 0.278 & 0.963 & fast \\
-Swindon & 2001.996 & 0.390 & 0.916 & fast \\
-Chelmsford & 2002.008 & 0.545 & 0.911 & fast \\
-Crawley & 2002.008 & 0.379 & 0.949 & fast \\
-Dumfries and Galloway & 2002.012 & 0.251 & 0.967 & fast \\
-Inverclyde & 2002.030 & 0.330 & 0.915 & fast \\
-North Hertfordshire & 2002.031 & 0.475 & 0.920 & fast \\
-Moray & 2002.050 & 0.358 & 0.947 & fast \\
-Orkney Islands & 2002.070 & 0.283 & 0.958 & fast \\
-Fife & 2002.070 & 0.363 & 0.945 & fast \\
-Mole Valley & 2002.071 & 0.460 & 0.925 & fast \\
-Guildford & 2002.113 & 0.413 & 0.941 & fast \\
-Buckinghamshire & 2002.114 & 0.390 & 0.942 & fast \\
-Cotswold & 2002.116 & 0.375 & 0.946 & fast \\
-Shetland Islands & 2002.120 & 0.332 & 0.949 & fast \\
-South Oxfordshire & 2002.146 & 0.367 & 0.950 & fast \\
-Watford & 2002.157 & 0.451 & 0.929 & fast \\
-Aberdeenshire & 2002.168 & 0.416 & 0.931 & fast \\
-Southampton & 2002.189 & 0.472 & 0.922 & fast \\
-Mid Suffolk & 2002.196 & 0.442 & 0.922 & fast \\
-Eden & 2002.196 & 0.334 & 0.949 & fast \\
-South Lakeland & 2002.197 & 0.238 & 0.974 & fast \\
-Stoke-on-Trent & 2002.203 & 0.419 & 0.927 & fast \\
-Babergh & 2002.209 & 0.449 & 0.927 & fast \\
-Bexley & 2002.213 & 0.493 & 0.909 & fast \\
-Torbay & 2002.215 & 0.374 & 0.942 & fast \\
-Brentwood & 2002.219 & 0.336 & 0.936 & fast \\
-Ceredigion & 2002.227 & 0.241 & 0.971 & fast \\
-Spelthorne & 2002.232 & 0.451 & 0.933 & fast \\
-Bath and North East Somerset & 2002.238 & 0.402 & 0.941 & fast \\
-Falkirk & 2002.245 & 0.367 & 0.938 & fast \\
-Broxtowe & 2002.258 & 0.435 & 0.932 & fast \\
-East Hertfordshire & 2002.261 & 0.453 & 0.928 & fast \\
-Stirling & 2002.268 & 0.251 & 0.975 & fast \\
-Ealing & 2002.294 & 0.523 & 0.922 & fast \\
-Mid Sussex & 2002.295 & 0.453 & 0.936 & fast \\
-Barrow-in-Furness & 2002.303 & 0.284 & 0.959 & fast \\
-West Oxfordshire & 2002.322 & 0.467 & 0.929 & fast \\
-Sutton & 2002.326 & 0.544 & 0.911 & fast \\
-Portsmouth & 2002.356 & 0.479 & 0.921 & fast \\
-Great Yarmouth & 2002.369 & 0.265 & 0.968 & fast \\
-East Hampshire & 2002.370 & 0.474 & 0.931 & fast \\
-Wyre Forest & 2002.376 & 0.561 & 0.916 & fast \\
-Angus & 2002.378 & 0.396 & 0.939 & fast \\
-Argyll and Bute & 2002.427 & 0.321 & 0.962 & fast \\
-Scottish Borders & 2002.428 & 0.298 & 0.962 & fast \\
-East Suffolk & 2002.431 & 0.533 & 0.919 & fast \\
-Blackpool & 2002.443 & 0.294 & 0.962 & fast \\
-Cherwell & 2002.448 & 0.533 & 0.923 & fast \\
-Wandsworth & 2002.449 & 0.570 & 0.921 & fast \\
-Tendring & 2002.456 & 0.456 & 0.935 & fast \\
-Westminster & 2002.459 & 0.437 & 0.952 & fast \\
-Richmond upon Thames & 2002.462 & 0.389 & 0.956 & fast \\
-Test Valley & 2002.463 & 0.553 & 0.920 & fast \\
-Isle of Wight & 2002.478 & 0.377 & 0.953 & fast \\
-Vale of White Horse & 2002.496 & 0.408 & 0.949 & fast \\
-Croydon & 2002.510 & 0.504 & 0.927 & fast \\
-Hounslow & 2002.521 & 0.426 & 0.952 & fast \\
-Copeland & 2002.524 & 0.237 & 0.971 & fast \\
-Wiltshire & 2002.528 & 0.450 & 0.940 & fast \\
-Gwynedd & 2002.536 & 0.372 & 0.954 & fast \\
-Hillingdon & 2002.560 & 0.470 & 0.940 & fast \\
-Conwy & 2002.564 & 0.372 & 0.954 & fast \\
-Highland & 2002.566 & 0.270 & 0.972 & fast \\
-Basingstoke and Deane & 2002.572 & 0.461 & 0.947 & fast \\
-Harrow & 2002.587 & 0.509 & 0.936 & fast \\
-West Berkshire & 2002.595 & 0.696 & 0.902 & fast \\
-North Lincolnshire & 2002.596 & 0.501 & 0.933 & fast \\
-East Dunbartonshire & 2002.598 & 0.528 & 0.925 & fast \\
-Bradford & 2002.598 & 0.613 & 0.916 & fast \\
-Waverley & 2002.606 & 0.512 & 0.928 & fast \\
-Stroud & 2002.608 & 0.559 & 0.916 & fast \\
-Herefordshire, County of & 2002.622 & 0.388 & 0.956 & fast \\
-North Norfolk & 2002.624 & 0.422 & 0.945 & fast \\
-Nottingham & 2002.630 & 0.531 & 0.936 & fast \\
-Castle Point & 2002.645 & 0.470 & 0.936 & fast \\
-North Warwickshire & 2002.657 & 0.380 & 0.955 & fast \\
-Gravesham & 2002.680 & 0.473 & 0.933 & fast \\
-Lancaster & 2002.692 & 0.336 & 0.963 & fast \\
-West Suffolk & 2002.699 & 0.536 & 0.930 & fast \\
-Stafford & 2002.719 & 0.499 & 0.933 & fast \\
-Tunbridge Wells & 2002.720 & 0.401 & 0.958 & fast \\
-Oxford & 2002.723 & 0.583 & 0.934 & fast \\
-East Lothian & 2002.731 & 0.537 & 0.927 & fast \\
-Redcar and Cleveland & 2002.750 & 0.509 & 0.929 & fast \\
-Tamworth & 2002.755 & 0.551 & 0.929 & fast \\
-South Hams & 2002.773 & 0.422 & 0.952 & fast \\
-Allerdale & 2002.784 & 0.376 & 0.958 & fast \\
-Central Bedfordshire & 2002.825 & 0.620 & 0.921 & fast \\
-East Cambridgeshire & 2002.843 & 0.636 & 0.927 & fast \\
-Havant & 2002.853 & 0.541 & 0.932 & fast \\
-South Lanarkshire & 2002.874 & 0.486 & 0.938 & fast \\
-Stratford-on-Avon & 2002.879 & 0.470 & 0.945 & fast \\
-Arun & 2002.882 & 0.526 & 0.938 & fast \\
-Fenland & 2002.891 & 0.632 & 0.918 & fast \\
-Monmouthshire & 2002.893 & 0.501 & 0.935 & fast \\
-Denbighshire & 2002.901 & 0.457 & 0.947 & fast \\
-Southend-on-Sea & 2002.903 & 0.551 & 0.932 & fast \\
-High Peak & 2002.903 & 0.488 & 0.946 & fast \\
-Pembrokeshire & 2002.905 & 0.387 & 0.958 & fast \\
-Malvern Hills & 2002.907 & 0.524 & 0.940 & fast \\
-Camden & 2002.915 & 0.599 & 0.941 & fast \\
-North Devon & 2002.926 & 0.426 & 0.950 & fast \\
-Wyre & 2002.927 & 0.553 & 0.927 & fast \\
-Darlington & 2002.933 & 0.615 & 0.929 & fast \\
-Swale & 2002.940 & 0.447 & 0.948 & fast \\
-Welwyn Hatfield & 2002.951 & 0.628 & 0.922 & fast \\
-Mid Devon & 2002.960 & 0.485 & 0.946 & fast \\
-Lewes & 2002.964 & 0.507 & 0.945 & fast \\
-Dorset & 2002.968 & 0.407 & 0.958 & fast \\
-Brighton and Hove & 2002.976 & 0.578 & 0.934 & fast \\
-Braintree & 2002.978 & 0.534 & 0.938 & fast \\
-Epsom and Ewell & 2002.979 & 0.746 & 0.908 & fast \\
-Sefton & 2002.980 & 0.616 & 0.928 & fast \\
-Eastleigh & 2002.992 & 0.595 & 0.929 & fast \\
-Craven & 2002.993 & 0.379 & 0.965 & fast \\
-Hammersmith and Fulham & 2002.997 & 0.585 & 0.944 & fast \\
-Greenwich & 2003.014 & 0.571 & 0.930 & slow \\
-Cheltenham & 2003.025 & 0.602 & 0.937 & slow \\
-Worcester & 2003.041 & 0.659 & 0.920 & slow \\
-Tower Hamlets & 2003.043 & 0.660 & 0.926 & slow \\
-New Forest & 2003.046 & 0.554 & 0.941 & slow \\
-East Renfrewshire & 2003.046 & 0.739 & 0.900 & slow \\
-Fylde & 2003.056 & 0.501 & 0.946 & slow \\
-Carmarthenshire & 2003.067 & 0.390 & 0.958 & slow \\
-West Lancashire & 2003.076 & 0.547 & 0.937 & slow \\
-Hastings & 2003.086 & 0.685 & 0.911 & slow \\
-Carlisle & 2003.111 & 0.541 & 0.934 & slow \\
-Wychavon & 2003.115 & 0.570 & 0.935 & slow \\
-Isle of Anglesey & 2003.144 & 0.403 & 0.960 & slow \\
-Dudley & 2003.150 & 0.678 & 0.925 & slow \\
-Ryedale & 2003.152 & 0.380 & 0.961 & slow \\
-Rother & 2003.162 & 0.366 & 0.966 & slow \\
-Leicester & 2003.167 & 0.686 & 0.924 & slow \\
-Breckland & 2003.182 & 0.567 & 0.938 & slow \\
-Tandridge & 2003.190 & 0.747 & 0.918 & slow \\
-Shropshire & 2003.206 & 0.621 & 0.928 & slow \\
-West Devon & 2003.228 & 0.489 & 0.949 & slow \\
-Milton Keynes & 2003.231 & 0.700 & 0.929 & slow \\
-Sandwell & 2003.234 & 0.760 & 0.916 & slow \\
-Winchester & 2003.234 & 0.443 & 0.956 & slow \\
-Redditch & 2003.238 & 0.706 & 0.923 & slow \\
-Rugby & 2003.265 & 0.709 & 0.922 & slow \\
-North Somerset & 2003.278 & 0.558 & 0.939 & slow \\
-West Lindsey & 2003.285 & 0.674 & 0.924 & slow \\
-Richmondshire & 2003.286 & 0.425 & 0.958 & slow \\
-Melton & 2003.292 & 0.534 & 0.946 & slow \\
-Chichester & 2003.295 & 0.582 & 0.942 & slow \\
-Torridge & 2003.301 & 0.532 & 0.942 & slow \\
-Dundee City & 2003.303 & 0.568 & 0.939 & slow \\
-South Ayrshire & 2003.303 & 0.626 & 0.931 & slow \\
-East Devon & 2003.308 & 0.492 & 0.947 & slow \\
-Bolton & 2003.323 & 0.774 & 0.913 & slow \\
-Hertsmere & 2003.326 & 0.726 & 0.924 & slow \\
-Bournemouth, Christchurch and Poole & 2003.347 & 0.662 & 0.936 & slow \\
-Maldon & 2003.349 & 0.495 & 0.951 & slow \\
-Barnet & 2003.352 & 0.766 & 0.919 & slow \\
-Brent & 2003.389 & 0.762 & 0.925 & slow \\
-Midlothian & 2003.413 & 0.732 & 0.921 & slow \\
-Boston & 2003.416 & 0.593 & 0.933 & slow \\
-Scarborough & 2003.421 & 0.431 & 0.963 & slow \\
-Kirklees & 2003.435 & 0.725 & 0.925 & slow \\
-Tameside & 2003.441 & 0.819 & 0.907 & slow \\
-Newport & 2003.449 & 0.635 & 0.930 & slow \\
-Glasgow City & 2003.451 & 0.759 & 0.922 & slow \\
-Clackmannanshire & 2003.454 & 0.585 & 0.936 & slow \\
-Three Rivers & 2003.458 & 0.628 & 0.947 & slow \\
-Harborough & 2003.488 & 0.549 & 0.950 & slow \\
-Rochdale & 2003.496 & 0.685 & 0.937 & slow \\
-Tonbridge and Malling & 2003.497 & 0.710 & 0.927 & slow \\
-Somerset West and Taunton & 2003.502 & 0.491 & 0.955 & slow \\
-Wrexham & 2003.512 & 0.553 & 0.942 & slow \\
-Worthing & 2003.522 & 0.622 & 0.938 & slow \\
-Tewkesbury & 2003.540 & 0.580 & 0.946 & slow \\
-City of Edinburgh & 2003.541 & 0.685 & 0.941 & slow \\
-Coventry & 2003.592 & 0.564 & 0.948 & slow \\
-Northumberland & 2003.607 & 0.508 & 0.954 & slow \\
-Mid and East Antrim & 2003.609 & 0.893 & 0.900 & slow \\
-Wigan & 2003.617 & 0.755 & 0.929 & slow \\
-Lichfield & 2003.629 & 0.625 & 0.939 & slow \\
-Ashford & 2003.633 & 0.535 & 0.944 & slow \\
-Cornwall & 2003.638 & 0.443 & 0.963 & slow \\
-Mendip & 2003.652 & 0.505 & 0.955 & slow \\
-Stevenage & 2003.665 & 0.525 & 0.958 & slow \\
-Blaenau Gwent & 2003.666 & 0.643 & 0.933 & slow \\
-Lincoln & 2003.666 & 0.634 & 0.940 & slow \\
-South Somerset & 2003.676 & 0.553 & 0.948 & slow \\
-Charnwood & 2003.677 & 0.699 & 0.934 & slow \\
-North Ayrshire & 2003.682 & 0.607 & 0.942 & slow \\
-Folkestone and Hythe & 2003.684 & 0.792 & 0.905 & slow \\
-Eastbourne & 2003.684 & 0.697 & 0.930 & slow \\
-Blackburn with Darwen & 2003.685 & 0.680 & 0.938 & slow \\
-Dover & 2003.699 & 0.574 & 0.948 & slow \\
-Adur & 2003.735 & 0.551 & 0.954 & slow \\
-Haringey & 2003.739 & 0.667 & 0.943 & slow \\
-Gosport & 2003.751 & 0.600 & 0.934 & slow \\
-Trafford & 2003.752 & 0.640 & 0.949 & slow \\
-Norwich & 2003.756 & 0.742 & 0.939 & slow \\
-West Lothian & 2003.758 & 0.652 & 0.943 & slow \\
-North East Lincolnshire & 2003.811 & 0.858 & 0.920 & slow \\
-Bristol, City of & 2003.828 & 0.831 & 0.928 & slow \\
-Rushcliffe & 2003.839 & 0.591 & 0.954 & slow \\
-Hinckley and Bosworth & 2003.857 & 0.749 & 0.934 & slow \\
-Torfaen & 2003.861 & 0.841 & 0.922 & slow \\
-Swansea & 2003.875 & 0.650 & 0.947 & slow \\
-Wolverhampton & 2003.882 & 0.793 & 0.931 & slow \\
-Kingston upon Hull, City of & 2003.885 & 0.757 & 0.936 & slow \\
-Calderdale & 2003.889 & 0.714 & 0.939 & slow \\
-North Northamptonshire & 2003.902 & 0.746 & 0.935 & slow \\
-Stockton-on-Tees & 2003.902 & 0.955 & 0.916 & slow \\
-Wealden & 2003.906 & 0.736 & 0.938 & slow \\
-Thanet & 2003.953 & 0.667 & 0.947 & slow \\
-Broadland & 2003.962 & 0.727 & 0.938 & slow \\
-West Northamptonshire & 2003.972 & 0.736 & 0.940 & slow \\
-North Kesteven & 2003.976 & 0.633 & 0.942 & slow \\
-Neath Port Talbot & 2003.981 & 0.767 & 0.933 & slow \\
-Rhondda Cynon Taf & 2003.991 & 0.769 & 0.925 & slow \\
-Enfield & 2003.992 & 0.588 & 0.954 & slow \\
-East Lindsey & 2004.010 & 0.577 & 0.952 & slow \\
-Teignbridge & 2004.015 & 0.681 & 0.941 & slow \\
-York & 2004.025 & 0.739 & 0.944 & slow \\
-Harlow & 2004.030 & 0.803 & 0.936 & slow \\
-Vale of Glamorgan & 2004.033 & 0.592 & 0.951 & slow \\
-Newark and Sherwood & 2004.034 & 0.668 & 0.946 & slow \\
-Merton & 2004.041 & 0.932 & 0.922 & slow \\
-Hambleton & 2004.065 & 0.636 & 0.953 & slow \\
-Bedford & 2004.068 & 0.852 & 0.933 & slow \\
-Stockport & 2004.075 & 0.757 & 0.942 & slow \\
-South Ribble & 2004.126 & 0.674 & 0.948 & slow \\
-Uttlesford & 2004.144 & 0.905 & 0.926 & slow \\
-Rossendale & 2004.160 & 0.976 & 0.923 & slow \\
-Oldham & 2004.162 & 0.801 & 0.938 & slow \\
-Sheffield & 2004.189 & 0.770 & 0.944 & slow \\
-Ribble Valley & 2004.204 & 0.718 & 0.945 & slow \\
-Maidstone & 2004.222 & 0.854 & 0.932 & slow \\
-Cheshire West and Chester & 2004.234 & 0.742 & 0.947 & slow \\
-Thurrock & 2004.241 & 0.841 & 0.924 & slow \\
-Telford and Wrekin & 2004.241 & 1.024 & 0.917 & slow \\
-Cardiff & 2004.246 & 0.823 & 0.937 & slow \\
-County Durham & 2004.250 & 0.626 & 0.953 & slow \\
-Plymouth & 2004.252 & 0.785 & 0.934 & slow \\
-Bridgend & 2004.256 & 0.547 & 0.956 & slow \\
-Rotherham & 2004.273 & 0.722 & 0.938 & slow \\
-Hyndburn & 2004.298 & 0.881 & 0.932 & slow \\
-Newcastle upon Tyne & 2004.305 & 0.906 & 0.932 & slow \\
-Wakefield & 2004.314 & 0.905 & 0.923 & slow \\
-Havering & 2004.345 & 0.822 & 0.938 & slow \\
-South Kesteven & 2004.353 & 1.026 & 0.915 & slow \\
-Canterbury & 2004.354 & 0.602 & 0.960 & slow \\
-Broxbourne & 2004.363 & 0.817 & 0.944 & slow \\
-Peterborough & 2004.382 & 0.937 & 0.932 & slow \\
-Redbridge & 2004.411 & 1.028 & 0.925 & slow \\
-Bury & 2004.431 & 0.735 & 0.953 & slow \\
-Harrogate & 2004.433 & 0.971 & 0.927 & slow \\
-Birmingham & 2004.435 & 1.182 & 0.912 & slow \\
-South Tyneside & 2004.446 & 0.636 & 0.948 & slow \\
-Chorley & 2004.462 & 1.093 & 0.913 & slow \\
-North East Derbyshire & 2004.483 & 0.703 & 0.953 & slow \\
-Lambeth & 2004.485 & 0.958 & 0.937 & slow \\
-Doncaster & 2004.496 & 0.672 & 0.953 & slow \\
-South Gloucestershire & 2004.499 & 0.881 & 0.937 & slow \\
-Caerphilly & 2004.499 & 0.819 & 0.938 & slow \\
-East Staffordshire & 2004.501 & 1.132 & 0.910 & slow \\
-North Tyneside & 2004.509 & 0.864 & 0.933 & slow \\
-South Holland & 2004.534 & 0.851 & 0.941 & slow \\
-Gateshead & 2004.535 & 0.869 & 0.934 & slow \\
-St.~Helens & 2004.542 & 1.097 & 0.923 & slow \\
-Flintshire & 2004.549 & 0.764 & 0.951 & slow \\
-Selby & 2004.549 & 0.716 & 0.947 & slow \\
-Belfast & 2004.556 & 1.332 & 0.906 & slow \\
-Sedgemoor & 2004.613 & 0.540 & 0.966 & slow \\
-Exeter & 2004.617 & 0.964 & 0.936 & slow \\
-South Derbyshire & 2004.629 & 0.934 & 0.938 & slow \\
-Derbyshire Dales & 2004.668 & 0.648 & 0.963 & slow \\
-East Riding of Yorkshire & 2004.683 & 0.728 & 0.955 & slow \\
-Basildon & 2004.691 & 1.067 & 0.925 & slow \\
-Barking and Dagenham & 2004.800 & 1.198 & 0.916 & slow \\
-Causeway Coast and Glens & 2004.834 & 1.024 & 0.928 & slow \\
-North Lanarkshire & 2004.839 & 0.878 & 0.945 & slow \\
-Chesterfield & 2004.887 & 1.173 & 0.927 & slow \\
-Newcastle-under-Lyme & 2004.933 & 1.172 & 0.925 & slow \\
-East Ayrshire & 2004.934 & 1.280 & 0.903 & slow \\
-Nuneaton and Bedworth & 2004.956 & 0.950 & 0.941 & slow \\
-Blaby & 2004.959 & 1.059 & 0.929 & slow \\
-Leeds & 2004.979 & 0.836 & 0.956 & slow \\
-Erewash & 2004.987 & 0.939 & 0.944 & slow \\
-Bassetlaw & 2004.998 & 0.982 & 0.944 & slow \\
-Hackney & 2005.026 & 1.157 & 0.934 & slow \\
-Barnsley & 2005.055 & 0.912 & 0.942 & slow \\
-Amber Valley & 2005.105 & 1.017 & 0.941 & slow \\
-Colchester & 2005.144 & 1.250 & 0.927 & slow \\
-Ashfield & 2005.176 & 1.073 & 0.942 & slow \\
-Wirral & 2005.184 & 1.084 & 0.939 & slow \\
-Knowsley & 2005.186 & 1.160 & 0.923 & slow \\
-Windsor and Maidenhead & 2005.195 & 1.746 & 0.902 & slow \\
-Bromsgrove & 2005.494 & 1.144 & 0.941 & slow \\
-Liverpool & 2005.526 & 1.276 & 0.936 & slow \\
-Staffordshire Moorlands & 2005.583 & 1.426 & 0.924 & slow \\
-Islington & 2005.970 & 1.223 & 0.955 & slow \\
-Warrington & 2006.015 & 1.387 & 0.942 & slow \\
-Newham & 2006.078 & 1.908 & 0.907 & slow \\
-Bolsover & 2006.188 & 1.143 & 0.957 & slow \\
-Lisburn and Castlereagh & 2006.193 & 1.970 & 0.903 & slow \\
-Manchester & 2006.449 & 1.434 & 0.950 & slow \\
-Sunderland & 2006.479 & 1.679 & 0.928 & slow \\
-South Staffordshire & 2006.490 & 1.837 & 0.922 & slow \\
-Rutland & 2006.529 & 0.986 & 0.967 & slow \\
-Cannock Chase & 2006.700 & 2.231 & 0.917 & slow \\
-Mansfield & 2006.889 & 1.579 & 0.946 & slow \\
-Ards and North Down & 2006.947 & 2.485 & 0.907 & slow \\
-Halton & 2007.069 & 0.932 & 0.967 & slow \\
-Burnley & 2007.372 & 2.286 & 0.919 & slow \\
-Middlesbrough & 2010.074 & 5.297 & 0.900 & slow \\
-Isles of Scilly & 2012.163 & 4.257 & 0.953 & slow \\
+Horsham & South East & 2001.423 & 0.254 & 0.950 & fast \\
+Fareham & South East & 2001.443 & 0.346 & 0.925 & fast \\
+Kingston upon Thames & London & 2001.513 & 0.354 & 0.933 & fast \\
+Kensington and Chelsea & London & 2001.581 & 0.341 & 0.943 & fast \\
+Runnymede & South East & 2001.582 & 0.266 & 0.943 & fast \\
+Bracknell Forest & South East & 2001.586 & 0.324 & 0.928 & fast \\
+Elmbridge & South East & 2001.656 & 0.333 & 0.932 & fast \\
+Reigate and Banstead & South East & 2001.665 & 0.253 & 0.964 & fast \\
+South Cambridgeshire & East of England & 2001.680 & 0.433 & 0.905 &
+fast \\
+Walsall & West Midlands & 2001.715 & 0.413 & 0.901 & fast \\
+Surrey Heath & South East & 2001.718 & 0.333 & 0.933 & fast \\
+Woking & South East & 2001.759 & 0.292 & 0.951 & fast \\
+South Norfolk & East of England & 2001.874 & 0.358 & 0.931 & fast \\
+City of London & London & 2001.874 & 0.499 & 0.930 & fast \\
+Wokingham & South East & 2001.891 & 0.287 & 0.958 & fast \\
+Reading & South East & 2001.900 & 0.318 & 0.948 & fast \\
+Sevenoaks & South East & 2001.904 & 0.407 & 0.926 & fast \\
+Huntingdonshire & East of England & 2001.912 & 0.402 & 0.925 & fast \\
+Pendle & North West & 2001.924 & 0.407 & 0.923 & fast \\
+St Albans & East of England & 2001.933 & 0.396 & 0.927 & fast \\
+Perth and Kinross & NA & 2001.943 & 0.228 & 0.970 & fast \\
+Bromley & London & 2001.945 & 0.396 & 0.919 & fast \\
+Rushmoor & South East & 2001.962 & 0.518 & 0.912 & fast \\
+Powys & NA & 2001.969 & 0.278 & 0.963 & fast \\
+Swindon & South West & 2001.996 & 0.390 & 0.916 & fast \\
+Chelmsford & East of England & 2002.008 & 0.545 & 0.911 & fast \\
+Crawley & South East & 2002.008 & 0.379 & 0.949 & fast \\
+Dumfries and Galloway & NA & 2002.012 & 0.251 & 0.967 & fast \\
+Inverclyde & NA & 2002.030 & 0.330 & 0.915 & fast \\
+North Hertfordshire & East of England & 2002.031 & 0.475 & 0.920 &
+fast \\
+Moray & NA & 2002.050 & 0.358 & 0.947 & fast \\
+Orkney Islands & NA & 2002.070 & 0.283 & 0.958 & fast \\
+Fife & NA & 2002.070 & 0.363 & 0.945 & fast \\
+Mole Valley & South East & 2002.071 & 0.460 & 0.925 & fast \\
+Guildford & South East & 2002.113 & 0.413 & 0.941 & fast \\
+Buckinghamshire & South East & 2002.114 & 0.390 & 0.942 & fast \\
+Cotswold & South West & 2002.116 & 0.375 & 0.946 & fast \\
+Shetland Islands & NA & 2002.120 & 0.332 & 0.949 & fast \\
+South Oxfordshire & South East & 2002.146 & 0.367 & 0.950 & fast \\
+Watford & East of England & 2002.157 & 0.451 & 0.929 & fast \\
+Aberdeenshire & NA & 2002.168 & 0.416 & 0.931 & fast \\
+Southampton & South East & 2002.189 & 0.472 & 0.922 & fast \\
+Mid Suffolk & East of England & 2002.196 & 0.442 & 0.922 & fast \\
+Eden & North West & 2002.196 & 0.334 & 0.949 & fast \\
+South Lakeland & North West & 2002.197 & 0.238 & 0.974 & fast \\
+Stoke-on-Trent & West Midlands & 2002.203 & 0.419 & 0.927 & fast \\
+Babergh & East of England & 2002.209 & 0.449 & 0.927 & fast \\
+Bexley & London & 2002.213 & 0.493 & 0.909 & fast \\
+Torbay & South West & 2002.215 & 0.374 & 0.942 & fast \\
+Brentwood & East of England & 2002.219 & 0.336 & 0.936 & fast \\
+Ceredigion & NA & 2002.227 & 0.241 & 0.971 & fast \\
+Spelthorne & South East & 2002.232 & 0.451 & 0.933 & fast \\
+Bath and North East Somerset & South West & 2002.238 & 0.402 & 0.941 &
+fast \\
+Falkirk & NA & 2002.245 & 0.367 & 0.938 & fast \\
+Broxtowe & East Midlands & 2002.258 & 0.435 & 0.932 & fast \\
+East Hertfordshire & East of England & 2002.261 & 0.453 & 0.928 &
+fast \\
+Stirling & NA & 2002.268 & 0.251 & 0.975 & fast \\
+Ealing & London & 2002.294 & 0.523 & 0.922 & fast \\
+Mid Sussex & South East & 2002.295 & 0.453 & 0.936 & fast \\
+Barrow-in-Furness & North West & 2002.303 & 0.284 & 0.959 & fast \\
+West Oxfordshire & South East & 2002.322 & 0.467 & 0.929 & fast \\
+Sutton & London & 2002.326 & 0.544 & 0.911 & fast \\
+Portsmouth & South East & 2002.356 & 0.479 & 0.921 & fast \\
+Great Yarmouth & East of England & 2002.369 & 0.265 & 0.968 & fast \\
+East Hampshire & South East & 2002.370 & 0.474 & 0.931 & fast \\
+Wyre Forest & West Midlands & 2002.376 & 0.561 & 0.916 & fast \\
+Angus & NA & 2002.378 & 0.396 & 0.939 & fast \\
+Argyll and Bute & NA & 2002.427 & 0.321 & 0.962 & fast \\
+Scottish Borders & NA & 2002.428 & 0.298 & 0.962 & fast \\
+East Suffolk & East of England & 2002.431 & 0.533 & 0.919 & fast \\
+Blackpool & North West & 2002.443 & 0.294 & 0.962 & fast \\
+Cherwell & South East & 2002.448 & 0.533 & 0.923 & fast \\
+Wandsworth & London & 2002.449 & 0.570 & 0.921 & fast \\
+Tendring & East of England & 2002.456 & 0.456 & 0.935 & fast \\
+Westminster & London & 2002.459 & 0.437 & 0.952 & fast \\
+Richmond upon Thames & London & 2002.462 & 0.389 & 0.956 & fast \\
+Test Valley & South East & 2002.463 & 0.553 & 0.920 & fast \\
+Isle of Wight & South East & 2002.478 & 0.377 & 0.953 & fast \\
+Vale of White Horse & South East & 2002.496 & 0.408 & 0.949 & fast \\
+Croydon & London & 2002.510 & 0.504 & 0.927 & fast \\
+Hounslow & London & 2002.521 & 0.426 & 0.952 & fast \\
+Copeland & North West & 2002.524 & 0.237 & 0.971 & fast \\
+Wiltshire & South West & 2002.528 & 0.450 & 0.940 & fast \\
+Gwynedd & NA & 2002.536 & 0.372 & 0.954 & fast \\
+Hillingdon & London & 2002.560 & 0.470 & 0.940 & fast \\
+Conwy & NA & 2002.564 & 0.372 & 0.954 & fast \\
+Highland & NA & 2002.566 & 0.270 & 0.972 & fast \\
+Basingstoke and Deane & South East & 2002.572 & 0.461 & 0.947 & fast \\
+Harrow & London & 2002.587 & 0.509 & 0.936 & fast \\
+West Berkshire & South East & 2002.595 & 0.696 & 0.902 & fast \\
+North Lincolnshire & Yorkshire and The Humber & 2002.596 & 0.501 & 0.933
+& fast \\
+East Dunbartonshire & NA & 2002.598 & 0.528 & 0.925 & fast \\
+Bradford & Yorkshire and The Humber & 2002.598 & 0.613 & 0.916 & fast \\
+Waverley & South East & 2002.606 & 0.512 & 0.928 & fast \\
+Stroud & South West & 2002.608 & 0.559 & 0.916 & fast \\
+Herefordshire, County of & West Midlands & 2002.622 & 0.388 & 0.956 &
+fast \\
+North Norfolk & East of England & 2002.624 & 0.422 & 0.945 & fast \\
+Nottingham & East Midlands & 2002.630 & 0.531 & 0.936 & fast \\
+Castle Point & East of England & 2002.645 & 0.470 & 0.936 & fast \\
+North Warwickshire & West Midlands & 2002.657 & 0.380 & 0.955 & fast \\
+Gravesham & South East & 2002.680 & 0.473 & 0.933 & fast \\
+Lancaster & North West & 2002.692 & 0.336 & 0.963 & fast \\
+West Suffolk & East of England & 2002.699 & 0.536 & 0.930 & fast \\
+Stafford & West Midlands & 2002.719 & 0.499 & 0.933 & fast \\
+Tunbridge Wells & South East & 2002.720 & 0.401 & 0.958 & fast \\
+Oxford & South East & 2002.723 & 0.583 & 0.934 & fast \\
+East Lothian & NA & 2002.731 & 0.537 & 0.927 & fast \\
+Redcar and Cleveland & North East & 2002.750 & 0.509 & 0.929 & fast \\
+Tamworth & West Midlands & 2002.755 & 0.551 & 0.929 & fast \\
+South Hams & South West & 2002.773 & 0.422 & 0.952 & fast \\
+Allerdale & North West & 2002.784 & 0.376 & 0.958 & fast \\
+Central Bedfordshire & East of England & 2002.825 & 0.620 & 0.921 &
+fast \\
+East Cambridgeshire & East of England & 2002.843 & 0.636 & 0.927 &
+fast \\
+Havant & South East & 2002.853 & 0.541 & 0.932 & fast \\
+South Lanarkshire & NA & 2002.874 & 0.486 & 0.938 & fast \\
+Stratford-on-Avon & West Midlands & 2002.879 & 0.470 & 0.945 & fast \\
+Arun & South East & 2002.882 & 0.526 & 0.938 & fast \\
+Fenland & East of England & 2002.891 & 0.632 & 0.918 & fast \\
+Monmouthshire & NA & 2002.893 & 0.501 & 0.935 & fast \\
+Denbighshire & NA & 2002.901 & 0.457 & 0.947 & fast \\
+Southend-on-Sea & East of England & 2002.903 & 0.551 & 0.932 & fast \\
+High Peak & East Midlands & 2002.903 & 0.488 & 0.946 & fast \\
+Pembrokeshire & NA & 2002.905 & 0.387 & 0.958 & fast \\
+Malvern Hills & West Midlands & 2002.907 & 0.524 & 0.940 & fast \\
+Camden & London & 2002.915 & 0.599 & 0.941 & fast \\
+North Devon & South West & 2002.926 & 0.426 & 0.950 & fast \\
+Wyre & North West & 2002.927 & 0.553 & 0.927 & fast \\
+Darlington & North East & 2002.933 & 0.615 & 0.929 & fast \\
+Swale & South East & 2002.940 & 0.447 & 0.948 & fast \\
+Welwyn Hatfield & East of England & 2002.951 & 0.628 & 0.922 & fast \\
+Mid Devon & South West & 2002.960 & 0.485 & 0.946 & fast \\
+Lewes & South East & 2002.964 & 0.507 & 0.945 & fast \\
+Dorset & South West & 2002.968 & 0.407 & 0.958 & fast \\
+Brighton and Hove & South East & 2002.976 & 0.578 & 0.934 & fast \\
+Braintree & East of England & 2002.978 & 0.534 & 0.938 & fast \\
+Epsom and Ewell & South East & 2002.979 & 0.746 & 0.908 & fast \\
+Sefton & North West & 2002.980 & 0.616 & 0.928 & fast \\
+Eastleigh & South East & 2002.992 & 0.595 & 0.929 & fast \\
+Craven & Yorkshire and The Humber & 2002.993 & 0.379 & 0.965 & fast \\
+Hammersmith and Fulham & London & 2002.997 & 0.585 & 0.944 & fast \\
+Greenwich & London & 2003.014 & 0.571 & 0.930 & slow \\
+Cheltenham & South West & 2003.025 & 0.602 & 0.937 & slow \\
+Worcester & West Midlands & 2003.041 & 0.659 & 0.920 & slow \\
+Tower Hamlets & London & 2003.043 & 0.660 & 0.926 & slow \\
+New Forest & South East & 2003.046 & 0.554 & 0.941 & slow \\
+East Renfrewshire & NA & 2003.046 & 0.739 & 0.900 & slow \\
+Fylde & North West & 2003.056 & 0.501 & 0.946 & slow \\
+Carmarthenshire & NA & 2003.067 & 0.390 & 0.958 & slow \\
+West Lancashire & North West & 2003.076 & 0.547 & 0.937 & slow \\
+Hastings & South East & 2003.086 & 0.685 & 0.911 & slow \\
+Carlisle & North West & 2003.111 & 0.541 & 0.934 & slow \\
+Wychavon & West Midlands & 2003.115 & 0.570 & 0.935 & slow \\
+Isle of Anglesey & NA & 2003.144 & 0.403 & 0.960 & slow \\
+Dudley & West Midlands & 2003.150 & 0.678 & 0.925 & slow \\
+Ryedale & Yorkshire and The Humber & 2003.152 & 0.380 & 0.961 & slow \\
+Rother & South East & 2003.162 & 0.366 & 0.966 & slow \\
+Leicester & East Midlands & 2003.167 & 0.686 & 0.924 & slow \\
+Breckland & East of England & 2003.182 & 0.567 & 0.938 & slow \\
+Tandridge & South East & 2003.190 & 0.747 & 0.918 & slow \\
+Shropshire & West Midlands & 2003.206 & 0.621 & 0.928 & slow \\
+West Devon & South West & 2003.228 & 0.489 & 0.949 & slow \\
+Milton Keynes & South East & 2003.231 & 0.700 & 0.929 & slow \\
+Sandwell & West Midlands & 2003.234 & 0.760 & 0.916 & slow \\
+Winchester & South East & 2003.234 & 0.443 & 0.956 & slow \\
+Redditch & West Midlands & 2003.238 & 0.706 & 0.923 & slow \\
+Rugby & West Midlands & 2003.265 & 0.709 & 0.922 & slow \\
+North Somerset & South West & 2003.278 & 0.558 & 0.939 & slow \\
+West Lindsey & East Midlands & 2003.285 & 0.674 & 0.924 & slow \\
+Richmondshire & Yorkshire and The Humber & 2003.286 & 0.425 & 0.958 &
+slow \\
+Melton & East Midlands & 2003.292 & 0.534 & 0.946 & slow \\
+Chichester & South East & 2003.295 & 0.582 & 0.942 & slow \\
+Torridge & South West & 2003.301 & 0.532 & 0.942 & slow \\
+Dundee City & NA & 2003.303 & 0.568 & 0.939 & slow \\
+South Ayrshire & NA & 2003.303 & 0.626 & 0.931 & slow \\
+East Devon & South West & 2003.308 & 0.492 & 0.947 & slow \\
+Bolton & North West & 2003.323 & 0.774 & 0.913 & slow \\
+Hertsmere & East of England & 2003.326 & 0.726 & 0.924 & slow \\
+Bournemouth, Christchurch and Poole & South West & 2003.347 & 0.662 &
+0.936 & slow \\
+Maldon & East of England & 2003.349 & 0.495 & 0.951 & slow \\
+Barnet & London & 2003.352 & 0.766 & 0.919 & slow \\
+Brent & London & 2003.389 & 0.762 & 0.925 & slow \\
+Midlothian & NA & 2003.413 & 0.732 & 0.921 & slow \\
+Boston & East Midlands & 2003.416 & 0.593 & 0.933 & slow \\
+Scarborough & Yorkshire and The Humber & 2003.421 & 0.431 & 0.963 &
+slow \\
+Kirklees & Yorkshire and The Humber & 2003.435 & 0.725 & 0.925 & slow \\
+Tameside & North West & 2003.441 & 0.819 & 0.907 & slow \\
+Newport & NA & 2003.449 & 0.635 & 0.930 & slow \\
+Glasgow City & NA & 2003.451 & 0.759 & 0.922 & slow \\
+Clackmannanshire & NA & 2003.454 & 0.585 & 0.936 & slow \\
+Three Rivers & East of England & 2003.458 & 0.628 & 0.947 & slow \\
+Harborough & East Midlands & 2003.488 & 0.549 & 0.950 & slow \\
+Rochdale & North West & 2003.496 & 0.685 & 0.937 & slow \\
+Tonbridge and Malling & South East & 2003.497 & 0.710 & 0.927 & slow \\
+Somerset West and Taunton & South West & 2003.502 & 0.491 & 0.955 &
+slow \\
+Wrexham & NA & 2003.512 & 0.553 & 0.942 & slow \\
+Worthing & South East & 2003.522 & 0.622 & 0.938 & slow \\
+Tewkesbury & South West & 2003.540 & 0.580 & 0.946 & slow \\
+City of Edinburgh & NA & 2003.541 & 0.685 & 0.941 & slow \\
+Coventry & West Midlands & 2003.592 & 0.564 & 0.948 & slow \\
+Northumberland & North East & 2003.607 & 0.508 & 0.954 & slow \\
+Mid and East Antrim & NA & 2003.609 & 0.893 & 0.900 & slow \\
+Wigan & North West & 2003.617 & 0.755 & 0.929 & slow \\
+Lichfield & West Midlands & 2003.629 & 0.625 & 0.939 & slow \\
+Ashford & South East & 2003.633 & 0.535 & 0.944 & slow \\
+Cornwall & South West & 2003.638 & 0.443 & 0.963 & slow \\
+Mendip & South West & 2003.652 & 0.505 & 0.955 & slow \\
+Stevenage & East of England & 2003.665 & 0.525 & 0.958 & slow \\
+Blaenau Gwent & NA & 2003.666 & 0.643 & 0.933 & slow \\
+Lincoln & East Midlands & 2003.666 & 0.634 & 0.940 & slow \\
+South Somerset & South West & 2003.676 & 0.553 & 0.948 & slow \\
+Charnwood & East Midlands & 2003.677 & 0.699 & 0.934 & slow \\
+North Ayrshire & NA & 2003.682 & 0.607 & 0.942 & slow \\
+Folkestone and Hythe & South East & 2003.684 & 0.792 & 0.905 & slow \\
+Eastbourne & South East & 2003.684 & 0.697 & 0.930 & slow \\
+Blackburn with Darwen & North West & 2003.685 & 0.680 & 0.938 & slow \\
+Dover & South East & 2003.699 & 0.574 & 0.948 & slow \\
+Adur & South East & 2003.735 & 0.551 & 0.954 & slow \\
+Haringey & London & 2003.739 & 0.667 & 0.943 & slow \\
+Gosport & South East & 2003.751 & 0.600 & 0.934 & slow \\
+Trafford & North West & 2003.752 & 0.640 & 0.949 & slow \\
+Norwich & East of England & 2003.756 & 0.742 & 0.939 & slow \\
+West Lothian & NA & 2003.758 & 0.652 & 0.943 & slow \\
+North East Lincolnshire & Yorkshire and The Humber & 2003.811 & 0.858 &
+0.920 & slow \\
+Bristol, City of & South West & 2003.828 & 0.831 & 0.928 & slow \\
+Rushcliffe & East Midlands & 2003.839 & 0.591 & 0.954 & slow \\
+Hinckley and Bosworth & East Midlands & 2003.857 & 0.749 & 0.934 &
+slow \\
+Torfaen & NA & 2003.861 & 0.841 & 0.922 & slow \\
+Swansea & NA & 2003.875 & 0.650 & 0.947 & slow \\
+Wolverhampton & West Midlands & 2003.882 & 0.793 & 0.931 & slow \\
+Kingston upon Hull, City of & Yorkshire and The Humber & 2003.885 &
+0.757 & 0.936 & slow \\
+Calderdale & Yorkshire and The Humber & 2003.889 & 0.714 & 0.939 &
+slow \\
+North Northamptonshire & East Midlands & 2003.902 & 0.746 & 0.935 &
+slow \\
+Stockton-on-Tees & North East & 2003.902 & 0.955 & 0.916 & slow \\
+Wealden & South East & 2003.906 & 0.736 & 0.938 & slow \\
+Thanet & South East & 2003.953 & 0.667 & 0.947 & slow \\
+Broadland & East of England & 2003.962 & 0.727 & 0.938 & slow \\
+West Northamptonshire & East Midlands & 2003.972 & 0.736 & 0.940 &
+slow \\
+North Kesteven & East Midlands & 2003.976 & 0.633 & 0.942 & slow \\
+Neath Port Talbot & NA & 2003.981 & 0.767 & 0.933 & slow \\
+Rhondda Cynon Taf & NA & 2003.991 & 0.769 & 0.925 & slow \\
+Enfield & London & 2003.992 & 0.588 & 0.954 & slow \\
+East Lindsey & East Midlands & 2004.010 & 0.577 & 0.952 & slow \\
+Teignbridge & South West & 2004.015 & 0.681 & 0.941 & slow \\
+York & Yorkshire and The Humber & 2004.025 & 0.739 & 0.944 & slow \\
+Harlow & East of England & 2004.030 & 0.803 & 0.936 & slow \\
+Vale of Glamorgan & NA & 2004.033 & 0.592 & 0.951 & slow \\
+Newark and Sherwood & East Midlands & 2004.034 & 0.668 & 0.946 & slow \\
+Merton & London & 2004.041 & 0.932 & 0.922 & slow \\
+Hambleton & Yorkshire and The Humber & 2004.065 & 0.636 & 0.953 &
+slow \\
+Bedford & East of England & 2004.068 & 0.852 & 0.933 & slow \\
+Stockport & North West & 2004.075 & 0.757 & 0.942 & slow \\
+South Ribble & North West & 2004.126 & 0.674 & 0.948 & slow \\
+Uttlesford & East of England & 2004.144 & 0.905 & 0.926 & slow \\
+Rossendale & North West & 2004.160 & 0.976 & 0.923 & slow \\
+Oldham & North West & 2004.162 & 0.801 & 0.938 & slow \\
+Sheffield & Yorkshire and The Humber & 2004.189 & 0.770 & 0.944 &
+slow \\
+Ribble Valley & North West & 2004.204 & 0.718 & 0.945 & slow \\
+Maidstone & South East & 2004.222 & 0.854 & 0.932 & slow \\
+Cheshire West and Chester & North West & 2004.234 & 0.742 & 0.947 &
+slow \\
+Thurrock & East of England & 2004.241 & 0.841 & 0.924 & slow \\
+Telford and Wrekin & West Midlands & 2004.241 & 1.024 & 0.917 & slow \\
+Cardiff & NA & 2004.246 & 0.823 & 0.937 & slow \\
+County Durham & North East & 2004.250 & 0.626 & 0.953 & slow \\
+Plymouth & South West & 2004.252 & 0.785 & 0.934 & slow \\
+Bridgend & NA & 2004.256 & 0.547 & 0.956 & slow \\
+Rotherham & Yorkshire and The Humber & 2004.273 & 0.722 & 0.938 &
+slow \\
+Hyndburn & North West & 2004.298 & 0.881 & 0.932 & slow \\
+Newcastle upon Tyne & North East & 2004.305 & 0.906 & 0.932 & slow \\
+Wakefield & Yorkshire and The Humber & 2004.314 & 0.905 & 0.923 &
+slow \\
+Havering & London & 2004.345 & 0.822 & 0.938 & slow \\
+South Kesteven & East Midlands & 2004.353 & 1.026 & 0.915 & slow \\
+Canterbury & South East & 2004.354 & 0.602 & 0.960 & slow \\
+Broxbourne & East of England & 2004.363 & 0.817 & 0.944 & slow \\
+Peterborough & East of England & 2004.382 & 0.937 & 0.932 & slow \\
+Redbridge & London & 2004.411 & 1.028 & 0.925 & slow \\
+Bury & North West & 2004.431 & 0.735 & 0.953 & slow \\
+Harrogate & Yorkshire and The Humber & 2004.433 & 0.971 & 0.927 &
+slow \\
+Birmingham & West Midlands & 2004.435 & 1.182 & 0.912 & slow \\
+South Tyneside & North East & 2004.446 & 0.636 & 0.948 & slow \\
+Chorley & North West & 2004.462 & 1.093 & 0.913 & slow \\
+North East Derbyshire & East Midlands & 2004.483 & 0.703 & 0.953 &
+slow \\
+Lambeth & London & 2004.485 & 0.958 & 0.937 & slow \\
+Doncaster & Yorkshire and The Humber & 2004.496 & 0.672 & 0.953 &
+slow \\
+South Gloucestershire & South West & 2004.499 & 0.881 & 0.937 & slow \\
+Caerphilly & NA & 2004.499 & 0.819 & 0.938 & slow \\
+East Staffordshire & West Midlands & 2004.501 & 1.132 & 0.910 & slow \\
+North Tyneside & North East & 2004.509 & 0.864 & 0.933 & slow \\
+South Holland & East Midlands & 2004.534 & 0.851 & 0.941 & slow \\
+Gateshead & North East & 2004.535 & 0.869 & 0.934 & slow \\
+St.~Helens & North West & 2004.542 & 1.097 & 0.923 & slow \\
+Flintshire & NA & 2004.549 & 0.764 & 0.951 & slow \\
+Selby & Yorkshire and The Humber & 2004.549 & 0.716 & 0.947 & slow \\
+Belfast & NA & 2004.556 & 1.332 & 0.906 & slow \\
+Sedgemoor & South West & 2004.613 & 0.540 & 0.966 & slow \\
+Exeter & South West & 2004.617 & 0.964 & 0.936 & slow \\
+South Derbyshire & East Midlands & 2004.629 & 0.934 & 0.938 & slow \\
+Derbyshire Dales & East Midlands & 2004.668 & 0.648 & 0.963 & slow \\
+East Riding of Yorkshire & Yorkshire and The Humber & 2004.683 & 0.728 &
+0.955 & slow \\
+Basildon & East of England & 2004.691 & 1.067 & 0.925 & slow \\
+Barking and Dagenham & London & 2004.800 & 1.198 & 0.916 & slow \\
+Causeway Coast and Glens & NA & 2004.834 & 1.024 & 0.928 & slow \\
+North Lanarkshire & NA & 2004.839 & 0.878 & 0.945 & slow \\
+Chesterfield & East Midlands & 2004.887 & 1.173 & 0.927 & slow \\
+Newcastle-under-Lyme & West Midlands & 2004.933 & 1.172 & 0.925 &
+slow \\
+East Ayrshire & NA & 2004.934 & 1.280 & 0.903 & slow \\
+Nuneaton and Bedworth & West Midlands & 2004.956 & 0.950 & 0.941 &
+slow \\
+Blaby & East Midlands & 2004.959 & 1.059 & 0.929 & slow \\
+Leeds & Yorkshire and The Humber & 2004.979 & 0.836 & 0.956 & slow \\
+Erewash & East Midlands & 2004.987 & 0.939 & 0.944 & slow \\
+Bassetlaw & East Midlands & 2004.998 & 0.982 & 0.944 & slow \\
+Hackney & London & 2005.026 & 1.157 & 0.934 & slow \\
+Barnsley & Yorkshire and The Humber & 2005.055 & 0.912 & 0.942 & slow \\
+Amber Valley & East Midlands & 2005.105 & 1.017 & 0.941 & slow \\
+Colchester & East of England & 2005.144 & 1.250 & 0.927 & slow \\
+Ashfield & East Midlands & 2005.176 & 1.073 & 0.942 & slow \\
+Wirral & North West & 2005.184 & 1.084 & 0.939 & slow \\
+Knowsley & North West & 2005.186 & 1.160 & 0.923 & slow \\
+Windsor and Maidenhead & South East & 2005.195 & 1.746 & 0.902 & slow \\
+Bromsgrove & West Midlands & 2005.494 & 1.144 & 0.941 & slow \\
+Liverpool & North West & 2005.526 & 1.276 & 0.936 & slow \\
+Staffordshire Moorlands & West Midlands & 2005.583 & 1.426 & 0.924 &
+slow \\
+Islington & London & 2005.970 & 1.223 & 0.955 & slow \\
+Warrington & North West & 2006.015 & 1.387 & 0.942 & slow \\
+Newham & London & 2006.078 & 1.908 & 0.907 & slow \\
+Bolsover & East Midlands & 2006.188 & 1.143 & 0.957 & slow \\
+Lisburn and Castlereagh & NA & 2006.193 & 1.970 & 0.903 & slow \\
+Manchester & North West & 2006.449 & 1.434 & 0.950 & slow \\
+Sunderland & North East & 2006.479 & 1.679 & 0.928 & slow \\
+South Staffordshire & West Midlands & 2006.490 & 1.837 & 0.922 & slow \\
+Rutland & East Midlands & 2006.529 & 0.986 & 0.967 & slow \\
+Cannock Chase & West Midlands & 2006.700 & 2.231 & 0.917 & slow \\
+Mansfield & East Midlands & 2006.889 & 1.579 & 0.946 & slow \\
+Ards and North Down & NA & 2006.947 & 2.485 & 0.907 & slow \\
+Halton & North West & 2007.069 & 0.932 & 0.967 & slow \\
+Burnley & North West & 2007.372 & 2.286 & 0.919 & slow \\
+Middlesbrough & North East & 2010.074 & 5.297 & 0.900 & slow \\
+Isles of Scilly & South West & 2012.163 & 4.257 & 0.953 & slow \\
 \end{longtable}
 
 
