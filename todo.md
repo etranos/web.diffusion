@@ -275,11 +275,26 @@ understanding of technological diffusion.
 - [x] @beardsell1999spatial for heterogeneity (computer industry with employment data)
 - [ ] @haller2011determinants for distance mechanism (firms with website in Ireland)
 - [x] @perkins2005international latecomer advantage
-- [ ] similar spatial autocorrelation with @ding2010modeling albeit in much more detailed spatial scale 
+- [x] similar spatial autocorrelation with @ding2010modeling albeit in much more detailed spatial scale 
 - [x] S curves in accordance with @PAPAGIANNIDIS2015308; @lengyel2020role
-- contrary to results from future studies regarding social media
+- [ ] contrary to results from future studies regarding social media
 [@lengyel2020role], web technologies did not exclusively spread from a
 central location. ???
 - [ ] range of xmid, how small the differences are in speed across LAD?
+- [ ] something about London?
 
+classic studies: @hagerstrand1968innovation; @rogers2010diffusion; @grubler1990rise
 
+specific: urban size @beardsell1999spatial computer industry
+@haller2011determinants neighbourhood
+@lengyel2020role distance
+
+data: [@iso2005; @kemeny2011international; @zook2022mapping]
+stakeholders: [@leibowicz2016representing; @meade2021modelling]
+digital econ: [@solow1957technical; @aghion1990model; @kemeny2011international; @capello2024nexus; @tranosuk]
+
+soft vs. hard technology: @sinai2004geography and @haller2011determinants
+
+contrary to results from future studies regarding social media
+[@lengyel2020role], web technologies did not exclusively spread from a
+central location.

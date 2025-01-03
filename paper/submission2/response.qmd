@@ -1,0 +1,440 @@
+---
+title: "Response to editor and reviewer comments"
+format: pdf
+bibliography: bibliography.bib
+---
+
+18-Dec-2024
+
+Dear Emmanouil 
+
+Thank you for submitting your manuscript to Journal of Economic Geography.
+
+I have now received comments from reviewers. Their comments are at the end of this email. The reviewers raise a range of concerns and have questions about the suitability of the paper for publication. The overall feeling is that the paper has probably been submitted too early and needs major work on most sections if it is to become publishable. I concur with the reviewers and see a number of significant issues that need to be addressed. This left me with a dilemma in terms of the decision. I have decided to invite you to revise and resubmit the paper so that it can be considered further for publication. However, this is a very high-risk revision, and I was bordering on rejection given the scale of the work needed and the limitations that the reviewers highlight. I am saying this to be open about the risk that after the next round the paper could be rejected unless reviewers believe you have addressed the range of issues identified. You may want to factor this into your decision about whether to revise the paper, given how much work is needed.
+ 
+Having said this, let me offer some suggestions about the main areas to focus on if you decide to revise the paper. Reviewer 1 is more positive but very brief in their report. I am, therefore, putting more weight on reviewers 2 and 3 when identifying priorities for the revision.
+
+## Editor; theory and justification 
+\color{teal}
+First, you will need to develop a more convincing theoretical argument and contribution. You will see that both reviewers 2 and 3 raise questions about your claims in relation to the gap in the literature and suggest you fail to build on existing work appropriately and do not convincingly identify the motivation for this analysis. In general, claims that an issue has never been addressed are hard to sustain and it is better to build on existing work and extend knowledge relating to a particular theoretical issue. The reviewers challenge you to do this using your data and suggest both the argument and structure of the paper will need to change.
+\color{black}
+
+## Editor; data
+\color{teal}
+Second, you need to justify your data and analysis better. Reviewer 2 fairly questions the end point of the analysis – which is not explained and given the 10+ years gap to your submission raises questions about the timeliness of the analysis. The questions about coverage of the UK website population also need to be addressed convincingly. More generally, the reviewers ask for more careful presentation of the data to make clear the significance of each figure and finding. As it stands, the paper feels rather overloaded with data, rather than acting as a focused analysis.
+\color{black}
+ 
+## Editor; conclusions
+\color{teal}
+The problems identified above result in the paper feeling imprecise, confusing and lacking a contribution. The end point is a conclusion that the reviewers do not find justified or original. The reviewers do see potential. As I noted, the feeling is a paper that is underdeveloped and submitted prematurely. There is, then, a route to publication, but it will require significant changes to convince the reviewers.
+\color{black}
+
+## Referee: 1
+
+I have read your paper with interest and I appreciate its quality and clarity. The work is both well-executed and well-written, making it a valuable contribution to the field.
+
+However, I would like to offer a few minor suggestions that could further enhance the readability and overall coherence of the paper:
+
+> Simplify the Introduction: I recommend streamlining the introduction by reducing the inclusion of overly technical or highly specific details. Instead, consider expanding on the broader conceptual framework that situates the paper within its scholarly context. This approach would help orient readers and provide a more accessible foundation for understanding the study.
+*Simplify the introduction*
+
+Strengthen the Connection Between Hypotheses and Results: It may be beneficial to establish a clearer and more explicit link between the study's hypotheses and its findings. One way to achieve this could be by using section titles that are more conceptually informative, which would guide the reader through the logical progression of the argument and findings more effectively.
+*change section titles?*
+
+## Referee: 2
+
+\color{teal}
+OVERVIEW\
+- focused on innovation diffusion, using the case of the web in the UK
+- “this paper tests whether the three distinct spatial diffusion mechanisms shaped the diffusion of the Web in the UK at very granular spatial scales from the Web’s early stages onwards”; presumably “S-shaped pattern”/temporal models, core to periphery; distance/proximity.
+
+Figure 2 shows the diffusion of domains per company at the scale of the UK matches the S growth model. Figure 3 shows some spatial clustering. I think this is for all years in the dataset but this could be better labeled
+\color{black}
+
+**explain, change title**
+
+\color{teal}
+Figure 4, not sure what this demonstrates
+\color{black}
+
+\color{teal}
+Figure 5&6, shows early clustering and then diffusion (I think)
+\color{black}
+
+**yes**
+
+\color{teal}
+DATA\
+Focusing just on .co.uk website is OK but needs to be better justified given that it only represented about 50 percent of domains in the UK at that time. See my back of the envelop calculations: As per Zook (2001, Table 1) .uk represented 66% of all domains in the UK, .co.uk is a subset of that, so this is perhaps 50% of all domains registered in the UK at that time. If 1/5 of .co.uk domains had findable postal codes (p. 5), this study is based on 10% of the domains in the UK. (perhaps this is too low, aggregating from webpages to websites brought the number higher, not entirely clear to me)
+\color{black}
+
+Thanks for going the extra mile to check the data used here! I agree with the 
+above calculation up until the findable postcode point as 1/5 of the archived 
+*webpages* -- not *websites*, i.e. domains -- included a postcode in the web text. 
+Think of the website of a small company with one trading address. I think it is 
+fair to expect that website to have multiple webpages to present the different
+products and services and then one webpage to showcase the address -- the 
+'Contact us' page. So, the 1/5 share of *webpages* containing a postcode should
+translate to a much higher share of *websites* -- i.e. domains -- containing 
+a postcode. Previous estimates indicated that around 70% of all websites contain 
+place reference [@hill2009georeferencing] and this reference has no been added 
+in the paper.
+
+So, based on the above 35% of all domains with a registered address in the UK
+were represented in the data. Most importantly though the paper does not model 
+the adoption of the Web from the general population but instead from firms. So, 
+although the data only represents 35% of the population of websites with a 
+registered address in the UK, it represents almost all the *relevant* archived
+websites -- that is websites using the commercial .co.uk SLD. As stated in the 
+paper, this has been the primary choice for commercial websites in the UK.
+
+The third paragraph in the Data and Methods section includes the following text:
+
+> Instead of using the whole .uk ccTLD, this paper focuses on its
+commercial subset, the .co.uk second level domain (SLD). This choice
+is aligned with the topic of the paper -- the diffusion of the Web for 
+commercial functions and decreases the heterogeneity of the web data as such 
+commercial websites have specific aims: they are used to diffuse information, 
+support online transactions and share opinions [@THELWALL2000441; 
+@blazquez2018big].
+
+<!-- Active/inactive, don;t suffer from multiple registrations -->
+
+\color{teal}
+overall the time period 1996-2012 is a good time to study the diffusion of the commercial internet. But why stop at 2012? Is it when the Library stopped its data series?
+\color{black}
+
+Yes, the British Library had obtained a copy of all of the .uk contents of the 
+Internet Archive for that period. From a data perspective, it wouldn't be correct
+to extend this dataset with data from other open archives such as the Common 
+Crawl as they use different crawlers and there will be inconsistencies. Most
+importantly though, this period covers the diffusion of the web from the very
+early stages until its maturity. This is also illustrated by the figure 
+depicting the cumulative adoption and the flattening right end of the line. 
+
+There is a specific paragraph justifying how the time period of the data fits
+the aim of the paper and another line is now included in the second paragraph 
+of the introductions ("from the very early days until its maturity (1996-2012)").
+
+\color{teal}
+Framing
+“With the exception of Sinai and Waldfogel (2004), who focused, among other things, on web content and demonstrated that more such content is available in larger markets, this strand of literature has been mostly concerned with the spatiality of the Internet’s hard and tangible infrastructure and shied away from exploring the spatial dimensions of one of the most distinct software layers of the Internet infrastructure, the Web.” This statement is simply not true, the literature reviews misses the entirety of web content diffusion studies: Zook, 2000, Malecki, 2002. Townsend, 2000, Gorman, 2002, Feldman, 2002, lots more
+\color{black}
+
+Point taken. Despite being aware of these studies, I omitted citing them as I 
+was primarily searching for studies testing the diffusion mechanisms over longer
+time periods. This error has now been corrected and the above paragraph has been 
+replaced with the following one, which emphasises the long time series motivation. 
+Regarding the actual references, @zook2000web, @zook2000web and @moss1997tracking 
+used relevant, domain name registration data, but the rest (e.g. @malecki2002economic 
+and @moss2000internet) focused on hard infrastructure. @gorman2002web examined 
+the head and branch locations of the top 40 e-business integration firms in the 
+USA, which although interesting is not directly relevant to this paper. I also
+went through of Feldman's work around 2002, but I did not find papers
+adopting a similar empirical perspective. 
+
+> Another line of motivation has to do with the very nature of the Web as a 
+digital technology and how it evolved over time. The digital geographies field 
+has debunked premature claims about the Internet's placeless-ness by mapping 
+various of its facets and technological layers [@tranos2013death], but the lack 
+of relevant long time-series data prevented researchers from observing digital
+phenomena overtime. Most of these studies focused on its hard infrastructure 
+[e.g. @malecki2002economic; @moss2000internet], on Internet subscribers 
+[e.g. @blank2018local], or on social media users [e.g. @crampton2013beyond].
+Exceptions include early work from @zook2000web, @zook2000web and 
+@moss1997tracking, which utilised domain name registration data and use it to
+map and illustrate the spatial footprint of the web content. Pivotal as these 
+contributions have been in understanding the economic geographies of the 
+Internet, they were based on cross-sectional, often spatially detailed, mapping 
+and on shallow time comparisons (e.g. 1993-1998) and did not observe the 
+evolution and diffusion of the Web until its maturity. As we know from the 
+relevant literature, different technologies diffuse at different rates and 
+there is no theory that can explain these differences 
+[@leibowicz2016representing]. Hence, mapping and modelling the diffusion of the
+Web among firms can offer useful insights.
+
+\color{teal}
+“for a digital technology as weightless as the Web” – this runs a bit counter to lots of work by digital geographers who have shown again and again how the digital is not weightless or placeless
+\color{black}
+
+\color{teal}
+Conclusion
+p. 18 “This is the first time that the importance of granular spatial mechanisms for the diffusion of an intangible, digital technology is exposed.” Honestly, I would not expect the diffusion of the web to be any different than any other kind of innovation diffusion. The spatiality of digital life, and its connection to material spaces is a constant refrain within digital geography. So I’m not convinced it makes much sense to emphasize this, if a granular spatial analysis of innovation diffusion is already novel.
+\color{black}
+
+**for the last two comments, I need to soften the weightless argument throughout.**
+I have added a long time series argument and also said that there is heterogeneity
+[@leibowicz2016representing] among diffusion rates of different technologies.
+
+As per the 'framing' point above, the digital motivation para in the 
+introduction has been amended acordilngly. 
+
+## Referee: 3
+
+\color{teal}
+This paper addresses a gap in Economic Geography by examining the spatial diffusion of digital technologies, specifically the adoption of commercial websites, from 1996 to 2012. Recognizing the potential of digital technologies to shape local development trajectories through increased productivity and innovation, the study employs novel data sources and machine learning techniques to analyze diffusion patterns at highly granular geographical scales. The authors explore the roles of various spatial mechanisms driving this process, offering insights into how digital technology adoption unfolds across space and time.
+The paper has the potential to make an interesting contribution to the literature as it combines a fascinating topic with novel data and methodologies. However, in its current form, it is not ready for publication, as it never becomes clear what it actually delivers in terms of new knowledge and what knowledge gap it seeks to fill. Despite some analytical elements, it is rather descriptive in nature, which doesn’t fit well with this journal. 
+
+Most importantly, I suggest developing some clear hypotheses to structure and motivate the paper better. In light of this, I recommend major revisions.
+\color{black}
+
+This is very helpful. The first two sections have been restructured around two 
+hypotheses. I believe the structure and the flow of the paper is much clearer
+now.
+
+\color{teal}
+\noindent 1. Abstract:\
+\noindent 1. The abstract needs significant improvement. It needs to adequately report the main findings, relevance, or implications of the study. Additionally, the assertion that geographers have "shied away" from analyzing the diffusion of digital technologies is misleading; the issue was primarily due to the lack of available data.
+\color{black}
+
+**fix the abstract**
+
+"shied away" has been replaced in the opening paragraph.
+
+\color{teal}
+\noindent 2. Introduction\
+\noindent 2. General Diffusion Studies: The statement that there are few contemporary general diffusion studies in Economic Geography is not accurate, although it may apply specifically to digital technologies. Consider the following recent examples:
+o Peris, A., Meijers, E., & van Ham, M. (2021). Information diffusion between Dutch cities: Revisiting Zipf and Pred using a computational social science approach. Computers, Environment and Urban Systems, 85(November), 101565. https://doi.org/10.1016/j.compenvurbsys.2020.101565
+o Bednarz, M., & Broekel, T. (2020). Pulled or pushed? The spatial diffusion of wind energy between local demand and supply. Industrial and Corporate Change, 29(4), 893–916. https://doi.org/10.1093/icc/dtaa012
+o Feldman, M. P., Kogler, D. F., & Rigby, D. L. (2015). rKnowledge: The Spatial Diffusion and Adoption of rDNA Methods. Regional Studies, 49(5), 798–817. https://doi.org/10.1080/00343404.2014.980799
+\color{black}
+
+@PERIS2021101565 is indeed an interesting paper, but it is not directly relevant 
+as it focuses on information diffusion rather than diffusion of new 
+technologies. Information diffuses through social and, consequently, urban 
+networks, but it is not adopted like new technologies. @bednarz2020pulled was 
+already cited and @feldman2015rknowledge has now been added. These references 
+are included in the second section. 
+
+Regarding the statement about economic geography studies on diffusion of 
+new technologies and innovation, I do believe that this is a fair statement. 
+The references listed below are the ones reviewed in the second section and none 
+of them are published in one of the flagship economic geography journals 
+(*Journal of Economic Geography* and *Economic Geography*). There are two papers
+published in *The Professional Geographer*, which is a broad-scope geography 
+journal and then only one paper in *Regional Studies*, which is the closest to
+economic geography. Importantly though, the *Regional Studies* paper 
+[@feldman2015rknowledge] paper is focused on inventions as observed by patent 
+data contrary to the broader 'adoption of a new technology' approach of this 
+paper. All other papers listed below are published in business and economics 
+journals.
+
+1. @beardsell1999spatial: European Economic Review
+2. @bednarz2020pulled: Industrial and Corporate Change
+3. @haller2011determinants: Applied Economics
+4. @perkins2011internet: The Professional Geographer
+5. @feldman2015rknowledge: Regional Studies
+6. @ding2010modeling: The Professional Geographer
+7. @bakher2013diffusion: Journal of Marketing Analytics
+8. @PAPAGIANNIDIS2015308: Technological Forecasting and Social Change
+9. @lengyel2020role: Scientific reports
+
+Also, the lack of spatial granularity argument has been highlighted in various 
+instances throughout the paper as the main line of justification.
+
+**ADD SPATIAL GRANULARITY IN CONCLUSIONS**
+
+\color{teal}
+\noindent 3. Novelty: The study needs to be more explicit about its novel contributions to understanding spatial diffusion mechanisms. Currently, the discussion is too general.
+\color{black}
+
+**granularity**
+
+**HAVE A THINK, intro has been restructured**
+
+\color{teal}
+\noindent 4. Motivation: The motivation for the study is unclear. The text raises several issues, but it is unclear which are specific to digital technologies and which pertain to technological diffusion more broadly.
+\color{black}
+
+**HAVE A THINK, intro has been restructured**
+
+\color{teal}
+\noindent 5. Structure and Focus: The discussion on motivations should be streamlined and clarified. For example, after specifying that the study focuses on commercial websites rather than the web, subsequent references revert to the general term “web.” Additionally, the discussion confuses diffusion patterns, firm perspectives, and early adopter advantages. Consider restructuring this section to clearly differentiate between literature gaps (motivations) and expected outcomes (mechanisms).
+\color{black}
+
+The revised paper consistently illustrates that the focus is on commercial 
+websites. 
+
+In the relevant paragrapg in the Data and Methods section, the following line
+has been added: "Henceforward any reference to websites will refer to commercial 
+-- .co.uk -- websites".
+
+**fixed for intro, lit rev  and data -- check the rest of the paper.**
+
+The introduction and literature review sections have been restructured, so 
+the firm perspectives and early adopter advantages discussions have been moved. 
+
+\color{teal}
+\noindent 6. Data Consistency: The terminology for the data should be consistent. At one point, the text refers to the “totality of the web,” while elsewhere, it specifies “commercial websites.” Clarify and maintain consistency throughout.
+\color{black}
+
+The terminology is now consistent across the paper. The "totality" point 
+referred to different web technologies and not to the totality of the web. It 
+has now been replaced with "an overarching technology".
+
+\color{teal}
+\noindent 7. Recommended Structure: To align with the common structure in Journal of Economic Geography (JoEG), consider splitting the introduction into a shorter introduction and a dedicated theory section merged with the literature review.
+\color{black}
+
+The introduction is now shorter and the literature review section has been 
+re-structured and re-named as "The mechanisms that shape the diffusion of a new 
+technology".
+
+\color{teal}
+\noindent 3. Literature Review / Theory\
+\noindent 1. Synthesis and Motivation: The literature review should be transformed into a theory section. Rather than presenting a historical review, synthesize the arguments to clearly motivate and inform your hypotheses.
+\color{black}
+
+Done. Restructured: theory, gaps, hypotheses.
+
+\color{teal}
+\noindent 2. Knowledge Gaps: The current review does not clearly identify the knowledge gaps that this study aims to address. Clarify whether the goal is to confirm known processes with new data and methods or to explore unique diffusion patterns related to websites.
+\color{black}
+
+Known processes at very detailed scale: explanatory power of these mechanisms at granular, local
+scales
+
+\color{teal}
+\noindent 3. Lack of Hypotheses: To clarify what the paper delivers and what knowledge gaps it fills, I strongly recommend developing a number of hypotheses that will be tested.
+\color{black}
+
+Added.
+
+\color{teal}
+\noindent 4. Fit to title: The term “multi-scalar” appears in the title but is never really discussed in the paper.
+\color{black}
+
+This was discussed from the data section onwards, but indeed not before that. 
+Section 2 includes a new paragraph describing the second hypothesis (H~2~), 
+which explicitely discusses the value of the multiscale approach: 
+"Understanding the diffusion of a new technology in multiple, detailed spatial
+scales is of interest to economic geography as ..."
+
+\color{teal}
+\noindent 4. Data & Methods\
+\noindent 1. Order of Presentation: Introduce the data first, followed by the geographical units used in the study.
+\color{black}
+
+The order of presentation has been amended accordingly and the two scales of 
+analyses are presented after the data.
+
+\color{teal}
+\noindent 2. Postcode Identification: The approach of identifying postcodes on websites is innovative, but potential errors need to be discussed. Specifically:
+- How do you ensure that a postcode on a website accurately represents the 
+company’s location or its subsidiary?
+- How do you handle numbers that resemble postcodes but are not actual postcodes?
+- What about references to events or other organizations unrelated to the website’s owner?
+Include a brief discussion of these potential issues.
+\color{black}
+
+A number of different strategies have been developed to address the potential 
+issues described above. 
+
+\noindent 1. To prevent false positives, the resulted postcodes
+were matched against official postcode lookup files [@ons]. This was not 
+explicitly mentioned in the first submission on the paper and the previous 
+sentence has now been added in the relevant paragraph:
+
+> The text from these webpages was scanned using a regular expression
+(regex) to identify strings of text which resemble UK postcodes and one
+fifth of them included a mention to a postcode [@BL2013geo]. This
+information allows the geolocation of the data and the creation of the
+LAD and OA counts. To prevent false positives, the resulted postcodes
+were matched against official postcode lookup files [@ons].
+
+\noindent 2. Then, to remove the bias from link farms associated with a handful of postcodes
+having irregular high numbers of websites pointing to them, a targeted data 
+imputation procedure was developed. This is detailed in the data section -- see
+also Figure 1. 
+
+\noindent 3. Regarding the points about subsidiary company location and event postings, 
+these cannot be directly observed and distinguished. However, a process that has 
+been successfully used in previous studies has been adopted here. Firstly, given 
+that the focus of the paper is commercial websites, the relevant literature 
+illustrates that such websites serve specific purposes:
+
+> they are used to diffuse information, support online transactions and share 
+opinions [@THELWALL2000441; @blazquez2018big].
+
+Secondly, the webpage-to-website aggregation process leads to websites with 
+different number of postcodes as presented in Table 1. To decrease heterogeneity, 
+the analysis firstly focuses on websites with one unique postcode. Given the the
+commercial nature of these websites (.co.uk), it is fair to expect that such 
+websites with one unique postcode in their web text represent companies with a 
+single trading location. The analysis included in the main body of the paper is
+based on this subset of the website population. For year 2000, this includes 
+70% of all the archived, geolocated commercial websites. Then, as a robustness
+check all the different steps of the analysis are repeated for websites with up 
+to 10 postcodes and the results are presented in the appendix. This includes 94%
+of all the archived, geolocated commercial websites. For this step, websites 
+with multiple postcodes were counted multiple times, one for each different 
+postcode. All the results are qualitatively the same and only marginally 
+different, which is indication of the robustness of the website geolocation 
+strategy. 
+
+As a further argument for the robustness of the above process, the results of a 
+previous study which used the same approach for a small subset of these data 
+from a specific neighbourhood in London matched in terms of accuracy previous 
+research that was based on extensive qualitative work, interviews and 
+observational studies [@shoreditch]. This last point has now been added in the 
+relevant section:
+
+> Previous research which used the same methodology for a small subset of these 
+data illustrates the robustness of the above approach: its results matched in 
+terms of accuracy past rounds of research based on extensive qualitative work, 
+interviews and observational studies for the same study area [@shoreditch].
+
+\color{teal}
+\noindent 3. Equation 2: The rationale behind Equation 2 is unclear. Shouldn’t the primary predictor of website density at time tbe the location density at t-1? Why was this approach chosen over a growth model? Additionally, clarify how spatial dependencies are accounted for in the model.
+\color{black}
+
+**growth as an appendix, spatial dependencies have been included**
+
+\color{teal}
+\noindent 5. Results\
+\noindent 1. Diffusion Speed: The decision to binarize diffusion speed is questionable. Continuous measures, such as growth rates or the time required to reach 50% saturation, would provide more informative insights.
+\color{black}
+
+**This is only for the map, this is a critical point in diffusion studies**
+
+\color{teal}
+\noindent 2. Geographical Scale: While the effort to model diffusion curves at a fine geographical scale is commendable, the paper does not sufficiently explain the benefits or additional knowledge gained from this approach.
+\color{black}
+
+**reveal that theories are valid for lcoal scales and inform local tech policies**
+
+\color{teal}
+\noindent 3. Early Adopters and Latecomers: The discussion of early-adopter and latecomer advantages is underdeveloped. How do these advantages manifest locally? What specific benefits arise if a company registers its website six months earlier than competitors in other locations? If this aspect is retained, it should be elaborated in the theory section, including how it relates to local capabilities or diffusion hierarchies.
+\color{black}
+
+**relates to local capabilities or diffusion hierarchies**
+
+\color{teal}
+\noindent 4. Descriptive Statistics: The value of the descriptive Moran’s I and Gini coefficient analyses in Section 4.2 is unclear. Instead, calculating growth rates of adoption and examining their distribution over time would offer a better sense of adoption speed and magnitude.
+\color{black}
+
+**think, growth rates will not work for OA**
+
+\color{teal}
+\noindent 5. Retail Centers: The sudden shift to retail centers on page 15 is confusing, given that the data pertains to all commercial sites. Clarify the rationale for this focus.
+\color{black}
+
+**hierarchy**
+
+\color{teal}
+\noindent 6. Modeling Details: The methodological details in Section 4.3 should be moved to the methods section to maintain clarity and coherence. Including these details in the results section is confusing.
+\color{black}
+
+\color{teal}
+\noindent 7. Clarity and Structure: Section 4.3 is difficult to follow. Clearly state the main message and highlight how diffusion mechanisms vary spatially. Develop hypotheses to structure the results and provide potential explanations for observed heterogeneity. Without this, the section feels like a descriptive summary without clear takeaways for the reader.
+\color{black}
+
+\color{teal}
+\noindent 
+Overall Recommendations
+\noindent 1. Consistency: Ensure consistent terminology and focus throughout the paper, particularly when referring to the web and commercial websites.
+\noindent 2. Structure: Adopt a clearer structure by separating the introduction, theory/literature review, methods, and results sections.
+\noindent 3. Clarity: Develop hypotheses to frame the results and provide clearer explanations for methodological choices and findings.
+\color{black}
+
+## References
