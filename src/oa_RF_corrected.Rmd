@@ -731,7 +731,7 @@ unregister_dopar()
 ```{r}
 set.seed(123)
 indices <- CreateSpacetimeFolds(df, 
-                                spacevar = "oa11cd",
+                                spacevar = "RGN11CD",
                                 timevar = "year", 
                                 k = 10)
 
@@ -857,7 +857,7 @@ for (i in regions){
   
   set.seed(71)
   indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD!=i), 
-                                spacevar = "oa11cd",
+                                spacevar = "RGN21CD",
                                 timevar = "year", 
                                 k = k)
   

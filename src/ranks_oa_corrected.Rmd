@@ -1,0 +1,389 @@
+---
+title: "Ranks, OA corrected"
+date: "`r format(Sys.time(), '%d %B, %Y, %H:%M')`"
+output: 
+  html_document:
+    df_print: paged
+    toc: true
+    toc_float: true
+knit: (function(inputFile, encoding) {
+    rmarkdown::render(inputFile, encoding = encoding, output_dir = "../output")
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(rprojroot)
+# library(sf)
+# library(spdep)
+# library(knitr)
+# library(REAT)
+# library(tidygeocoder)
+# library(geosphere)
+# library(broom)
+# library(doParallel)
+# library(raster)
+library(plm)
+#library(lmtest)
+# library(caret)
+# library(randomForest)
+# library(CAST)
+library(ggbump)
+
+options(scipen=10000)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+## Load data
+
+Postcode lookup.
+
+[source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
+
+```{r}
+path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
+lookup <- read_csv(path.lookup) %>% 
+  dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
+  dplyr::rename(pc = pcds)
+#glimpse(lookup)
+# The problems refer to Welsh LAD names. Not a problem for the analysis.
+#sapply(lookup, function(x) sum(is.na(x)))
+# 10332 missing msoa11cd
+```
+
+The internet archive $1996$-$2010$ data is saved on /hdd.
+The internet archive $2011$-$2012$ data is saved on ~/projects/web.diffusion/data/temp.
+
+## Problem postcodes
+
+```{r}
+n = 1 #number of unique postcodes. 
+m = 11
+
+data.folder <- "/hdd/internet_archive/archive/data/"
+data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
+#Created by domain.R, which uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df9610 <- read_csv(data.path9610) %>% 
+  filter(
+      #V1.domain < m,             # for multiple pc
+      V1.domain == n,             # for n == 1
+      year > 1995)   
+
+data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+#Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+#This is what we use for the hyperlinks paper as per George's script
+
+df1112 <- read_csv(data.path2011_2012) %>% 
+  filter(
+    #V1.domain < m,             # for multiple pc
+    V1.domain == n)             # for n == 1
+
+df.long <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = n()) %>%
+  ungroup() %>% 
+  #arrange(desc(n)) %>% 
+  pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
+  dplyr::select(pc, n_1996, n_1999, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010, n_2011, n_2012) %>%
+  arrange(desc(n_2004), desc(n_2005)) %>% 
+  slice_head(n=1000) %>% 
+  pivot_longer(!pc, names_to = "year", values_to = "n") %>% 
+  mutate(year = as.integer(sub("n_", "", year, fixed = TRUE))) %>% 
+  replace(is.na(.), 0) %>% 
+  mutate(outlier = ifelse(n > 1000 & (year==2004 | year == 2005), pc, ""))
+
+problem.pcs <- df.long %>% filter(year==2004 | year == 2005, 
+                   n > 1000) %>% 
+  distinct(pc) 
+
+# n > 1500: "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"   
+# n > 1000: SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, M28 2SL, DE21 7BF
+```
+
+## Corrected
+
+The above exploratory analysis indicated that there is a huge increase in 2004-2006
+in the above postcodes. I turn them to NAs and then use a regression to impute these
+gaps.
+
+```{r}
+df.corrected <- bind_rows(df9610, df1112) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  group_by(pc, year) %>% 
+  summarise(n = n()) %>% 
+  ungroup() %>% 
+  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2001 & year <2007, NA, n))
+
+df.corrected <- pdata.frame(df.corrected)
+predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
+                                 model = "within", data = df.corrected), newdata = df.corrected), 2)
+
+df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
+```
+
+## OA df
+
+```{r}
+df <- df.corrected %>% 
+  mutate(year = as.integer(as.character(year))) %>% 
+  filter(year > 1995 & year < 2013) %>% 
+  left_join(lookup, by = "pc", suffix =c("","")) %>% 
+  group_by(year, oa11cd) %>%
+  summarise(n = sum(n)) %>% # **********ATTENTION*********  
+  ungroup() %>% 
+  complete(oa11cd, year) %>% 
+  filter(!is.na(oa11cd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
+  replace(is.na(.), 0) 
+```
+
+## Average ranks websites per firm t and 2012 only: 05 and 95
+
+Very awkward figure as the ranks are compresses because of the low ranges. For
+instance, there are so many 0s, so all these OAs are together in the bottom.
+
+```{r}
+
+t <- 2000
+
+out.path <- paste0(path, "/outputs/ranks/oa", t,"_2012_only0595_av.png")
+
+df %>% 
+  
+  # left_join(oa.uk %>% as_tibble() %>% dplyr::select(id),
+  #           by = c("ladcd" = "id")) %>% 
+  
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(oa11cd, period) %>%
+  mutate(n = ifelse(period != 2, mean(n), n)) %>% 
+  filter(year > 1997 & year < 2011) %>% 
+  group_by(year) %>% 
+  #mutate(rank = rank(desc(n))) %>% # this should be the same as min_rank()
+  mutate(rank = min_rank(desc(n))) %>% 
+  ungroup() %>% 
+  filter(year==1998 | year == 2010) %>% 
+  arrange(oa11cd, year) %>% 
+  group_by(oa11cd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-dplyr::lag(rank))) %>% #filter(abs(diff_1st) > 300) #arrange(diff_1st)
+  
+  #ggplot(aes(abs(diff_1st))) + geom_histogram()
+  
+  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .95, na.rm = T))
+  # q.95 = 136884, q.9 = 136884, q.1 = 10469, q.05 = 3915. **abs()** # for dense_rank()
+  # q.95 = 302, q.9 = 302, q.1 = 287, q.05 = 277. **abs()** # for min_rank()
+  # ungroup() %>% summarise(max = max(abs(diff_1st), na.rm = T),
+  #                         min = min(abs(diff_1st), na.rm = T))
+
+  mutate(alpha = ifelse(abs(diff_1st) <= 277 | abs(diff_1st) > 302, 1, 0.5)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
+  
+  mutate(q = ifelse(abs(diff_1st) <= 277, "05",
+                    ifelse(abs(diff_1st) > 302, "95", "m"))) %>% 
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  
+  ggplot(aes(year, rank, group = oa11cd, alpha=alpha)) +
+  geom_bump(aes(colour = q)) + #colour = "red"
+  scale_color_manual(values = c("darkorchid3", "orange", "grey70"),
+                     breaks = c("05", "95"),
+                     labels = c("Stability","Volatility")) + 
+  labs(color = "oa11cd") +
+  # scale_y_reverse(labels = c(30000, 60000, 90000, 120000, 161000)) +
+  scale_y_reverse() +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  #theme(legend.position="none") +
+  scale_x_continuous(NULL, 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2010),
+                     labels = c("1996-98","2010-12")) +
+  guides(alpha = "none")
+
+# ggsave(out.path)
+```
+
+Plot n
+
+```{r}
+
+t <- 2000
+
+out.path <- paste0(path, "/outputs/ranks/oa_n_", t,"_2012_only0595_av.png")
+
+df %>% 
+  
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(oa11cd, period) %>%
+  mutate(n = ifelse(period != 2, mean(n), n)) %>% 
+  
+  filter(year==1998 | year == 2010) %>% 
+  group_by(year) %>% 
+  mutate(n.st = n / max(n)) %>% 
+  
+  group_by(oa11cd) %>% 
+  mutate(diff_1st = -(n.st-dplyr::lag(n.st))) %>% 
+  
+  # ggplot(aes(abs(diff_1st))) + geom_histogram()
+  
+  # ungroup() %>% summarise(q = quantile(abs(diff_1st), .05, na.rm = T))
+  # q.95 = 0.01221996, q.9 = 0.006924644, q.1 = 0, q.05 = 0.
+  # ungroup() %>% summarise(max = max(abs(diff_1st), na.rm = T),
+  #                         min = min(abs(diff_1st), na.rm = T))
+
+  mutate(alpha = ifelse(abs(diff_1st) <= 0 | abs(diff_1st) > 0.01221996, 1, 0.5)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
+  
+  mutate(q = ifelse(abs(diff_1st) <= 0, "05",
+                    ifelse(abs(diff_1st) > 0.01221996, "95", "m"))) %>% 
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  
+  ggplot(aes(year, n.st, group = oa11cd, alpha=alpha)) +
+  geom_bump(aes(colour = q)) + #colour = "red"
+  scale_color_manual(values = c("darkorchid3", "orange", "grey70"),
+                     breaks = c("05", "95"),
+                     labels = c("Stability","Volatility")) + 
+  labs(color = "oa11cd") +
+  #scale_y_reverse() +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  #theme(legend.position="none") +
+  scale_x_continuous(NULL, 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2010),
+                     labels = c("1996-98","2010-12")) +
+  guides(alpha = "none")
+
+ggsave(out.path)
+```
+
+## For specific LA
+
+```{r}
+
+t <- 2000
+LAD <- "E09000002"
+
+#out.path <- paste0(path, "/outputs/ranks/oa", t,"_2012_only0595_av.png")
+
+# Lookup: OA to regions
+path.lookup <- paste0(path, "/data/raw/Output_Area_to_Lower_layer_Super_Output_Area_to_Middle_layer_Super_Output_Area_to_Local_Authority_District_(December_2011)_Lookup_in_England_and_Wales.csv")  
+lookup.lad <- read_csv(path.lookup) %>% dplyr::select(OA11CD, LAD11CD, LAD11NM)
+
+df %>% left_join(lookup.lad, by = c("oa11cd" = "OA11CD")) %>% 
+  relocate(c(LAD11NM, LAD11CD), .after=year) %>% 
+  filter(LAD11CD == LAD) %>% 
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(oa11cd, period) %>%
+  mutate(n = ifelse(period != 2, mean(n), n)) %>% 
+  filter(year > 1997 & year < 2011) %>% 
+  group_by(year) %>% 
+  #mutate(rank = rank(desc(n))) %>% # this should be the same as min_rank()
+  mutate(rank = min_rank(desc(n))) %>% 
+  ungroup() %>% 
+  filter(year==1998 | year == 2010) %>% 
+  arrange(oa11cd, year) %>% 
+  group_by(oa11cd) %>% 
+  #mutate(diff_1st = -diff(rank))
+  mutate(diff_1st = -(rank-dplyr::lag(rank))) %>% #filter(abs(diff_1st) > 300) #arrange(diff_1st)
+  
+  #ggplot(aes(abs(diff_1st))) + geom_histogram()
+  
+  #ungroup() %>% summarise(q = quantile(abs(diff_1st), .05, na.rm = T))
+  # q.95 = 9.2, q.05 = 0. **abs()** # for min_rank()
+  # ungroup() %>% summarise(max = max(abs(diff_1st), na.rm = T),
+  #                         min = min(abs(diff_1st), na.rm = T))
+
+  mutate(alpha = ifelse(abs(diff_1st) <= 0 | abs(diff_1st) > 9.2, 1, 0.5)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
+  
+  mutate(q = ifelse(abs(diff_1st) <= 0, "05",
+                    ifelse(abs(diff_1st) > 9.2, "95", "m"))) %>% 
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  
+  ggplot(aes(year, rank, group = oa11cd, alpha=alpha)) +
+  geom_bump(aes(colour = q)) + #colour = "red"
+  scale_color_manual(values = c("darkorchid3", "orange", "grey70"),
+                     breaks = c("05", "95"),
+                     labels = c("Stability","Volatility")) + 
+  labs(color = "oa11cd") +
+  # scale_y_reverse(labels = c(30000, 60000, 90000, 120000, 161000)) +
+  scale_y_reverse() +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  #theme(legend.position="none") +
+  scale_x_continuous(NULL, 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2010),
+                     labels = c("1996-98","2010-12")) +
+  guides(alpha = "none")
+
+# ggsave(out.path)
+```
+
+Plot n
+
+```{r}
+
+t <- 2000
+LAD <- "E09000023"
+
+
+out.path <- paste0(path, "/outputs/ranks/oa_n_", t,"_2012_only0595_av.png")
+
+
+df %>% left_join(lookup.lad, by = c("oa11cd" = "OA11CD")) %>% 
+  relocate(c(LAD11NM, LAD11CD), .after=year) %>% 
+  filter(LAD11CD == LAD) %>% 
+  mutate(period = ifelse(year < 1999, 1, 
+                         ifelse(year > 2009, 3, 2))) %>%
+  group_by(oa11cd, period) %>%
+  mutate(n = ifelse(period != 2, mean(n), n)) %>% 
+  
+  filter(year==1998 | year == 2010) %>% 
+  group_by(year) %>% 
+  mutate(n.st = n / max(n)) %>% 
+  
+  group_by(oa11cd) %>% 
+  mutate(diff_1st = -(n.st-dplyr::lag(n.st))) %>% 
+  
+  # ggplot(aes(abs(diff_1st))) + geom_histogram()
+  
+  # ungroup() %>% summarise(q = quantile(abs(diff_1st), .05, na.rm = T))
+  # q.95 = 0.01221996, q.9 = 0.006924644, q.1 = 0, q.05 = 0.
+  # ungroup() %>% summarise(max = max(abs(diff_1st), na.rm = T),
+  #                         min = min(abs(diff_1st), na.rm = T))
+
+  mutate(alpha = ifelse(abs(diff_1st) <= 0 | abs(diff_1st) > 0.01221996, 1, 0.5)) %>% 
+  mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
+  
+  mutate(q = ifelse(abs(diff_1st) <= 0, "05",
+                    ifelse(abs(diff_1st) > 0.01221996, "95", "m"))) %>% 
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  
+  ggplot(aes(year, n.st, group = oa11cd, alpha=alpha)) +
+  geom_bump(aes(colour = q)) + #colour = "red"
+  scale_color_manual(values = c("darkorchid3", "orange", "grey70"),
+                     breaks = c("05", "95"),
+                     labels = c("Stability","Volatility")) + 
+  labs(color = "oa11cd") +
+  #scale_y_reverse() +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  #theme(legend.position="none") +
+  scale_x_continuous(NULL, 
+                     #limits = c(1998, 2010), 
+                     breaks=c(1998, 2010),
+                     labels = c("1996-98","2010-12")) +
+  guides(alpha = "none")
+
+#ggsave(out.path)
+```
