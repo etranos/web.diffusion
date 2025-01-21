@@ -1,0 +1,21 @@
+
+```{r}
+#mem <- 
+read_delim("memory.log", delim = "\\t") %>%
+  rename(t = 1) %>% 
+  filter(!str_detect(t, 'total')) %>% 
+  separate(t, sep = ":", into = c("type", "b")) %>% 
+  filter(type == "Mem") %>% 
+  separate(b, sep = "\\S*\\K\\s+", into = c("total", "used", "free", "shared", "buff/cache", "available")) %>% 
+  arrange(shared)
+  #extract(b, c("total", "used", "free", "shared", "buff/cache", "available"), "(\\d+)\\s(\\d+)\\s(\\d+)\\s(\\d+)\\s(\\d+)\\s(\\d+)\\s")
+
+
+read_delim("memory.log", delim = "\\t") %>%
+  rename(t = 1) %>% 
+  filter(!str_detect(t, 'total')) %>% 
+  separate(t, sep = ":", into = c("type", "b")) %>% 
+  filter(type != "Mem") %>% 
+  separate(b, sep = "\\S*\\K\\s+", into = c("total", "used", "free")) %>% 
+  arrange(desc(free))
+```

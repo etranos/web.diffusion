@@ -445,10 +445,16 @@ df %>%
 
   mutate(alpha = ifelse(abs(diff_1st) <= 3.75 | abs(diff_1st) > 253, 1, 0.5)) %>% 
   mutate(alpha = ifelse(is.na(diff_1st), 0.5, alpha)) %>%
-  
   mutate(q = ifelse(abs(diff_1st) <= 3.75, "05",
                     ifelse(abs(diff_1st) > 253, "95", "m"))) %>% 
-  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>%
+  mutate(q = ifelse(is.na(diff_1st), "m", q)) %>% #filter(rank < 100 & q == "95")
+  mutate(label = ifelse(abs(diff_1st) > 253  & q == "95", #& rank < 100
+                        LAD21NM, "")) %>% 
+  mutate(label.low = ifelse(abs(diff_1st) <= 3.75  & q == "05", #& rank < 100
+                        LAD21NM, "")) %>% 
+
+  
+  filter(abs(diff_1st) > 253 & rank > 100 & q == "95") %>% distinct(LAD21NM)
   
   ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
   geom_bump(aes(colour = q)) + #colour = "red"
@@ -460,6 +466,19 @@ df %>%
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5)) +
   #theme(legend.position="none") +
+  
+  geom_text_repel(aes(x = Inf, label = label), 
+                  size = 3, hjust = 0, color = "darkorange3", 
+                  max.overlaps = Inf,
+                  min.segment.length = Inf,
+                  hjust = "left") + # x = 2012 + .1
+  
+  geom_text_repel(aes(x = -Inf, label = label.low), 
+                  size = 3, hjust = 0, color = "darkorchid4", 
+                  max.overlaps = Inf,
+                  min.segment.length = Inf,
+                  hjust = "left") + # x = 2012 + .1
+  
   scale_x_continuous(NULL, 
                      #limits = c(1998, 2010), 
                      breaks=c(1998, 2010),
@@ -468,3 +487,35 @@ df %>%
 
 ggsave(out.path)
 ```
+
+```{r}
+path.in <- paste0(path, "/outputs/s/s_la_per_firm.csv")
+
+latecomers <- c("Halton", "Blackpool", "Rutland", "Torbay", "Isles of Scilly", "North Devon", "Gosport", "Thanet", "Na h-Eileanan Siar", "Conwy")
+
+earlyadopters <- c("Slough", "Three Rivers", "Epsom and Ewell", "City of London", "Hillingdon", "Hounslow", "Kensington and Chelsea", "Kingston upon Thames", "Richmond upon Thames", "Wandsworth")
+
+la.df <- read_csv(path.in) 
+
+early <- la.df %>% filter(LAD21NM %in% earlyadopters) %>% 
+  dplyr::select(LAD21NM, estimate, fast) %>% 
+  mutate(estimate = round(estimate, 1)) %>% 
+  mutate('early/late' = "early adopting") %>% 
+  rename(LAD = LAD21NM)
+
+late <- la.df %>% filter(LAD21NM %in% latecomers) %>% 
+  dplyr::select(LAD21NM, estimate, fast) %>% 
+  mutate(estimate = round(estimate, 1)) %>% 
+  mutate('early/late' = "late coming") %>% 
+  rename(LAD = LAD21NM)
+
+df.late.early <- bind_rows(late, early) 
+
+path.out <- paste0(path, "/outputs/ranks/late_early.csv")
+write_csv(df.late.early, path.out)
+
+# stargazer(df.late.early[1:20,],
+#           type = 'text', 
+#           summary = FALSE)
+```
+
