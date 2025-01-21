@@ -5,7 +5,7 @@ author:
     email: e.tranos@bristol.ac.uk
     affiliations: 
       - id: some-tech
-        name: University of Bristol and The Alan Turing Institute
+        name: University of Bristol
         department: 
         address: 
         city: 
@@ -17,10 +17,12 @@ address:
         corresponding: true
     note: This is the first author footnote.
 abstract: |
-  This paper maps the participation in the digital economy and its evolution in the UK over space and time. Most of the existing economic geography literature which dealt with the spatiality of the internet employed supply-side measures, such as infrastructural capacity, in order to understand the geography of the digital economy and its potential spatial economic effects. Useful as these approaches might have been, they cannot capture the micro-processes and the characteristics of the individual online behaviour. Using large volumes of archived and geolocated web content, this paper models the diffusion of web technologies over space and time in the UK. The data and geolocation strategy allow to capture these processes at a very granular spatial scale. The modelling approach, which is based on simple spatial analytical methods and on the estimation of diffusion curves at various scales, enables to depict the role of geography and other cognitive factors which drove the diffusion of web technologies. Although the focus is on a recent historical period -- 1996-2012 -- the results of the analysis depict diffusion mechanisms which can be very useful in understanding the evolutionary patterns of the adoption of other newer technologies.
+    Despite the broad consensus that differences in technological adoption and sophistication can lead to uneven trajectories of local development as new technologies can increase productivity and allow firms to introduce new products and services, economic geographers have shied away from exploring the diffusion of digital technologies across space and time. This paper fills this gap by exposing the roles of different spatial mechanisms in the diffusion of an intangible, digital technology at very granular geographical scales. It does so by employing a novel source of data and machine learning algorithms to model the active engagement with Web during 1996-2012.
 keywords: 
-  - keyword1
-  - keyword2
+  - diffusion
+  - technologies
+  - Web
+  - digital
 date: last-modified
 bibliography: bibliography
 format:
@@ -52,6 +54,7 @@ library(knitr)
 library(kableExtra)
 library(sf)
 library(cowplot)
+library(patchwork)
 
 # This is the project path
 path <- find_rstudio_root_file()
@@ -60,61 +63,95 @@ path <- find_rstudio_root_file()
 
 # Introduction {#sec-introduction}
 
-<!-- geographers lack of interest + motivation -->
-
-Geographers were always interested in how new technologies and
-innovations diffuse across space and time and, importantly, how such
-spatio-temporal processes can be modeled. After all, diffusion together
-with invention and innovation are considered the pillars of
-technological change [@das2022diffusion]. The seminal contribution of
-@hagerstrand1968innovation is illustrative of this early interest.
-However, the torch of exploring and modelling such processes had been
-passed to other disciplines such as economics, business studies and
-sociology well before the 'cultural turn' of economic geography
+<!-- geographers lack of interest for diffusion + motivation -->
+Economic geographers were always interested in how new technologies and
+innovations diffuse across space and time with the work of 
+@hagerstrand1968innovation, which demonstrated the importance of communications 
+as a mechanism for the diffusion of innovations, being the most impactful. 
+It was followed by various empirical studies -- see for instance @ormrod1990 
+and @iso2005. However, the torch of exploring and modelling such diffusion 
+processes had been passed to other disciplines such as economics, business 
+studies and sociology well before the 'cultural turn' of economic geography
 [@perkins2005international]. A potential explanation of the lack of
-geographical studies exploring the diffusion of new and, more
-specifically for this paper, digital technologies across both space
-and time can be attributed to the scarcity of relevant and granular
-enough data. As @zook2022mapping highlight, digital activities are
-hardly ever captured in official data.
+geographical studies exploring the diffusion of new and, more specifically for 
+this paper, digital technologies across both space and time can be attributed to 
+the scarcity of relevant and granular enough data, a problem also highlighted 
+by @iso2005 and @kemeny2011international. As @zook2022mapping pointed, digital 
+activities are hardly ever captured in official data.
 
 <!-- contribution -->
+This paper offers such a contribution: an economic geography study revealing
+the importance of spatial mechanisms for the diffusion of an intangible, 
+digital technology that is the Web in the UK at a high level of spatial 
+granularity during the 1996-2012 period.
+<!-- how a new technology that is the Web diffused over space and time  -->
+It does so by employing a novel source of big data and machine 
+learning algorithms to model the *active* engagement with Web during that 
+period and tests how different spatial and temporal mechanisms shaped its 
+diffusion. This paper also exemplifies how the combination of data sources 
+and state-of-the-art research methods which escape the traditional social 
+science domain can offer new lenses to geographical research regarding the 
+understanding of technological diffusion.
 
-This paper offers such a contribution: a geographical study illustrating
-how a new technology that is the web diffused over space and time in the
-UK at a high level of spatial granularity during the $1996-2012$ period.
-It does so by employing a novel source of big data which captures the
-active engagement with web technologies during that period. By
-addressing this empirical question this paper exemplifies how the
-combination of data sources which escape the traditional social science
-domain and adequate research methods can offer new lenses to
-geographical research regarding the understanding of technological
-diffusion.
-
-**SAY SOMETHING ABOUT SPATIAL ANALYTICS, DIST PAPER BY ARP, NOT SPECIFIC EXPLANATORY VARIABLES, INTANGIBLE**
-
-<!-- motivation -->
-
+<!-- motivation: stakeholders -->
 The motivation for this paper lies in the fact that there are various
 stakeholders who are interested in knowing how new digital technologies
-diffused over space and time and use this knowledge to make predictions
-regarding the diffusion of related *future* technologies. As per
+diffuse over space and time and use this knowledge to make predictions
+about the diffusion of related future technologies. As per
 @leibowicz2016representing, historical studies agree that technologies diffuse 
 differently in terms of times, rates, and geographies and can be driven
 by related policies [@victor1993]. @meade2021modelling highlight
 that a variety of actors have a direct interest in gaining such
-knowledge including network equipment suppliers; network operators,
+knowledge including network equipment suppliers, network operators,
 regulatory and local authorities. These processes and their effects vary
 a lot across scales: although the diffusion of a new technology might
 not be optimal at a local level, it might be beneficial from a global
 perspective as it could lead to faster diffusion to less advantaged
 places [@leibowicz2016representing]. Despite the spatial heterogeneity
-of such diffusion mechanisms and the policy relevance, there are very
-limited attempts in the literature to analyse the diffusion of new
-digital technologies at a detailed geographical level.
+of such diffusion mechanisms and the policy relevance, there is a scarcity 
+of studies analysing the diffusion of new digital technologies at a detailed
+geographical level because of the lack of detailed enough data and adequate 
+research methods. 
+
+<!-- motivation: regional development -->
+This gap becomes even more prominent if we consider the importance of 
+technology and its adoption in economic geography and macroeconomic growth 
+theories. Simply put, differences in technological adoption and sophistication 
+may lead to uneven development as new technologies can increase productivity 
+and allow firms to introduce new products [@solow1957technical; 
+@aghion1990model; @kemeny2011international]. Linked to the subject of this 
+paper, the Web -- and the active engagement with this technology that is 
+creating and maintaining instead of just browsing a website -- can be 
+considered as the underpinning technology for the transformative process 
+identified by @capello2024nexus as the *digital service economy*. Importantly, 
+the focus here is not the Web in general, but instead commercial websites.
+After all, diffusion together with invention and innovation are considered the 
+pillars of technological change [@das2022diffusion]. Findings from previous 
+studies illustrated that early engagement with digital technologies such as 
+the Web led to longstanding positive productivity gains for these regions that 
+hosted early adopters [@tranosuk]. Hence, obtaining a robust understanding of 
+the spatial diffusion mechanisms is crucial in mapping future development 
+trajectories.
+
+<!-- motivation: intangible/digital -->
+Another line of motivation has to do with the intangible nature of the Web 
+and the debate about the footloose nature of digital technologies, which
+contrary to several earlier general purpose technologies are 'light in weight' 
+[@coyle1999weightless]. Following the seminal work of @gaspar1998information, 
+which demonstrated that technological improvements in telecommunications lead 
+to increased demand for face-to-face communications and, consequently, 
+enhance the importance of cities, empirical studies from economic geography 
+and urban economics explored whether digital technologies substitute or 
+complement agglomeration externalities and spatial structure 
+[@kolko_death_2000; @ioannides2008effect; @tranos2021ubiquitous].
+With the exception of @sinai2004geography, who focused, among other things, 
+on web content and demonstrated that more such content is available in larger
+markets, this strand of literature has been mostly concerned with the
+spatiality of the Internet's hard and tangible infrastructure
+and shied away from exploring the spatial dimensions of one of the 
+most distinct software layers of the Internet infrastructure, the Web. 
 
 <!-- diffusion and adoption -->
-
 Technological diffusion, which is by definition an aggregated process,
 can be discussed in parallel with individual adoption mechanisms. On the
 one hand, @rogers2010diffusion identifies early adopter of new
@@ -130,109 +167,116 @@ profitable, valueable and useful.
 <!-- gives an idea of aggregate (industry or household) behaviour, it does -->
 <!-- not focus on the individual's (firm or household) adoption process -->
 
-<!-- data and early engagement with the web -->
-
-This paper focuses on the diffusion of the web as new technology during
-the $1996-2012$ period. This was an exciting period for digital
+<!-- early engagement with the web -->
+This paper focuses on the diffusion of the Web as new technology during
+the 1996-2012 period. This was an exciting period for digital
 technologies as it corresponds with the commercialisation of the
-internet and, consequently, its almost universal adoption. The reader is
+Internet and, consequently, its almost universal adoption. The reader is
 reminded that it was only in 1994 when Netscape Navigator was
 introduced, a year before Microsoft's Internet Explorer.[^1] Also, only
-$9$ per cent of UK's households had access to the internet in $1998$
+9 per cent of UK's households had access to the Internet in 1998
 [@ons2018], the web included mostly static webpages, there were no
-social media and web browsing was happening exclusively from desktop PCs
+social media and web browsing involved exclusively a desktop PCs
 as there were no smartphones [@tranosuk]. Hence, it is fair to say that
-the study period captures the very early stages of the diffusion on a
-new technology that is the web as well as its maturity. 
-The former is a key point in the lifecycle of a
-new technology. Firstly, during this period new technologies are
-expensive, crude and imperfect [@rosenberg1994exploring; @wilson201281].
-A simple comparison between Web 1.0 and Web 3.0 applications clearly
-illustrates this [@tranos2020social]; for instance a static website compared 
-with a platform like `github`, which enables cooperation between users and 
-the creation of new information, meaning, and knowledge 
-[@faraj2016special; @barassi2012does]. 
-During this period the performance
-of a new technology is the main attraction and not the cost to access
-and use it [@wilson2011lessons]. There is a broader theoretical
-discussion in the literature regarding the motivation behind early
-adoption. As summarised by @perkins2005international, on the one hand,
-epidemic models highlight the role of interpersonal contacts as a way
-for new technologies to diffuse. On the other hand, economic models
-underline the importance of heterogeneity. Different firms have
-different structures and business plans, which define the potential
+the study period captures the very early stages of the diffusion of a
+new technology that is the Web until its maturity. The former is a key 
+point in the lifecycle of a new technology. Firstly, during this period new 
+technologies are expensive, crude and imperfect [@rosenberg1994exploring; 
+@wilson201281]. A simple comparison between Web 1.0 and Web 3.0 applications 
+clearly illustrates this [@tranos2020social]: while a static website 
+facilitates one-way information dissemination, a platform like `github` 
+enables cooperation between users and the creation of new information, 
+meaning, and even knowledge [@faraj2016special; @barassi2012does]. 
+During this period the performance of a new technology is the main 
+attraction and not the cost to access and use it [@wilson2011lessons]. 
+There is a broader theoretical discussion in the literature about 
+the early adoption motives. As summarised by @perkins2005international, 
+on one hand, epidemic models highlight the role of interpersonal 
+contacts as a way for new technologies to diffuse. On the other hand, 
+economic models underline the importance of heterogeneity. Different firms 
+have different structures and business plans, which define the potential
 economic returns of the adoption of a new technology and, therefore, the
 choice to adopt a new technology becomes an individual option. From a
 broader and evolutionary perspective, initial conditions are essential
 for the creation and evolution of path-dependent technological
 development trajectories [@neffke2011regions; @simmie2014new]. This
-argument is even more relevant when the focus is on digital technologies because 
-of the commonly found lag between investment and economic returns as reflected in 
-the Solow paradox [@acemoglu2014return; @brynjolfsson2018artificial].
+argument is even more relevant when the focus is on digital technologies 
+because of the commonly found lag between investment and economic returns as 
+reflected in the Solow paradox [@acemoglu2014return; 
+@brynjolfsson2018artificial].
 
 [^1]: <https://www.theguardian.com/global/2015/mar/22/web-browser-came-back-haunt-microsoft>
 
-Importantly, the data used here depicts the *active* engagement with the
-web in the UK as it contains all commercial websites that 
-(i) are part of the UK's relevant second level domain (SLD, .co.uk), 
-(ii) have been archived by the Internet Archive[^2], and 
-(iii) include a mention to at least one valid UK
-postcode in the web text. 
-The act of creating a website is understood here as active engagement with the
-web vis-à-vis the more passive act of browsing the web or having an
-internet connection [@tranosuk]. Previous studies have focused mostly on
-more passive notions of engaging with digital technologies such as
-internet adoption and internet speeds [e.g. @blank2018local;
-@riddlesden2014broadband]. More details about the data and the data
-generation process can be found in @sec-datamethods. 
-
-**S curve??**
+<!-- data -->
+The data used here depict the active engagement with the Web as they contain 
+geolocated and time-stamped counts of commercial websites from the UK. Instead 
+of adopting metrics reflecting the passive engagement with the Internet such as 
+Internet adoption and speeds [e.g. @blank2018local; @destefano2022fuzzy], this 
+paper observes yearly counts of geolocated websites, which reflect the creation 
+and maintenance of websites. It needs to be highlighted here that although 
+there are various types of underpinning web technologies -- namely markup, 
+stylesheet, client- and server-side coding languages as well as different
+web browsers and other related programming language -- the focus here
+is on the diffusion of the Web in its totality. For a more detailed and 
+cross-country technological diffusion study, see @PAPAGIANNIDIS2015308.
 
 <!-- description of the methods and results -->
+To analyse these data, a diverse set of methods are employed. Firstly, 
+cumulative adoption curves are estimated for the UK as a whole and for the 
+Local Authority Districts (LAD), illustrating, for the first time, such 
+S-shaped diffusion patterns for local areas. This system level analysis also 
+reveals insights about the volatility of the adoption of the Web. Then, 
+exploratory spatial data analysis offers some first indications of the 
+importance of the different spatial diffusion mechanisms in shaping the 
+diffusion of the Web in the UK. Importantly, the analysis adopts two distinct 
+geographical scales: the LAD and the most detailed scale of UK census areas, 
+the Output Areas (OA). Lastly, a novel methodological framework based on 
+Machine Learning (ML) algorithms is developed to test the 
+role of such mechanisms at these two scales. The results reveal, for the first 
+time, the importance of different spatial diffusion mechanisms in the diffusion 
+of an intangible, digital technology at very granular geographical scales. 
 
 <!-- contents -->
+The structure of the paper goes as follows. @sec-litreview reviews the key
+concepts in the diffusion literature as well as relevant empirical studies. 
+Then, @sec-datamethods describes the data and methods used in this paper. 
+The results of the different stages of the analysis are presented in 
+@sec-results. The discussion of the results and the conclusions of the paper
+are offered in @sec-conclusions.
 
-@grubler1990rise Later Hagerstrand conceptualized physical "barrier"
-effects like lakes or uninhabited areas, which, in addition to distance,
-act as further retarding effects on diffusion. These are formalized in
-the form of "zero" or "half" contact multiplicators on the (distance
-decaying) message flows.
+<!-- @grubler1990rise Later Hagerstrand conceptualized physical "barrier" -->
+<!-- effects like lakes or uninhabited areas, which, in addition to distance, -->
+<!-- act as further retarding effects on diffusion. These are formalized in -->
+<!-- the form of "zero" or "half" contact multiplicators on the (distance -->
+<!-- decaying) message flows. -->
 
-@grubler1990rise With respect to the formalization of the communication
-flows Hagerstrand defines a "mean information field" (MIF), in which the
-probability of communication is a negative function of distance between
-individuals
-
-@wilson201281 Logistic growth describes an initial period of gradual
-diffusion as a technology is introduced as a new commercial application,
-moving then through a rapid, exponential growth phase, before slowing
-and eventually saturating [@grubler1999dynamics]. The substitution of
-incumbent technologies by new competitors leads to subsequent decline
-and eventual obsolescence.
+<!-- @grubler1990rise With respect to the formalization of the communication -->
+<!-- flows Hagerstrand defines a "mean information field" (MIF), in which the -->
+<!-- probability of communication is a negative function of distance between -->
+<!-- individuals -->
 
 # Literature review {#sec-litreview}
 
 <!-- key concepts -- copied from help.Rmd -->
-
 Geographical diffusion is a synthesis of different processes. On the one
-hand, a purely spatial or, in other words, contagious processes can be identified. 
-Adjacency and, more broadly, distance are the key drivers of
+hand, a purely spatial or, in other words, contagious processes can be 
+identified. Adjacency and, more broadly, distance are the key drivers of
 diffusion. This perspective draws similarities with epidemics:
-innovation just like pathogens spreads because of contagion and,
+innovations just like pathogens spread because of contagion and,
 consequently, proximity and exposure [@hivner2003facilitating]. On the
-other hand, there is a hierarchical processes. Instead of
-horizontal distance-based diffusion mechanisms, the top-down hierarchy
-of urban systems shapes technological diffusion. In reality, the synthesis of these
-two processes represents how new technologies diffuse over space and
-time [@morrill2020spatial].
+other hand, there is a hierarchical processes. According to this, instead of 
+a horizontal distance-based diffusion mechanism, the top-down hierarchy
+of urban systems shapes technological diffusion. In reality, the synthesis 
+of these two processes better reflects how new technologies diffuse over 
+space [@morrill2020spatial].
 
 These ideas were firstly introduced by Torsten Hägerstrand and his
 thesis entitled 'Innovation Diffusion as a Spatial Process'
-[@hagerstrand1968innovation]. Hägerstrand was the first one to identify
+[@hagerstrand1968innovation]. Hägerstrand was the first to identify
 diffusion as a geographical process. The starting point was the idea
 that diffusion is based on passing information through social networks,
 which themselves tend to be defined by geography. Hence, he identified
-the 'neighbourhood' effect of how information, and consequently,
+a 'neighbourhood' mechanism of how information, and consequently,
 innovation diffuse. He used agricultural innovations to test and model
 his ideas using Monte Carlo simulations. Hägerstrand also incorporated
 the role of hierarchy and how some phenomena maybe firstly adopted in
@@ -252,10 +296,10 @@ technologies and innovations by individuals and the individual
 mechanisms that drive the decisions behind adoption. He identified five
 groups of individuals regarding their adoption speed: innovators, early
 adopters, early majority, late majority and laggards. The key mechanism of
-diffusion and adoption is communication and how knowledge is
-transferred within a social system. Therefore, all approaches agree on
-the S-shaped diffusion and cumulative adoption pattern
-[@grubler1990rise].
+diffusion and adoption is communication and how knowledge is transferred 
+within a social system. All above approaches agree that diffusion and the
+cumulative adoption of a new technology are represented by an S-shaped 
+line plot [@grubler1990rise].
 
 Schmidt's Law empirically illustrates a similar pattern. *Core* and
 usually highly agglomerated regions is where new technologies are
@@ -265,40 +309,43 @@ spread to the *rim* and eventually to the *periphery*. Although adoption
 pace might be higher when new technologies finally arrive to the
 periphery, the saturation levels there may never reach the ones in the
 core because of the lack of infrastructure or other necessary
-institutions [@leibowicz2016representing]. @grubler1990rise effectively
-summarises the three key characteristics of the spatial diffusion
-process: (i) the cumulative level of adoption follows an S-shaped
+institutions [@leibowicz2016representing]. 
+
+@grubler1990rise effectively summarises the three key spatial diffusion 
+mechanisms: (i) the cumulative level of adoption follows an S-shaped
 pattern just like purely temporal models; (ii) diffusion is shaped by a
-hierarchy effect in a form of a centrifugal force: from core to
-periphery; and (iii) diffusion is also shaped by distance and a
-neighbourhood effect and contaminate nearby locations. These are the three
-mechanisms that the empirical analysis in @sec-results investigates.
+hierarchical mechanism in a form of a centrifugal force: from core to
+periphery; and (iii) diffusion is also shaped by distance and proximity. 
+These are the three mechanisms that the empirical analysis in @sec-results 
+investigates.
 
 <!-- previous studies -->
-
 The remaining of this section reviews empirical studies which analysed
 the diffusion on new technologies over space and time. Although the
 spatial dimension is present in most of the following studies, the level
-of spatial detail is always more coarse than the one adopted
-here. @beardsell1999spatial studied the evolution of the computer
-industry in $317$ US metro areas during the $1977-1992$ period using
+of spatial detail is always more coarse than the one adopted in this
+paper. @beardsell1999spatial studied the evolution of the computer
+industry in 317 US metro areas during the 1977-1992 period using
 employment data. Their analysis indicated that the relative size
 distribution holds for urban computer employment and also urban
 heterogeneity is essential in explaining this distribution. In a recent
 study, @bednarz2020pulled focused on wind turbines and modelled their
-spatial diffusion across $402$ German regions during $1970-2015$. Their
+spatial diffusion across 402 German regions during 1970-2015. Their
 key finding is that local demand than local supply was the main driving
-factor.
+factor. @haller2011determinants employed firm panel data for Ireland
+during 2003-2005 and illustrated that when firms are located in a
+region or industry with high share of firms having a website, they are
+more likely to have a website too.
 
-At a global scale @perkins2005international explored whther the
+At a global scale @perkins2005international explored whether the
 diffusion rate of new technologies is driven by a latecomer advantage
 and the engagement with the global economy via foreign direct
 investments and trade. Their results illustrate that indeed latecomers
 and developing countries experience diffusion of new technologies more
 rapidly than early adopters and developed countries. At the same scale,
 @perkins2011internet explored whether the adoption of previous
-communication technologies that is mail, telegrams and telephones was
-shaped by similar socioeconomic factors as the internet. Their results
+communication technologies that is mail, telegrams and telephones were
+shaped by similar socioeconomic factors as the Internet. Their results
 indicated common patterns regarding the drivers behind the adoption of
 different communication technologies.
 
@@ -309,17 +356,22 @@ indicated that socioeconomic characteristics are important determinants
 of the timing, speed and the level of mobile diffusion within China.
 Using data from a Hungarian online social network, @lengyel2020role
 analysed its adoption and the churn at a very granular spatial level.
-Their results are in agreement with early theoretical and empirical
+Their results were in agreement with the early theoretical and empirical
 contributions reviewed here: assortativity, urban scaling and distance
-are the key drivers of spatial diffusion. At a global scale
+are the key drivers of spatial diffusion. @bakher2013diffusion compared 
+different the growth curves as a means to model diffusion of online 
+shopping in Australia during the 1998-2009 period. At a global scale
 @PAPAGIANNIDIS2015308 modelled the diffusion of different web
-technologies technologies and practices. Interestingly, they did so by
-using similar, but less extensive data as the one used here. Their
-analysis illustrated how the diffusion of different web technologies and
-practices follow an S-shaped pattern as well as the different diffusion
-rates of the different technologies and practices.
+technologies and practices across countries. Using similar but less extensive 
+data as the one used here, their analysis illustrated how the diffusion 
+of different web technologies and practices follow an S-shaped pattern 
+as well as the different diffusion rates of the different technologies 
+and practices.
 
-All in all, ...
+All in all, this paper tests whether the three distinct spatial diffusion 
+mechanisms shaped the diffusion of the Web in the UK at very granular
+spatial scales from the Web's early stages onwards. The next section discusses
+the empirical framework.
 
 <!-- @fritsch2015new analyze the spatial diffusion of laser technology -->
 <!-- research in West Germany from 1960, when this technology began, until -->
@@ -356,75 +408,67 @@ All in all, ...
 <!-- country level, not sure if needed. -->
 
 <!-- @bento2018time explore What determines the duration of formative phases -->
-
 <!-- for energy innovations in different markets? We are interested both in -->
-
 <!-- initial markets (also: core, lead, first mover, early adopter) where -->
-
 <!-- formative phases prepare technologies for mass commercialization, and in -->
-
 <!-- follower markets (also: periphery, lag, late adopter) where accelerated -->
-
 <!-- formative phases may benefit from diffusion and spillovers. -->
 
 # Data and Methods {#sec-datamethods}
 
-**ADD FAMILY OF WEB TECHNOLOGIES**
-
 <!-- main metric -->
-
-To capture the diffusion of web technologies, a website density metric is developed 
-for two different geographical scales: the Local Authority Districts (LAD) and the 
-Output Areas (OA). The former is an administrative unit and there are 
-c. 374 such units in the UK. The latter is a census-based geographical unit, which 
-is very small as there are c. 230,000 of them in the UK. This methodological choice 
-will allow the mapping of the diffusion of web technologies and the assessment of 
-the diffusion mechanisms at these two very different spatial scales.
+To capture the diffusion of the Web, a website density metric is developed 
+for two different geographical scales: the Local Authority Districts (LAD) 
+and the Output Areas (OA). The former is an administrative unit and there 
+are 374 LAD in the UK. The latter is the smallest census-based geographical 
+unit and there are c. 230,000 of them in the UK. This methodological choice 
+will allow the mapping of the diffusion of web technologies and the assessment 
+of the diffusion mechanisms at these two very different spatial scales.
 
 <!-- web data -->
-
 The counts of websites at these scales are calculated using data from the 
-Internet Archive [^2] and, specifically, the JISC UK Web Domain Dataset [@ukwebarchive]. 
-The Internet Archive is one of the most complete and oldest archive of webpages 
-in the world operating since 1996 [@ainsworth2011much; @holzmann2016dawn].
-It is a web crawler, which discovers webpages by following the hyperlinks
-of every webpage its archives.
+Internet Archive[^2] and, specifically, the JISC UK Web Domain Dataset 
+[@ukwebarchive]. The Internet Archive is one of the most complete and oldest 
+archive of webpages in the world operating since 1996 
+[@ainsworth2011much; @holzmann2016dawn]. It is a web crawler, which discovers 
+webpages by following the hyperlinks of every webpage it archives.
 This dataset, which is curated by the British Library, contains all
-the archived webpages from the UK ccTLD (.uk) from the 1996–2012 period. 
-In essence, this is a long list of 2.5 billion URLs of archived webpages including 
-also the archival timestamp. 
+the archived webpages from the UK country code top level domain (ccTLD - .uk) 
+from the 1996–2012 period. In essence, this is a long list of 2.5 billion URLs 
+of archived webpages including also the archival timestamp. 
 
 [^2]: [https://archive.org/](See%20https://archive.org/).
 
-Instead of using the whole .uk country code top-level domain (ccTLD), this 
-paper focuses on its commercial subset, the .co.uk SLD. 
-This choice decrease the heterogeneity of the web data as 
-such commercial websites have rather specific aims: they are used to diffuse information,
-support online transactions and share opinions [@THELWALL2000441; @blazquez2018big]. 
-Although a UK company can adopt a generic TLD such as .com and these cases escape 
-the data used here, such omissions should not affect our results given the
-popularity of the .uk ccTLD [@tranosuk]: UK consumers prefer to visit a .uk website
-when they are searching for products or services [@hope]; and
-anecdotal evidence indicates that during the first half of 2000, three
-.co.uk domains were registered every minute [@oecd_coms]. 
-Importantly, previous studies illustrated that .co.uk is the most popular UK SLD
-[@tranosuk].
+Instead of using the whole .uk ccTLD, this paper focuses on its commercial 
+subset, the .co.uk second level domain (SLD). This choices decrease the 
+heterogeneity of the web data as such commercial websites have specific 
+aims: they are used to diffuse information, support online transactions 
+and share opinions [@THELWALL2000441; @blazquez2018big]. 
+Although a UK company can adopt a generic TLD such as .com and these 
+cases escape the data used here, such omissions should not affect the 
+validity of the results given the popularity of the .uk ccTLD [@tranosuk]: 
+UK consumers prefer to visit a .uk website when they are searching for 
+products or services [@hope]; and anecdotal evidence indicates that during 
+the first half of 2000, three .co.uk domains were registered every minute 
+[@oecd_coms]. Importantly, previous studies illustrated that .co.uk is the 
+most popular UK SLD [@tranosuk].
 
 The text from these webpages was scanned using a regular expression (regex) to
-identify strings of text which resemble UK postcodes and one fifth of them included
-a mention to a postcode [@BL2013geo]. This information allows the geolocation of the 
-data and the creation of the LAD and OA counts. 
+identify strings of text which resemble UK postcodes and one fifth of them 
+included a mention to a postcode [@BL2013geo]. This information allows the 
+geolocation of the data and the creation of the LAD and OA counts. 
 
-The data cleaning process included an aggregation step, through which
-the archived webpages were aggregated to the parent websites. This website 
-reconstruction allows the creation of a *website* instead of a *webpage* density 
-metric. Websites, which are hierarchical structures, tend to represent specific 
-orgnanisations or entities, and, arguably, are more meaningful observational units 
-than webpages, which ignore the upstream dependencies. 
-Based on the following example, all three webpages are part of the 
-same website ([http://www.website.co.uk](http://www.website.co.uk)) and at the end 
-only websites and not the nested webpages were considered as otherwise the metric 
-would have been biased towards large, place specific, websites. 
+The data cleaning process includes an aggregation step, through which
+the archived webpages are aggregated to the parent websites. This website 
+reconstruction process lend itself to the construction of *website* instead 
+of *webpage* density metrics. Websites tend to represent specific organisations 
+or entities, and, arguably, are more meaningful observational units than 
+webpages, which can ignore the upstream dependency of the website they belong 
+to. Based on the following example, all three webpages are part of the 
+same website ([http://www.website.co.uk](http://www.website.co.uk)). Only 
+the overall website and not the nested webpages are considered for the counts 
+as otherwise the density metrics would have been biased towards large, place 
+specific, websites.
 
   - [http://www.website.co.uk/webpage_a](http://www.website.co.uk/webpage_a) B15 2TT
 
@@ -434,25 +478,24 @@ would have been biased towards large, place specific, websites.
 
 \noindent What is challenging is that this aggregation approach,
 which has been used elsewhere [@tranosuk; @shoreditch] may lead to websites with 
-multiple postcodes. As per the above example, [www.website.co.uk](http://www.website.co.uk)
-includes two unique postcodes: B15 2TT and BS8 1SS. 
-The distribution of postcodes for 2000 is presented in Table \ref{f2000}, which 
-clearly illustrates the wide range. At the left end of the distribution, there are 
-websites anchored to a unique location (72% of all the reconstructed websites in
-2000), which may represent a small company with a single trading location. At the 
-right end, we have websites with thousands of different postcodes.
-Considering the time period of the analysis, such cases can represent directories
-which used to be popular in the pre-search engines early times of the commercial 
-internet [@tranosuk].[^3]
+multiple postcodes. As per the above example, 
+[www.website.co.uk](http://www.website.co.uk) includes two unique postcodes: 
+B15 2TT and BS8 1SS. The distribution of the number of postcodes per website for 
+2000 is presented in Table \ref{f2000}, which illustrates a wide range. 
+At the left end of the distribution, there are websites anchored to a unique 
+location (72% of all the reconstructed websites in 2000), which may represent a 
+small company with a single trading location. At the right end, there are 
+websites with thousands of different postcodes. Considering the time period of 
+the analysis, such cases can represent directories which used to be popular 
+in the pre-search engines early times of the commercial Internet as well as real 
+estate websites [@tranosuk].
 
-The analysis presented here is based on two subsets of these data. Firstly, on websites, 
-which only contain only one unique postcode and, therefore, the geolocation process 
-does not suffer from noise. As a robustness check, the analysis is replicated 
-for an extended subset of websites, which include up to ten unique postcodes. These 
-websites are geolocated by equally attaching them to multiple locations. This extended 
-sample includes 94 percent of all the archived websites in 2000.
-
-[^3]: See Figure A1 in **Appendix A in the supplemental data online for examples**.
+The analysis is firstly conducted on websites, which only contain one unique 
+postcode. As a robustness check, the analysis is replicated for an extended 
+subset of websites, which include up to 10 unique postcodes to capture 
+commercial websites which point to multiple locations. They are geolocated 
+by equally attaching them to these locations. This extended sample includes 94 
+percent of all the archived websites in 2000.
 
 ```{r eval=T, echo=FALSE, results='asis'}
 
@@ -497,237 +540,258 @@ kable(f.websites.pc,
    # kable_classic(full_width = F, html_font = "Cambria")
 ```
 
-Another data cleaning step dealt with some extreme outliers. Figure \ref{pc1} plots
-the website counts for the top 1000 postcodes. Some obvious outliers can be observed 
-for the 2004-2006 period, which can be attributed to a link farm [@BL2013links].  
-The website counts for these six postcodes (SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, 
-M28 2SL, DE21 7BF), which in 2004 or 2005 had more than 1000 websites pointing to 
-them, were replaced with predicted values based on a simple panel regression model 
-with postcode fixed effects and yearly dummy variables. As the @sec-results illustrates,
-this led to a small increase of the model predictive capability. To put the magnitude 
-of the data imputation into perspective, this process affected 6 out of the 557,808
-postcodes present in the data.
+Another data cleaning step deals with some extreme outliers. Figure 
+\ref{correct} plots the website counts for the top 1000 postcodes. Some obvious 
+outliers can be observed for the 2002-2006 period for a handful of postcodes, 
+which can be attributed to link farms [@BL2013links]. The website counts for 
+these postcodes (SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, M28 2SL, DE21 7BF), which 
+in 2004 or 2005 had more than 1000 websites pointing to them, were replaced 
+with predicted values based on a simple panel regression model with postcode 
+fixed effects and yearly dummy variables. These postcodes refer to a residential 
+area with a small park in South London, residential areas outside Warwick and 
+Manchester, a rural area in the south border of England and Wales and small 
+business parks in Crew and Derby. Hence, it is difficult to believe that these
+postcodes genuinely hosted such a large amounts of websites, which were later 
+extensively declined. To put the magnitude of the data imputation into 
+perspective, this process affected 6 out of the 557,808 postcodes included in 
+the data. As the @sec-results illustrates, this led to a small increase of the 
+model predictive power. 
 
-```{r echo=FALSE, message=FALSE, fig.cap="\\label{pc1}Yearly website counts per postcode (top 1000)", out.height="60%"}
-path.image <- paste0(path, "/outputs/pc_year_1.png")
-knitr::include_graphics(path.image)
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{correct}Yearly website counts per postcode (top 1000) before (top) and after (down) data imputation", out.height="70%"}
+path.image1 <- paste0(path, "/outputs/pc_year_1.png")
+path.image2 <- paste0(path, "/outputs/pc_year_1_corrected.png")
+
+p1 <- ggdraw() + draw_image(path.image1)  
+p2 <- ggdraw() + draw_image(path.image2)  
+
+par(mar=rep(0,4)) # no margins
+
+p1 + plot_spacer() + p2 + plot_layout(ncol = 2)#, widths = c(1, -0.8, 1))
 ```
 
-To create the website density metric, the yearly website counts at the LAD level are
-standardised by the number of firms in LAD to avoid biases associated with LAD 
-hosting a large number of firms. Given that there is no such statistic for the OA,
-the actual OA level counts are used. However, because of the the consistent spatial 
-definition of OA (they host 40-250 households),[^4] website counts in OA are 
-interpreted as a density metric too.
+To create the website density metric, the yearly website counts at the LAD level 
+are standardised by the number of firms in LAD to avoid biases associated with 
+LAD hosting a large number of firms. Given that there is no such readily 
+available statistic for the OA, the actual OA level counts are used. However, 
+because of the the consistent spatial definition of OA (they host 40-250 
+households),[^4] website counts in OA are interpreted as a density metric too.
 
 [^4]: [https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies](https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies)
 
 <!-- system-level analysis -->
-
-These website density metrics are used for the three different steps of the analysis. 
-Firstly, a system-level analysis explores how the diffusion of web technologies in
-the UK fits with the well-established S-curve. To do so, the following logistic 
-function (Equation \ref{eq:s}) is estimated for the whole of the UK and for each 
-LAD separately:
+These website density metrics are used for the three different stages of the 
+analysis. Firstly, a system-level analysis explores how the diffusion of web 
+technologies in the UK fits with the well-established S-curve of cumulative 
+adoption. To do so, the following logistic function (Equation \ref{eq:s}) is 
+estimated for the whole of the UK and for each LAD separately:
 
 \begin{align}
 y = k /(1 + e^{-(t-t_{o})})\label{eq:s}
 \end{align}
 
-\noindent $k$ is the asymptote or, in other words, the saturation level, $b$ the overall 
-growth rate, and $t_{0}$ the *inflection point*
-of maximum growth at $k/2$, where the logistic function is symmetrical [@wilson201281]. 
-We compare  the LAD $t_0$ of each LAD against the $t_0$ of the UK to delineate 
-whether a LAD reached that point faster or slower than the country average. Importantly, 
-an accuracy criterion was imposed and only S-curves with $R^2 > 0.9$ were included 
-in the analysis. To estimate Equation \ref{eq:s} a self-starting logistic growth 
-model was employed using the `nls` and `SSlogis` functions in `R`.
+\noindent $k$ is the asymptote or, in other words, the saturation level, $b$ 
+the overall growth rate, and $t_{0}$ the *inflection point* of maximum growth 
+at $k/2$, where the logistic function is symmetrical [@wilson201281]. 
+The $t_0$ of each LAD is compared against the $t_0$ of the UK to delineate 
+whether a LAD reached that point faster or slower than the country average. 
+Importantly, an accuracy criterion was imposed and only LAD with $R^2 > 0.9$ 
+were included in this analysis. To estimate Equation \ref{eq:s} a self-starting 
+logistic growth model was employed using the `nls` and `SSlogis` functions in 
+`R`. This logistic growth model depicts the initial period of slow diffusion of 
+a new technology, which is followed by the fast, exponential growth stage to
+then eventually slow down and saturate [@wilson201281; @grubler1999dynamics]. 
 
 <!-- **minimum R2 = 95%** in @wilson201281, see also @grubler1990rise -->
 <!-- The literature usually uses the saturation level as the asymptote. I am -->
 <!-- using the total number of websites as we cannot compute a rate. -->
 
 The system-level analysis also focuses on the volatility of the web adoption to 
-depict places with high concentration of early adopters and, equally, latecomers. 
-To do so, the change of the ranking of the UK LAD over time is plotted and discussed. 
-Both the S-curve and the volatility analysis focus only on LAD as the very large 
-number of OA would have made such analysis diffucult to visualise and interpret.
+depict places with high concentration of early adopters and, equally, 
+latecomers. To do so, the change of the ranking of the UK LAD over time is 
+plotted and discussed. Both the S-curve and the volatility analysis focus only 
+on LAD as the very large number of OA would have made such analysis difficult 
+to visualise and interpret.
 
 <!-- ESDA -->
-
 Next, exploratory spatial data analysis depicts whether the two main 
-drivers of spatial diffusion -- namely neighbourhood and hierarchy -- underpin the
-diffusion of web technologies in the UK. To capture the former and following 
-@ding2010modeling the Moran's I and the Local Index of Spatial Association (LISA) 
-are estimated for website density. To address the hierarchy mechanism, the Gini 
-coefficient -- a well established metric of inequality -- is calculated. All the 
-above are computed and plotted longitudinally both for the LAD and the OA.
+drivers of spatial diffusion -- namely neighbourhood and hierarchy -- underpin 
+the diffusion of the Web in the UK. To capture the former and following 
+@ding2010modeling the Moran's I and the Local Index of Spatial Association 
+(LISA) are estimated for the website density. To address the hierarchy mechanism, 
+the Gini coefficient -- an established metric of inequality -- is 
+calculated. All the above are computed and plotted longitudinally both for the 
+LAD and the OA.
 
 <!-- RF -->
-
-Lastly, a modelling framework is developed to test the above diffusion mechanisms.
-The overarching aim is to build a model that can test the relationship between the
-website density and these mechanisms: 
+Lastly, a modelling framework is developed to test the above diffusion 
+mechanisms. The overarching aim is to build a model that can test how well
+these mechanisms can predict website density: 
 
 \begin{align}
 Website\,Density_{t} \sim Hierarchy_{t-1} + Neighbourhood_{t-1} + S-curve_{t}\label{eq:rf.generic}
 \end{align}
 
-To estimate Equation \ref{eq:rf.generic}, Random Forest (RF) models were built. 
-This is a popular machine learning algorith for both regression and classification 
-problems [@biau2012analysis]. It was introduced by @breiman2001random and has  
-gained popularity, becoming a go-to data science tool. RF can effectively 
-handle skewed distributions and outliers, model non-linear relationships, require 
-minimal hyperparameter tuning, exhibit low sensitivity to these parameters, and 
-have relatively short training times [@Caruana2008; @liaw2002classification; @yan2020using]. 
-These attributes match well with the website density data characteristics including 
-skewness especially for OA. Also, the large data size (c. 230k data points for 
-each of the 17 years) call for fast training times. 
-Importantly, RF predictions tend to be more accurate than those from single regression 
-trees and outperform Ordinary Least Squares in out-of-sample predictions, even with 
-moderate-sized training data and a small number of predictors [@mullainathan2017machine; 
-@athey2019machine; @sulaiman2011intelligent; @pourebrahim2019trip; @biau2012analysis].
+\noindent Equation \ref{eq:rf.generic} is estimated using Random Forest (RF).
+This is a popular ML algorithm for both regression and classification
+problems [@biau2012analysis]. It was introduced by @breiman2001random and has 
+become a go-to data science tool. RF can effectively handle skewed distributions 
+and outliers, model non-linear relationships, require minimal hyperparameter 
+tuning, exhibit low sensitivity to these parameters, and have relatively short 
+training times [@Caruana2008; @liaw2002classification; @yan2020using]. These 
+attributes match well with the website density data characteristics including 
+skewness especially for the OA. Also, the large data size (c. 230k data points 
+for each of the 17 years) calls for fast training times. Importantly, RF 
+predictions tend to be more accurate than those from single regression trees and 
+outperform Ordinary Least Squares in out-of-sample predictions, even with 
+moderate-sized training data and a small number of predictors 
+[@mullainathan2017machine; @athey2019machine; @sulaiman2011intelligent; 
+@pourebrahim2019trip; @biau2012analysis].
 
-RF is a tree-based ensemble learning algorithm [@breiman2001random]. It begins by 
-generating random samples of the training data, which are then used to grow 
-regression trees to predict the dependent variable. Data points and predictors are 
-randomly sampled for the different trees. The trees are trained in parallel using their 
-own bootstrapped samples of the training data. A crucial feature of RF is their 
-ability not to overfit, meaning they can generalize well to unseen test data. While 
-each tree may overfit individually, the ensemble of trees does not because the errors 
-of individual trees are averaged, reducing the overall variance and preventing overfitting 
-[@last2002improving]. For regression problems, RF predictions are made by averaging 
-the predictions of all decision trees.
+RF is a tree-based ensemble learning algorithm [@breiman2001random]. It begins 
+by generating random samples of the training data, which are then used to grow 
+regression trees to predict the dependent variable. Data points and predictors 
+are randomly sampled for the different trees. The trees are trained in parallel 
+using their own bootstrapped samples of the training data. A crucial feature of 
+RF is their ability not to overfit, meaning they can generalize well to unseen 
+test data. While each tree may overfit individually, the ensemble of trees does 
+not because the errors of individual trees are averaged, reducing the overall 
+variance and preventing overfitting [@last2002improving]. For regression 
+problems, RF predictions are made by averaging the predictions of all decision 
+trees.
 
-RF have been widely employed to address regression research problems. @pourebrahim2019trip 
-combined a spatial interaction modeling framework with ML algorithms including RF
-to predict commuting flows in New York City. @sinha2019assessing advocated for adopting
-spatial ensemble learning approaches, such as RF, to model spatial data with high
-autocorrelation and heterogeneity. @creditspatial predicted employment density in 
-Los Angeles using spatially explicit RF. @guns2014recommending used RF to build a 
-recommendation system for research collaborations. @ren2019predicting trained RF 
-to predict the socio-economic status of cities using various online and mobility 
-predictors. @tranos2023using utilised hyperlinks data and RF to make out-of-sample
-predictions of interregional trade. @zhou2023geography employed such a framework
-to assess whether key predictors of obesity differ across English cities.
+RF have been widely employed to address regression research problems. 
+@pourebrahim2019trip combined a spatial interaction modelling framework with ML 
+algorithms including RF to predict commuting flows in New York City. 
+@sinha2019assessing advocated for adopting spatial ensemble learning approaches, 
+such as RF, to model spatial data with high autocorrelation and heterogeneity. 
+@creditspatial predicted employment density in Los Angeles using spatially 
+explicit RF. @guns2014recommending used RF to build a recommendation system for 
+research collaborations. @ren2019predicting trained RF to predict the 
+socio-economic status of cities using various online and mobility predictors. 
+@tranos2023using utilised hyperlinks data and RF to make out-of-sample 
+predictions of interregional trade. @zhou2023geography employed such a 
+framework to assess whether key predictors of obesity differ across English 
+cities.
 
 # Results {#sec-results}
 
-1.  S-shaped diffusion curves: S for LAD per firm. UK,
-    fast/slow/examples
-
-2.  ranks: there is stability and movement
-
-3.  Neighbourhood effect: diffusion proceeds outwards from innovation
-    centers, first "hitting" nearby rather than far-away locations
-    (Grubler 1990) 
-
--   Moran's I: for OA and LAD over time
-
--   LISA maps: for OA and LAD over time More and less expected clusters.
-    Different scales show different results
-
-4.  Hierarchy effect: from main centers to secondary ones -- central
-    places
-
--   Gini coefficient. Almost perfect polarisation of web adoption in the
-    early stages at a granular level More equally diffused at the Local
-    Authority level Plateau overtime
-
-5.  RF
-
--   ideal: (i) train RF for all years and all (1) LAD and (2) OA with
-    CAST and report metrics. (ii) train for all years and all but one
-    region for (1) LAD and (2) OA to predict to the holdout region.
-    Reports predictions as region similarities.
+## System-level analysis
 
 <!-- S-shaped -->
-
-Figure \ref{s_uk} plots the S curve for the cumulative adoption of website technologies
-in the UK during the 1996-2012 period. It demonstrates a pattern well aligned with
-previous studies discussed in @sec-litreview. The vertical line for year 
-2003 illustrates the point where the modeled cumulative adoption was equal to 50% 
-of the maximum. This $t_0$ *inflection* point signals the maximum adoption speed 
-and is used here to determine whether the UK LAD reached that inflection point 
-earlier or later than the UK average. Specifically, the S curve and the inflection 
-point are estimated for every LAD individually and then compared with the UK average. 
-LAD that reached their inflection point earlier than the country average are labelled 
-as *fast* and the rest as *slow*. Figure \ref{s_map} maps this pattern and the picture 
-is not entirely clear. On the one hand, there are some expected examples of LAD
-with relevant industrial backgrounds delineated as fast: the City of London, a 
-world-renowned cluster of finance industries [@cook2007role], and Reading, a town 
-with high-tech service industries in proximity to London and its main airport, Heathrow 
-[@england2005polynet]. On the other hand, LAD which were expected to appear as fast
--- e.g. Hackney in central London and Bristol, a well-established creative cluster 
-[@oatley1999cultural; @bassett2002cultural] -- were delineated as slow. Nevertheless, 
-out of the 10 fastest LAD, eight were located in Greater London and one in 
-Cambridge (see **Appendix**), but in overall there is a spatially heterogenous and
-not easy to explain spatial pattern.
-
 ```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_uk}Grwoth curve, UK"}
 path.image <- paste0(path, "/outputs/s/s_uk_per_firm.png")
 knitr::include_graphics(path.image)
 ```
+
+Figure \ref{s_uk} plots the cumulative adoption of the Web in total in the UK 
+during the 1996-2012 period. Not surprisingly, the cumulative adoption is well 
+represented by a curve that resembles the figure S. The vertical 
+line around year 2003 illustrates the point where the modelled cumulative 
+adoption is equal to 50% of the maximum. This $t_0$ *inflection* point signals 
+the maximum adoption speed and is used here to determine whether a UK LAD 
+reached that inflection point earlier or later than the UK average. 
+Specifically, the S curve and the inflection point are estimated for every LAD 
+individually and then compared against the UK average. LAD that reached their 
+inflection point earlier than the country average are labelled as *fast* and 
+the rest as *slow*. Figure \ref{s_map} maps this pattern. There is a clear high 
+concentration of fast adopting LAD in the South and East of England as expected. 
+However, there is also such a concentration in Wales, Scotland and the North 
+West of England. At a more detailed level, there are some expected 
+examples of LAD with relevant industrial backgrounds delineated as fast: the 
+City of London, a world-renowned cluster of finance industries [@cook2007role], 
+and Reading, a town with high-tech service industries in proximity to London 
+and its main airport, Heathrow [@england2005polynet]. However, there are also 
+LAD which were expected to appear as fast -- e.g. Hackney in central London and 
+Bristol, a well-established creative cluster [@oatley1999cultural; 
+@bassett2002cultural] -- but were delineated as slow. Nevertheless, there is 
+obvious spatial clustering of fast and slow LAD. Importantly, out of the ten 
+fastest LAD, nine were located in the South East of England and London and one 
+in Cambridge (see Table \ref{table.s.lads} in the Appendix). The above 
+observations remain almost unchanged when the analysis includes websites 
+with up to 10 unique postcodes -- see Figures \ref{s_uk10} and \ref{s_map10} in 
+the Appendix -- advocating towards the robustness of the analysis.
 
 ```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_map}LAD adoption rates"}
 path.image <- paste0(path, "/outputs/s/speed_map.png")
 knitr::include_graphics(path.image)
 ```
 
+<!-- discussion -->
+The S-curves of the cumulative adoption of Web in the UK in total and in the 
+UK LAD demonstrate a pattern well aligned with all previous studies discussed 
+in @sec-litreview. Importantly, the above findings are in line with previous 
+studies exploring the diffusion of web technologies [@PAPAGIANNIDIS2015308], 
+social media [@lengyel2020role] and online shopping [@bakher2013diffusion]. 
+Similar to @beardsell1999spatial, who analysed the spatial evolution of 
+computer industry employment across 317 US metro areas, spatial heterogeneity
+is evident in the diffusion speed when the scale of analysis is as detailed
+as the LAD. Importantly, no previous studies estimated such cumulative 
+adoption curves for areal units as small as the UK LADS. 
+
 <!-- rankings -->
-The next step is to assess the stability and volatility of the LAD in terms of 
-their adoption of web technologies. As we know from the literature [@risk_perceptions],
-different agents have different perceptions about and levels of acceptance of the 
-risks and the potential economic returns associated with the adoption of new technologies 
--- see for instance the seminal work of @venkatesh2000theoretical. To reveal such 
-aggregated patterns, Figures \ref{rank_stable} and \ref{rank_unstable} plot the ranking
-of UK LAD based on website density. To decrease noise, the average ranking 
-of 1996-1998 and 2010-2012 is plotted instead of the individual years. 
-While there are quite a few obvious cases of LAD that maintained their position 
-between the beginning and the end of the study period either at the top or at the 
-bottom of the hierarchy (Figure \ref{rank_stable}), there are also 
-quite a few LAD that changed drastically their position. Some of these LAD enjoyed
-a process that at the first instance looks like leapfrogging since 
-they managed to jump at the top of the hierarchy despite their slow start (top of 
-Figure \ref{unstable}). There is extensive literature regarding the potential benefits of
-technological leapfrogging. The underpinning argument is that latecomers can adopt
-and benefit from new technologies that have been developed elsewhere without incurring 
-the hefty initial R&D costs [@teece2008firm]. Although the leapfrogging literature
-does not pay much attention to cities and regions [@yu2018sustainability], previous 
-research highlighted the long term and sustained productivity benefit of the early
-adopters of web technologies in the UK [@tranosuk]. So, although the LAD system 
-is volatile, it is not clear whether the LAD with high concentration of late adopters 
-will gain any latecomer benefits in a way similar to countries experiencing such
-technological leapfrogging. 
+The next step assesses the stability and volatility of the LAD in terms of 
+their adoption of web technologies. As highlighted in the literature 
+[@risk_perceptions], different agents have different perceptions about and 
+levels of acceptance of the risks and the potential economic returns associated 
+with the adoption of new technologies -- see for instance the seminal work of
+@venkatesh2000theoretical. To reveal such aggregated patterns, Figure \ref{rank} 
+plots the ranking of UK LAD based on website density. To decrease noise, the 
+average ranking of 1996-1998 and 2010-2012 is plotted instead of the individual 
+years. The colours depict the 5th and 95th percentile of the absolute 
+difference of the LAD ranking between 1996-1998 and 2010-2012. While there are 
+quite a few obvious cases of LAD that maintained their position between the 
+beginning and the end of the study period both at the top or at the bottom of 
+the hierarchy, there are also quite a few LAD that changed drastically 
+their position. Some of these LAD enjoyed a process that at the first instance 
+looks like *leapfrogging* since they managed to jump at the top of the hierarchy 
+despite their slow start. There is extensive literature regarding the potential 
+benefits of technological leapfrogging. The underpinning argument is that 
+latecomers can adopt and benefit from new technologies that have been developed 
+elsewhere without incurring the hefty initial R&D costs [@teece2008firm].
+Although the leapfrogging literature does not pay much attention to cities and 
+regions [@yu2018sustainability], previous research highlighted the long term 
+and sustained productivity benefit of the early adopters of web technologies 
+in the UK [@tranosuk]. So, although the LAD system is volatile, it is not clear 
+whether the LAD with high concentration of late adopters will gain any 
+latecomer-related benefits in a way similar to countries experiencing 
+technological leapfrogging. Still, the opportunity to catch up that 
+@perkins2005international illustrated at the country level, is also visible at 
+the much more detailed LAD scale. As previously, this is consistent with 
+including websites with up to 10 postcodes (see Figure \ref{rank10}).
 
-```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank_stable}Dynamics of wed diffusion: stability of LAD"}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only05_av.png")
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank}Dynamics of wed diffusion (LAD)"}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only0595_av.png")
 knitr::include_graphics(path.image)
 ```
 
-```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank_unstable}Dynamics of wed diffusion: volatility LAD"}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only95_av.png")
-knitr::include_graphics(path.image)
-```
+## Exploratory analysis
 
 <!-- Neighbourhood effect -->
-
-Then, figures \ref{morani} and \ref{lisa} offer a first insight into whether a neighbourhood 
-effect underpins the diffusion of web technologies in the UK as they plot the Moran's I
-and the LISA maps of website density respectively for LAD and OA. Starting from 
-the former, spatial autocorrelation was higher in the beginning and then around 
-year 2000 dropped slightly and stabled at 0.2. This reflects the early concentration 
-of high website density around London, which over time diffused as high-high clusters
-can be seen in other parts of the country away from London as seen in Figure \ref{lisa}. An 
-almost reverse pattern can be observed for OA. At the beginning of the study period
-Moran's I was around 0.1 and it plateaued after 2000-2001 around 0.2. Because of the 
-very small size of OA, at the early stages of the diffusion of web technologies 
-their adoption was spatially scattered. This is reflected in the lack of any significant
-clusters in 1996. Eventually, as the adoption rate increased, more such clusters 
-of high website density were formed and this is reflected both in the Moran's I 
-and the LISA maps in Figures \ref{morani} and \ref{lisa}. All in all, the exploratory 
-spatial data analysis advocates towards an underpinning neighbourhood effect and 
-the different scales of analysis illustrate how it evolved differently over time. 
+Figures \ref{morani} and \ref{lisa} offer a first insight into whether a 
+neighbourhood mechanism underpins the diffusion of the Web in the UK as they 
+present the Moran's I and the LISA maps of website density respectively for LAD 
+and OA. Starting from the former, spatial autocorrelation was higher in the 
+beginning of the study period and then after 2000 dropped slightly and 
+stabilised around 0.2. This reflects the early concentration of high website 
+density around London, which over time diffused as high website density clusters 
+can be seen in other parts of the country away from London (Figure \ref{lisa}). 
+An almost reverse pattern can be observed for OA. At the beginning of the study 
+period Moran's I was around 0.5 and it plateaued after 2000 around 0.2. 
+Because of the very small size of OA, at the early stages of the diffusion 
+of web technologies their adoption was spatially scattered. This is reflected in 
+the lack of any significant clusters in 1996 (Figure \ref{lisa}). Eventually, as 
+the adoption rate increased, more such clusters of high website density were 
+formed and this is reflected both in the Moran's I and the LISA maps in Figures 
+\ref{morani} and \ref{lisa}. A similar pattern is observed for the extended 
+dataset (see Figures\ref{morani10} and \ref{lisa10}). In this case, the 
+magnitude of spatial autocorrelation is slightly higher illustrating a stronger 
+spatial clustering mechanism. All in all, the exploratory spatial data analysis 
+advocates towards an underpinning neighbourhood mechanism and the different 
+scales of analysis illustrate how it evolved differently over time. 
+<!-- discussion -->
+Interestingly, the magnitude of Moran's I is similar to the ones revealed
+by @ding2010modeling about mobile phone adoption in China albeit the much more 
+detailed spatial scale of this paper.
 
 ```{r, morani, echo=FALSE, message=FALSE, fig.cap="\\label{morani}Website density Moran's I"}
 
@@ -752,10 +816,14 @@ bind_rows(la.m, oa.m) %>%
                     values = c("LAD" = "grey80",
                                 "OA"="grey48"),
                      limits = force) +
-  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) 
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
 ```
-
-Figure \ref{lisa}
 
 ```{r, echo=FALSE, message=FALSE, fig.cap="\\label{lisa}\\centering Website density LISA maps", out.height="80%"}
 
@@ -790,33 +858,28 @@ p <- p1 / plot_spacer() / p4 / p2 / plot_spacer() / p5 / p3 / plot_spacer() / p6
 
 # p + inset_element(p7, left = 0.45, bottom = -0.5, right = 0.6, top = 0.1)
 p + inset_element(p7, left = 0.29, bottom = 0.8, right = 0.49, top = 1.2)
-
 ```
 
-To illustrate whether a hierarchical process underpins the diffusion of web technologies,
-the Gini coefficient is calculated yearly both for LAD and OA. As a metric of 
-inequality, the Gini coefficient demonstrates whether website density is concentrated
-in a small number of LAD/OA, or whether it is more equally spread across the country.
-Both scales of analysis in Figure \ref{gini} illustrate the same picture. At the 
-beginning of the commercial internet website density was extremely unequal, or in
-other words, only a few places had websites associated with them. Inequality dropped 
-and plateaued after 2000 for both scales illustrating that at the first stages of 
-the commercial internet, website density was concentrated in a limited number of 
-places. This is an indication of a hierarchical diffusion mechanism that led over 
-time to a more equal spread. Interestingly, the year 2000 is again a period of change
-for this diffusion mechanisms as it was for the neighbourhood process. 
-There is a substantial difference between the Gini coefficient magnitude for LAD
-and OA, but this is well expected as the very small size of OA equates to a lot 
-polygons without any websites pointing to them -- for instance residential OA. 
-LAD/OA
+To illustrate whether a hierarchical process also underpins the diffusion of web 
+technologies, the Gini coefficient is calculated yearly both for LAD and OA. As 
+a metric of inequality, the Gini coefficient demonstrates whether website 
+density is concentrated in a small number of LAD or OA, or whether it is more 
+equally spread across the country. Both scales of analysis in Figure \ref{gini} 
+illustrate the same picture. At the beginning of the commercial Internet, 
+website density was extremely unequal, or, in other words, only a few places had 
+websites associated with them. Inequality dropped and plateaued after 2000 for 
+both scales. This is illustrative of a hierarchical diffusion mechanism that 
+led over time to a more equal spread. Interestingly, the year 2000 is again a 
+period of change for this diffusion mechanism as it was for the neighbourhood 
+process. There is a substantial difference between the Gini coefficient 
+magnitude for LAD and OA, but this is expected as the very small size of OA 
+equates to a lot of polygons without any websites pointing to them -- for 
+example residential OA. 
 
 ```{r, gini, echo=FALSE, message=FALSE, fig.cap="\\label{gini}Website density Gini coefficient"}
 
-path.in.la <- paste0(path, "/outputs/lisa/gini_la.csv")
-path.in.oa <- paste0(path, "/outputs/lisa/gini_oa.csv")
-
-# path.in <- paste0(path, "/outputs/lisa/gini_la.csv")
-# path.in <- paste0(path, "/outputs/lisa/gini_oa.csv")
+path.in.la <- paste0(path, "/outputs/gini/gini_la.csv")
+path.in.oa <- paste0(path, "/outputs/gini/gini_oa.csv")
 
 la.gini <- read_csv(path.in.la) %>% 
   mutate(spatial.unit = 'LAD')
@@ -835,63 +898,69 @@ bind_rows(la.gini, oa.gini) %>%
                     values = c("LAD" = "grey80",
                                 "OA"="grey48"),
                      limits = force) +
-  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) 
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
 ```
 
-<!-- RF results -->
+## Modelling outputs
 
-The next section incorporates the above discussed spatial processes of the
-diffusion of web technologies into a modelling framework. The aim
-is to use variables depicting these spatial processes in order to
-predict the diffusion of web technologies in the UK over space and time
-and across different scales. Specifically, four different models are
-estimated. Firstly, all the data points for the OA and LAD are utilised
-in order to build two respective RF models and assess their capacity to predict the
-adoption of web technologies. These two models will reveal the
-predictive capacity of the diffusion mechanisms and also allow to see how
-the importance of such variables changes across scales. The next two
-sets of models will be again trained on web diffusion at the two working scales:
+The next section incorporates the above mechanisms of the spatial
+diffusion of the Web into a modelling framework. The aim is to use variables 
+depicting these spatial processes in order to predict the diffusion of the Web 
+as a new technology in the UK over space and time and across different scales. 
+Specifically, four different models are estimated. Firstly, all the data points 
+for the OA and LAD are utilised in order to build two RF models and assess their 
+capacity to predict the adoption of the Web at the two different scales. 
+These two models will reveal the predictive capacity of the diffusion mechanisms 
+and also demonstrate how the importance of such variables changes across different 
+scales. The next two sets of models are again trained at these two scales: 
 OA and LAD. However, instead of using all the data points, the OA and
-the LAD from one of the twelve UK regions are held out and then the trained
-model is used to predict website density in the OA or the LAD of the
-held-out region. This process takes place recursively for all UK
-regions. The difference in the predictive capacity of the different
-samples will reveal how dissimilar are these spatial process across
-regions and, importantly, at different scales.
+the LAD from one of the twelve UK regions are held out for the model training.
+Then, the trained model is used to predict website density for the OA or the LAD 
+of the held-out region. This process takes place recursively for all twelve UK
+regions. The regional differences in the predictive capacity of the different
+samples will reveal how dissimilar these spatial process are across regions 
+and, importantly, at different scales.
 
-It needs to be highlighted here that the cross-validation for all models
+It needs to be highlighted here that the cross validation (CV) for all models
 is spatially and temporally sensitive. Instead of using
-10 random folds, we employ the `CAST` package which allows holding back
-data points from specific years and spatial units and use them for
-testing in order to estimate the model performance
+10 random and space- and time-agnostic folds,the `CAST` package is employed 
+which allows holding back data points from specific years and spatial units 
+and use them for testing in order to estimate the model performance 
 [@meyer2018improving].
 
-The models include variables that capture the three processes
-that the relevant literature and the descriptive analysis presented above highlighted. 
-Namely, the models capture: (i) a hierarchy effect with diffusion running from main 
-centres to secondary ones, (ii) a neighborhood effect according to which diffusion 
-first hits nearby locations, and (iii) the rather canonical pattern of diffusion 
-over time as reflected in the S-shaped pattern in the cumulative level of adoption.
+The models include variables that capture the three processes that the relevant 
+literature and the descriptive analysis highlighted. Namely, the models capture: 
+(i) a hierarchical mechanism with diffusion running from main centres to 
+secondary ones, (ii) a neighborhood mechanism according to which diffusion 
+first hits nearby locations, and (iii) the rather canonical pattern of 
+diffusion over time as reflected in the S-shaped pattern in the cumulative level 
+of adoption.
 
-To capture the hierarchy effect the models include as predictors a one
+To capture the hierarchical mechanism the models include as predictors a one
 year lag of website density in London, the largest city in the UK, a
 one year lag of the website density in the nearest city and the same for
 the nearest retail centre. Due to the small sizes of the retail centres,
-the latter is only relevant for the OA-level models. In addition, the
-models include the distance to London, the nearest city and the nearest
-retail centre. The underlying logic is that the level of website
+the latter is only relevant for and included in the OA-level models. In 
+addition, the models include the distance to London, the nearest city and the 
+nearest retail centre. The underlying logic is that the level of website
 adoption in a spatial unit depends on the level of the adoption in
-places further up in the urban hierarchy the previous year. The inclusion of the
-distance variables incorporates spatial structure into the hierarchy argument.
-To depict the neighbourhood effect, the website density of the neighbouring spatial
-units in the previous year is employed. Again, the underpinning rationale is that 
-the level of web adoption within a spatial unit depends on the level of web adoption 
-in the neighbouring spatial units the year before. This represents the 'hitting 
-nearby locations first' argument. Therefore, the spatial and temporal lag of the 
-website density in LAD and OA is calculated. Lastly, the time effect which is reflected 
-on the S-curve for the cumulative adoption is captured by a time trend variable.
-Hence, all four model will follow the following generic form 
-(Eq. \ref{model}):
+places further up in the urban hierarchy the previous year. The inclusion of
+the distance variables incorporates spatial structure into the hierarchy 
+argument. To depict the neighbourhood mechanism, the website density of the 
+neighbouring spatial units in the previous year is employed. This is calculated 
+using rook continuity. Again, the underpinning rationale is that the level of 
+web adoption within a spatial unit depends on the level of web adoption in the 
+neighbouring spatial units the year before. This represents the 'hitting nearby 
+locations first' argument. Therefore, the spatial and temporal lag of the 
+website density in LAD and OA is calculated. Lastly, the temporal pattern of 
+the cumulative adoption is captured by a time trend variable. Hence, all four 
+models will follow the following generic form (Eq. \ref{model}):
 
 ```{=tex}
 \begin{align} \label{model}
@@ -906,7 +975,7 @@ year_{t}
 \end{align}
 ```
 
-To assess the predictive capability of the model, three broadly utilised
+To assess the predictive power of the model, three broadly utilised
 metrics are employed: the coefficient of determination ($R^2$), mean
 absolute error (MAE) and root mean square error (RMSE):
 
@@ -926,7 +995,7 @@ RMSE =  \sqrt{\frac{\sum_{k = 1}^{N} (\hat{y_{k}} - y_{k})^2} {N}} \label{eq:rms
 \end{align}
 ```
 
-$y_{k}$ is the $k^{th}$ observation of the dataset, which consists of
+\noindent $y_{k}$ is the $k^{th}$ observation of the dataset, which consists of
 $N$ observations in total. $\hat{y_{k}}$ is the $k_{th}$ predicted value
 for the dependent variable and $\overline{y_{k}}$ is the average value
 of $y$. The last two metrics are expressed in the same units as the
@@ -935,138 +1004,161 @@ of websites for the OA models -- while the first one is the coefficient
 of determination between the observed and the predicted values of
 website adoption. Regarding $MAE$, it is the absolute difference between
 the observed and the predicted website adoption. While $MAE$ does not
-penalise for large errors, $RSME$ does so as it is proportional to the
+penalise for large errors, $RSME$ does, as it is proportional to the
 squared difference between the observed and the predicted trade flows.
 Hence larger errors weigh more for $RMSE$ [@pontius2008components].
 
-@tbl-model-metrics presents the model performance for the
-first set of models, for which all data points are employed for training
-and testing via cross validation. The first one is trained and tested on 374 LAD
-and the second on 232,296 OA, both for a 16 year period (1997-2012). The results are 
-remarkably good considering that the are the outcome of space and time sensitive 
-CV, so the the model does not suffer from overfitting. At the LAD level the model 
-predicts 81% of the variation of website density. Both error metrics indicate that
-the model error is $(\frac{1}{20}, \frac{1}{30})$ of a website per firm. At 
-the OA the $R^2$ drops down to 21%. Considering its granularity, this is still 
-a remarkable performance. To contextualise it, the model results in a MAE of one 
-website for areas small enough to host less than 140 households.^[According to the Office for
-National Statistics, 80% of OA in England and Wales host 110-139 households, [www.ons.gov.uk](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/outputgeography/outputareas).] 
+@tbl-model-metrics presents the model performance for the first set of models, 
+for which all data points are employed for training and testing via CV. The 
+first one is trained and tested on 374 LAD and the second on 
+232,296 OA, both for the 16 year period (1997-2012). The results are remarkably 
+good considering that the are the outcome of space and time sensitive 
+CV, so the the model does not suffer from overfitting. At the LAD level the 
+model predicts 85% of the variation of website density. Both error metrics 
+indicate that the model error is $(\frac{1}{20}, \frac{1}{30})$ of a website per 
+firm. At the OA the $R^2$ drops down to 32%. Considering its granularity, this 
+is still a remarkable performance. To contextualise it, the model results in a 
+$MAE$ equal to one website for areas small enough to host less than 140 
+households.
+^[According to the Office for National Statistics, 80% of OA in England and 
+Wales host 110-139 households,
+[www.ons.gov.uk](https://www.ons.gov.uk/census/2001censusandearlier/dataandproducts/outputgeography/outputareas).]
 Because of the small size of the spatial units, the distribution is highly skewed
 and a significant part of them is not linked to any websites. In 1997 only 1% of 
-the UK OA were associated with at least one website. This should not come as a surprise as 
-this was the very beginning of the commercial internet and any activities with a 
-digital footprint were concentrated in a handful of areas. This was clearly illustrated
-in Figure \ref{lisa}. At the end of the study period almost half of the UK OA were
-not associated with a website. Again, given the granularity of the data this should
-not come as a surprise. 
+the UK OA were associated with at least one website. This should not come as a 
+surprise as this was the very beginning of the commercial Internet and any 
+activities with a digital footprint were concentrated in a handful of areas. 
+This was clearly illustrated in Figure \ref{lisa}. At the end of the study 
+period almost half of the UK OA were not associated with a website. Again, 
+given the granularity of the data this should not come as a surprise.
 
-|                   | RMSE  | $R^{2}$   | MAE   |
-|-------------------|-------|-----------|-------|
-| Local Authorities | 0.032 | 0.810     | 0.019 |
-| Output Areas      | 5.000 | 0.205     | 1.047 |
+|                   | $RMSE$ | $R^{2}$ | $MAE$ |
+|-------------------|--------|---------|-------|
+| Local Authorities | 0.028 | 0.850    | 0.019 |
+| Output Areas      | 3.284 | 0.320    | 1.034 |
 
 : Model metrics {#tbl-model-metrics}
 
-Figures \ref{var.imp.LAD} and \ref{var.imp.OA} plot the importance of the different 
-predictors. When the focus is on the LAD, the website density in the nearest city,
-in London and in the neighbouring LAD the year before are the most important predictors.
-They are followed by the yearly trend, while the spatial configuration as reflected
-in distances to London or the nearest city only play a minor role. This can be attributed
-to the rather coarse spatial scale of analysis. Nevertheless, all previously discussed
-spatial processes are at play in the diffusion of web technologies at the LAD level: 
-the first two predictors depict the hierarchical effect, the spatial and temporal lag of website
-density depict the neighbourhood effect and the yearly trend the time-sensitive 
-cumulative adoption pattern. 
+The results in @tbl-model-metrics are robust against different specification. 
+As noted earlier, the data imputation process resulted in a modest improvement 
+of the predictive capacity of the model. As per
+@tbl-model-metrics-no-correction all accuracy metrics are only slightly worst 
+when the data imputation is not applied. As expected, the improvement is 
+higher for the more detailed scale of analysis. Then, @tbl-model-metrics-10 
+presents the model results for the extended dataset, which includes websites 
+with up to 10 unique postcodes. While the results for the LAD are slightly 
+less accurate, the $R^{2}$ of the OA model is more than double in comparison 
+to the base results in @tbl-model-metrics. All in all, the modelling exercise
+revealed how well can the three diffusion mechanisms predict 
+the diffusion of the Web as a new technology. Importantly, this predictive
+power is highly robust against against different scales and delineations
+of the diffusion of the web.
 
-When the much more granular scale of OA is adopted, the picture is reversed. The 
-most important predictors are the three distance variables to London, the nearest 
-city and the nearest retail centre. They stil depict the hierarchical effect, but
-proximity to the different population centres is more important than their lagged 
-web densities in predicting website diffusion. The neighbouring effect is less 
-important at this scale. What is interesting is the almost negligible role of the 
-yearly trend and London's website density. While the former probably illustrates 
-the large heterogeneity in how web technologies have been adopted at this very fine 
-scale, the later highlights that the importance of past web adoption rates in large 
-population centres is surpassed by proximity to them and spatial configuration 
-at this scale.
+|                   | $RMSE$ | $R^{2}$ | $MAE$ |
+|-------------------|--------|---------|-------|
+| Local Authorities | 0.032 | 0.810    | 0.019 |
+| Output Areas      | 5.000 | 0.205    | 1.047 |
 
-```{r varimpLA, eval = T, echo=FALSE, message = F, fig.cap="\\label{var.imp.LAD}Variable importance, LAD"}
-path.image <- paste0(path, "/outputs/rf/figures/varimp_LA.png")
+: Model metrics without data imputation {#tbl-model-metrics-no-correction}
+
+
+|                   | $RMSE$ | $R^{2}$ | $MAE$ |
+|-------------------|--------|---------|-------|
+| Local Authorities | 0.188  | 0.77    | 0.122 |
+| Output Areas      | 22.467 | 0.478   | 5.681 |
+
+: Model metrics for the extended dataset {#tbl-model-metrics-10}
+
+Figure \ref{var.imp} plots the importance of the different predictors. When the 
+focus is on LAD, the website density in the nearest city, in London and in the 
+neighbouring LAD the year before are the most important predictors. They are 
+followed by the yearly trend, while the spatial configuration as reflected
+in distances to London or the nearest city only plays a minor role. This can be 
+attributed to the relatively coarse spatial scale of LAD. Nevertheless, all 
+previously discussed spatial processes are at play in the diffusion of web 
+technologies at the LAD level: the first two predictors depict the hierarchical 
+mechanism, the spatial and temporal lag of website density the neighbourhood 
+mechanism, and the yearly trend the time-sensitive cumulative adoption pattern. 
+
+When the much more granular scale of OA is adopted, the picture is almost 
+reversed. The two most important predictors are the distance to London and to 
+the nearest city followed by the spatial and temporal lag of website density 
+and the distance to the nearest retail centre. They still depict a hierarchical 
+mechanism, but proximity to the different population centres is more important 
+than their lagged web densities in predicting website diffusion. The 
+neighbourhood mechanism is still strong but less important at this scale. What 
+is interesting is the almost negligible role of the yearly trend and London's 
+website density. While the former probably illustrates the large heterogeneity 
+in how the Web has been adopted at this very fine scale, the latter highlights 
+that the importance of past web adoption rates in large population centres is 
+surpassed by proximity to them and spatial configuration at this scale. 
+
+The above pattern of variable importance is largely in accordance with the 
+models estimated for the extended dataset. A comparison with Figure 
+\ref{var.imp10} illustrates that the main difference is the importance of the 
+neighbourhood mechanism for the OA as the space and time lag of the website 
+density is by far the most important predictor when the extended dataset is 
+employed. But still, the variable importance patterns for the two datasets are 
+not dissimilar.
+
+```{r varimpLA, eval = F, echo=FALSE, message = F, fig.cap="\\label{var.imp.LAD}Variable importance, LAD"}
+path.image <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected.png")
 knitr::include_graphics(path.image)
 ```
 
-```{r varimpOA, eval = T, echo=FALSE, message = F, fig.cap="\\label{var.imp.OA}Variable importance, OA"}
-path.image <- paste0(path, "/outputs/rf/figures/varimp_OA.png")
+```{r varimpOA, eval = F, echo=FALSE, message = F, fig.cap="\\label{var.imp.OA}Variable importance, OA"}
+path.image <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected.png")
 knitr::include_graphics(path.image)
 ```
 
-Figure \ref{var.imp} to replace Figures \ref{var.imp.LAD} and \ref{var.imp.OA} once
-I have the variable importance for LAD.
-
-```{r varimp, eval = T, echo=FALSE, message = F, fig.cap="\\label{var.imp}Variable importance"}
+```{r varimp, eval = T, echo=FALSE, message = F, warning=FALSE, fig.cap="\\label{var.imp}Variable importance", out.height="60%"}
 path.importance.lad <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected.csv")
 path.importance.oa <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected.csv")
 
-importance.oa <- read_csv(path.importance.oa)
-importance.lad <- read_csv(path.importance.oa) %>% 
-  mutate(importance = ifelse(variable == "year", 10, 
-                             ifelse(variable == "distance to London", 75, importance)))
+importance.oa <- read_csv(path.importance.oa) %>% 
+  mutate(id = c("LD", "NC", "NR", "STL", "Y", "DL", "DNC", "DNR")) %>% 
+  mutate(variable = str_to_sentence(variable))
+importance.lad <- read_csv(path.importance.lad) %>% 
+  mutate(id = c("LD", "NC", "STL", "Y", "DL", "DNC")) %>% 
+  mutate(variable = str_to_sentence(variable))
+
 
 importance.oa %>% 
   rename(OA = importance) %>% 
-  left_join(importance.lad %>% rename(LAD = importance), by = "variable") %>%
+  left_join(importance.lad %>% rename(LAD = importance), by = "id") %>%
+  dplyr::select(-variable.y, -id) %>% 
+  rename(variable = variable.x) %>% 
   pivot_longer(!variable, names_to = "spatial.unit", values_to = "importance") %>% 
-  # reorder with fct_reorder
-  ggplot(aes(x=importance, y=forcats::fct_reorder(variable, importance), 
+  mutate(order = ifelse(variable == "Distance to london", 1,
+                        ifelse(variable == "London's wensite density, t-1", 2,
+                               ifelse(variable == "Distance to the nearest city", 3,
+                                      ifelse(variable == "Nearest city's wensite density, t-1", 4,
+                                             ifelse(variable == "Distance to the nearest retail centre", 5,
+                                                    ifelse(variable == "Nearest retail centre's wensite density, t-1", 6,
+                                                           ifelse(variable == "Spatial and temporal lag of wensite density", 7, 8)))))))) %>% 
+  ggplot(aes(x=importance, y=reorder(variable, desc(order)), #forcats::fct_reorder(variable, importance), 
          fill = spatial.unit)) +
   geom_col(position = 'dodge') +
   ylab('') +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5), 
         axis.text.x = element_text(vjust = 0.5, hjust=1)) +
-  scale_fill_manual('Spatial unit', 
+  scale_fill_manual('Spatial unit: ', 
                     values = c("LAD" = "grey80",
                                 "OA"="grey48"),
                      limits = force) +
-  scale_x_continuous('Variable importance') 
-
+  scale_x_continuous('Variable importance') +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7))
 ```
 
 
-Table \ref{table.regions} presents the results of the recursive hold out models,
-which aim to highlight the potential regional heterogeneity of the spatial processes
-behind the diffusion of web technologies. To begin with, as highlighted before, 
-there is a difference of magnitude 
-of one order between the LAD and the OA prediction errors, which is aligned with 
-previous results that employed all data points. What is of interest here is the 
-regional comparison. Table \ref{table.regions} illustrates some striking similarities, 
-but also a few significant differences. The regions the web diffusion of which is 
-better predicted using models trained in the rest of the country are the same 
-despite the scale of analysis: South East, Wales, Yorkshire and The Humber and 
-the North East of England. In other words, these are the regions whose spatial 
-diffusion mechanisms of web technologies is closer to the country's average. Despite the 
-consistency across scales, this is a diverse set of regions: **ADD CHARACTERISTICS**.
-
-At the other end of the spectrum, Scotland's and the North West's web diffusion
-mechanisms are consistently diverging from the country's average. This should not
-come as a surprise as these regions are characterised of high levels of rurality
-and remoteness. Similarly, London diffusion mechanisms diverge from the country's 
-average and this is consistent across scales. London's uniqueness in UK's urban 
-system and economy is also reflected in the spatial diffusion mechanisms of web 
-technologies within its LAD and OA. It needs to be highlighted though that the 
-difference between the $R^2$ of LAD and OA is more that an order of magnitude 
-signaling how difficult is to predict diffusion at such a small spatial scale.
-Northern Ireland is an interesting case. While it ranks at the bottom of the scale
-when the models are trained and tested on LAD data, when the modelling adopts the
-more granular OA scale, the spatial mechanisms that shape the web diffusion within
-this region appear to be closer to the country's average. At this scale, proximity,
-or lack of, relative to the rest of the country become less important and the 
-internal to the region spatial structure predictors start playing a more
-important role **CHECK NI OA model**.
-
 ```{r regions}
-path.lad <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
-path.oa <- paste0(path, "/outputs/rf/figures/test_regions_OA.csv")
+path.lad <- paste0(path, "/outputs/rf/figures/test_regions_LA_corrected.csv")
+path.oa <- paste0(path, "/outputs/rf/figures/test_regions_OA_corrected.csv")
 
 lad <- read.csv(path.lad) %>% 
   rename('RSquared LAD' = Rsquared)
@@ -1084,11 +1176,118 @@ lad %>% left_join(oa) %>%
         col.names = c("Region", "$R^2$ LAD", "Rank LAD", "$R^2$ OA", "Rank OA")) 
 ```
 
-# Discussion and conclusions {#sec-conclusions}
+Table \ref{table.regions} presents the results of the recursive hold out models
+and allows to (i) highlight the regional heterogeneity of the spatial 
+processes behind the diffusion of the Web, and (ii) compare this heterogeneity
+across the two different scales of analysis. It illustrates some striking 
+similarities, but also a few significant differences. At the top of the 
+similarity with the rest of the country we see West Midlands and Yorkshire
+and the Humber for both scales. The web density for the LAD and OA of these 
+regions can be very well predicted by models trained on data for the LAD 
+and OA of the rest of the country. In other words, the spatial diffusion 
+mechanisms for these regions represent quite well the UK's average. This
+should not come as as surprise given their urban structure: they both contain
+a large urban centre (Birmingham and Leeds), smaller commuter towns as well 
+as more rural settlements. The bottom of the similarity ranking is populated 
+by Scotland, Northern Ireland, East of England and London for both scales. 
+The diffusion mechanisms for these regions diverge significantly from the 
+country's average and this could be attributed to rurality and remoteness 
+or to high levels of urbanisation and sophistication of economic activities 
+for the case of London and for East of England, which contains the Cambridge 
+area. 
 
-contrary to results from future studies regarding social media
-[@lengyel2020role], web technologies did not exclusively spread from a
-central location.
+Still, there are three regions the spatial diffusion mechanisms of which 
+differ a lot between the two scales. North West and South West are very
+close to the UK's average at the more granular OA scale, while the opposite
+applies for South East. Interestingly, the first two regions are well-known 
+tourist destinations (Lake District and Cornwall-Devon) and the exploratory
+analysis revealed clusters of high web density only visible at the OA scale 
+(Figure \ref{lisa}. Then, the South East is very well integrated with the 
+Greater London, hosts the broader Oxford area -- a known hub of research 
+excellence -- and Figure \ref{lisa} revealed high web density clusters at 
+the LAD level. 
+
+# Conclusions {#sec-conclusions}
+
+This paper assessed the importance of spatial mechanisms in the diffusion 
+of a new technology -- the Web -- at a high level of spatial granularity.
+Specifically, it assessed the capacity of the following three spatial 
+diffusion mechanisms in predicting website density in the UK over space and 
+time: (i) the hierarchical mechanism according to which diffusion runs 
+from main urban centres to secondary ones, (ii) the neighborhood mechanism 
+which highlights that diffusion first hits nearby locations, and (iii) the 
+rather canonical pattern of diffusion over time as reflected in the S-shaped 
+pattern of the cumulative level of adoption. This is the first time that 
+the importance of granular spatial mechanisms for the diffusion of an
+intangible, digital technology is exposed. The time period of the study is 
+also important as it captures the very early stages of this technology until 
+its maturity. Importantly, the empirical framework and the data employed here 
+allows to observe the active engagement with the Web that is creating and 
+maintaining a commercial website instead of the more passive action of 
+browsing webpages and accessing the Internet.
+
+The analysis firstly illustrated how well the S-pattern of cumulative adoption 
+fits at the local scale of LAD. It highlighted the heterogeneity of adoption 
+rates between LAD -- with both more and less expected examples -- as well as 
+the spatial clustering of LAD with similar adoption rates. The exploratory 
+analysis also illustrated instances of remarkable stability as well as 
+volatility of the web diffusion system that  is indicative of leapfrogging. 
+Previous research had already indicated the long-term productivity gains of 
+the early adoption of such technologies [@tranosuk]. Then, the paper developed 
+a robust and novel ML modelling framework to predict website diffusion over 
+space and time using the three spatial diffusion mechanisms based on space- 
+and time-sensitive CV without suffering from overfitting. The model revealed 
+the remarkably good predictive capacity of these mechanisms at both scales. 
+For the first time, the power of these mechanisms in predicting the diffusion 
+of a new technology was empirically tested, importantly, at very fine scales.
+
+The modelling framework also revealed that the importance of these spatial 
+mechanisms differ across different scales. While spatial structure as 
+reflected in distances to different urban centres is highly important at the 
+OA scale, it hardly plays any role at the more coarse LAD scale. And while 
+the almost canonical pattern of cumulative adoption is a key predictor at the 
+LAD level, it only plays a small role at the detailed OA level. Then, the 
+analysis revealed another level of spatial heterogeneity. While for some UK 
+regions these spatial diffusion mechanisms are very similar to the rest of 
+the country, other regions diverge significantly from the country average.
+Importantly, the above results are robust against different specifications 
+and subsets of the data. 
+
+The paper offers a number of different contributions. Firstly, it assesses, 
+for the first time, the role of these spatial diffusion mechanisms at 
+such granular spatial scales. While previous studies had 
+highlighted these mechanisms [@hagerstrand1968innovation; @rogers2010diffusion; 
+@grubler1990rise], their role had never been tested before at such granular 
+scale and, importantly, for a digital technology as weightless as the Web. 
+The findings talk directly to this literature  [e.g. @beardsell1999spatial; 
+@haller2011determinants; @lengyel2020role]. More broadly, the paper offers 
+a robust methodological framework, which utilises novel data and modern ML 
+algorithms and techniques to model the diffusion of a new technology across 
+space and time. It directly addresses the data problem which prevented economic
+geographers in engaging  with diffusion studies [@iso2005; 
+@kemeny2011international; @zook2022mapping].
+Thus, the paper seeks to renew economic geography's interest in the diffusion 
+of new technologies. Current data science advances including the availability 
+of granular enough data and adequate methods can enable economic 
+geographers to reveal interesting spatial patterns of diffusion of new 
+technologies as this paper has demonstrated. This is important as (i) 
+various stakeholders are interested in predicting localised demand for new 
+technologies for planning purposes [@leibowicz2016representing; 
+@meade2021modelling], and (ii) the adoption of such digital technologies 
+is associated with economic gains [@solow1957technical; @aghion1990model; 
+@kemeny2011international; @tranosuk; @capello2024nexus]. In addition, while 
+most related studies focused on tangible technologies, this paper sheds 
+light on the diffusion of a truly weightless digital technology that is the 
+Web. Thus, it adds much more granular findings to the limited related studies
+[@sinai2004geography; @haller2011determinants]. Importantly, although the 
+geographical focus of this paper is the UK, the empirical framework developed 
+here is easily transferable to other geographical contexts.
+
+<!-- Future research can further investigate other -->
+<!-- determinants of the diffusion of the Web. For instance, the archived web data -->
+<!-- can reveal important information about the industrial base of different places -->
+<!-- as well as the industries which were faster in adopting the Web. -->
+
 
 <!-- reset the figure, table and section numbering -->
 \setcounter{section}{0}
@@ -1100,12 +1299,184 @@ central location.
 \setcounter{figure}{0}
 \renewcommand{\thefigure}{A\arabic{figure}}
 
-# Appendices {.appendix}
+# Appendix {#appendix}
+
+<!-- #sec-appendix -->
+<!-- .appendix -->
 
 \counterwithin{figure}{section}
 \counterwithin{table}{section}
 
-## $t_0$ estunates for all LAD 
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_uk10}Grwoth curve, UK; up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/s/s_uk_per_firm.png")
+knitr::include_graphics(path.image)
+```
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_map10}LAD adoption rates; up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/s/speed_map_10.png")
+knitr::include_graphics(path.image)
+```
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank10}Dynamics of wed diffusion (LAD); up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only0595_av_10.png")
+knitr::include_graphics(path.image)
+```
+
+```{r, morani10, echo=FALSE, message=FALSE, fig.cap="\\label{morani10}Website density Moran's I; up to 10 postcodes per website"}
+
+path.in.la <- paste0(path, "/outputs/lisa/corrected/LA/morani_la_10.csv")
+path.in.oa <- paste0(path, "/outputs/lisa/corrected/oa/morani_oa_10.csv")
+
+la.m <- read_csv(path.in.la) %>% 
+  filter(p < 0.001) %>% # all values were significant
+  mutate(spatial.unit = 'LAD')
+oa.m <- read_csv(path.in.oa) %>% 
+  filter(p < 0.001) %>% # all values were significant
+  mutate(spatial.unit = 'OA')
+
+bind_rows(la.m, oa.m) %>% 
+  ggplot(aes(x=year, y=morani, fill= spatial.unit)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  ylab('Moran\'s I') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
+```
+
+```{r, echo=FALSE, message=FALSE, fig.cap="\\label{lisa10}\\centering Website density LISA maps; up to 10 postcodes per website", out.height="80%"}
+
+path.image1 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la1996.png")
+path.image2 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la2000.png")
+path.image3 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la2012.png")
+path.image4 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa1996.png")
+path.image5 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa2000.png")
+path.image6 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa2012.png")
+path.image7 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc1_la_legend.png")
+
+p1 <- ggdraw() + draw_image(path.image1)  
+p2 <- ggdraw() + draw_image(path.image2)  
+p3 <- ggdraw() + draw_image(path.image3)  
+p4 <- ggdraw() + draw_image(path.image4) 
+p5 <- ggdraw() + draw_image(path.image5)
+p6 <- ggdraw() + draw_image(path.image6)  
+p7 <- ggdraw() + draw_image(path.image7)  
+
+par(mar=rep(0,4)) # no margins
+
+p <- p1 / plot_spacer() / p4 / p2 / plot_spacer() / p5 / p3 / plot_spacer() / p6 +
+  plot_layout(ncol = 3, widths = c(1, -0.8, 1), heights = c(1,1,1))
+
+# p + inset_element(p7, left = 0.45, bottom = -0.5, right = 0.6, top = 0.1)
+p + inset_element(p7, left = 0.29, bottom = 0.8, right = 0.49, top = 1.2)
+
+```
+
+```{r, gini10, echo=FALSE, message=FALSE, fig.cap="\\label{gini10}Website density Gini coefficient; up to 10 postcodes per website"}
+
+path.in.la <- paste0(path, "/outputs/gini/gini_la_10.csv")
+path.in.oa <- paste0(path, "/outputs/gini/gini_oa_10.csv")
+
+la.gini <- read_csv(path.in.la) %>% 
+  mutate(spatial.unit = 'LAD')
+oa.gini <- read_csv(path.in.oa) %>% 
+  mutate(spatial.unit = 'OA')
+
+bind_rows(la.gini, oa.gini) %>%
+  rename(Gini = 'gini(a$n)') %>% 
+  ggplot(aes(x=year, y=Gini, fill= spatial.unit)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  ylab('Gini') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
+```
+
+```{r varimp10, eval = T, echo=FALSE, message = F, warning=FALSE, fig.cap="\\label{var.imp10}Variable importance; up to 10 postcodes per website", out.height="60%"}
+path.importance.lad <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected_10.csv")
+path.importance.oa <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected_10.csv")
+
+importance.oa <- read_csv(path.importance.oa) %>% 
+  mutate(id = c("LD", "NC", "NR", "STL", "Y", "DL", "DNC", "DNR")) %>% 
+  mutate(variable = str_to_sentence(variable))
+importance.lad <- read_csv(path.importance.lad) %>% 
+  mutate(id = c("LD", "NC", "STL", "Y", "DL", "DNC")) %>% 
+  mutate(variable = str_to_sentence(variable))
+
+
+importance.oa %>% 
+  rename(OA = importance) %>% 
+  left_join(importance.lad %>% rename(LAD = importance), by = "id") %>%
+  dplyr::select(-variable.y, -id) %>% 
+  rename(variable = variable.x) %>% 
+  pivot_longer(!variable, names_to = "spatial.unit", values_to = "importance") %>% 
+  mutate(order = ifelse(variable == "Distance to london", 1,
+                        ifelse(variable == "London's wensite density, t-1", 2,
+                               ifelse(variable == "Distance to the nearest city", 3,
+                                      ifelse(variable == "Nearest city's wensite density, t-1", 4,
+                                             ifelse(variable == "Distance to the nearest retail centre", 5,
+                                                    ifelse(variable == "Nearest retail centre's wensite density, t-1", 6,
+                                                           ifelse(variable == "Spatial and temporal lag of wensite density", 7, 8)))))))) %>% 
+  ggplot(aes(x=importance, y=reorder(variable, desc(order)), #forcats::fct_reorder(variable, importance), 
+         fill = spatial.unit)) +
+  geom_col(position = 'dodge') +
+  ylab('') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit: ', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous('Variable importance') +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7))
+```
+
+```{r regions_no_imp}
+path.lad <- paste0(path, "/outputs/rf/figures/test_regions_LA.csv")
+path.oa <- paste0(path, "/outputs/rf/figures/test_regions_OA.csv")
+
+lad <- read.csv(path.lad) %>% 
+  rename('RSquared LAD' = Rsquared)
+
+oa <- read.csv(path.oa) %>% rename(Region = test.region,
+                                   'RSquared OA' = Rsquared)
+
+lad %>% left_join(oa) %>% 
+  mutate('Rank OA' = rank(desc(`RSquared OA`)),
+         'Rank LAD' = rank(desc(`RSquared LAD`))) %>% 
+  relocate(5, .after = 2) %>% 
+  arrange(`Rank LAD`) %>% 
+  kable(caption= "Regional differences; up to 10 postcodes per website\\label{table.regions.no.imp}", 
+        digits=3,
+        col.names = c("Region", "$R^2$ LAD", "Rank LAD", "$R^2$ OA", "Rank OA")) 
+```
+
 
 ```{r, echo=FALSE, message = F, error=FALSE}
 
@@ -1116,21 +1487,28 @@ la <- st_read(path.geo, quiet = T)
 # spatial transformations
 la <- st_transform(la, 4326)
 
+# regions
+path.regions <- paste0(path, "/data/raw/LAD21_RGN21_EN_LU.csv")
+regions <- read_csv(path.regions)
+
 s.la.path <- paste0(path, "/data/temp/s_la_per_firm.csv")
+
 read.csv(s.la.path) %>% 
   left_join(la %>% as_tibble() %>% select(LAD21CD, LAD21NM),
             by = c("ladcd" = "LAD21CD")) %>% 
-  arrange(estimate) %>% 
-  select(LAD21NM, estimate, std.error, r2, fast) %>% 
+  arrange(estimate) %>%
+  left_join(regions %>% select(LAD21CD, RGN21NM), by = c("ladcd" = "LAD21CD")) %>% 
+  select(LAD21NM, RGN21NM, estimate, std.error, r2, fast) %>% 
   rename(LAD = LAD21NM,
+         Region = RGN21NM,
          "t_0 estimate" = "estimate",
          "R-squared" = "r2",
          "Std. error" = "std.error",
          "Diffusion speed" = "fast") %>% 
-  kable(caption= "S-curve estiamtes for LAD\\label{table.s.lads}", 
+  kable(caption= "S-curve estiamtes for LAD; up to 10 postcodes per website\\label{table.s.lads}", 
         digits=3,
-        align = c("l", "c", "c", "c", "c"),
-        col.names = c("LAD", "$t_0$ estimate", "Std. error", "$R^2$", "Diffusion speed"))
+        align = c("l", "l", "c", "c", "c", "c"),
+        col.names = c("LAD", "Region", "$t_0$ estimate", "Std. error", "$R^2$", "Diffusion speed"))
 ```
 
 # References {#references .unnumbered}

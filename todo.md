@@ -223,15 +223,26 @@ mtry  splitrule   RMSE      Rsquared     MAE
 - [x] find distinct(postcodes). n=1: 557,808, m=10: 
 - [x] lisa maps
 - [x] S UK the same and title. Ranking remove year and remove mid years
-- [ ] correct Gini and S. For S UK, take the sum() not mean(), theme_minimal()_
+- [x] correct Gini and S. For S UK, take the sum() not mean(), theme_minimal()_
+- [x] run problem and s for 1 and 10 
+- [x] lisa for 10
 
-- [x] problem_years.Rmd, corrected, run
-- [ ] la_RF_corrected.Rmd, corrected,
-- [ ] oa_RF_corrected.Rmd
+- [x] > 2001 instead of > 2003 for RF
+- [x] > 2001 instead of > 2003 for text
+- [x] la_RF_corrected.Rmd, 10,
+- [x] check oa resutls for one hold
+- [x] oa_RF_corrected.Rmd all
+- [x] oa_RF_corrected.Rmd 10 all
+- [x] oa_RF_corrected.Rmd one hold
+- [ ] oa_RF_corrected.Rmd 10 one hold
 
-- [ ] rerun LAD RF to have a .csv for importance
+- [ ] Spatial variable, distnce ARP
+- [ ] correlations instead of signs
+
+- [x] play with 2001 2003 for diffs in OA Moran's I 
+
+- [x] rerun LAD RF to have a .csv for importance
 - [x] write up the data cleaning process, find examples
-- [ ] to run: OA RF corrected for all but one for n = 1; OA RF for all and for all but one for m < 11. the m < 11 looks weird. reassess after the n = 1 is ready.  
 - [ ] London and year
 - [ ] End points for S curve
 - [ ] Differentiate hierarchy with neighbourhood, maybe interaction with time these variables
@@ -239,6 +250,51 @@ mtry  splitrule   RMSE      Rsquared     MAE
 - [ ] For 2004, emerald said Google fixed their algorithm 
 - [ ] Marcus Janser For green (for Emerald)
 - [x] Rank plots, average start and end
-- [ ] rerun: train the model in a loop for all but one regions as i deleted the outputs
-- [ ] Spatial variable
 
+## Kemeny_2011
+
+**GEOGRAPHY**
+Geographically removed agents face
+effective exclusion from adoption and imitation because technologies, at least initially,
+Ôcross hallways and streets more easily than oceans and continentsÕ (Glaeser et al., 1992,
+1127). Hence, much tacit and context-dependent knowledge remains spatially Ôsticky,Õ
+even in a global knowledge economy that has increasingly facilitated the exchange of
+codified information. This stickiness creates technology gaps, reinforces agglomeration
+and upholds the uneven distribution of production and income.
+
+## what did the paper do
+- tests the three spatial diffusion mechansisms at a very fine geographical scale for the first time and for a digital new technology: (i) the cumulative level of adoption follows an S-shaped pattern just like purely temporal models; (ii) diffusion is shaped by a hierarchy mechanisms in a form of a centrifugal force: from core to periphery; and (iii) diffusion is also shaped by distance and proximity.
+- the combination of data sources which escape the traditional social science domain and adequate research methods can offer new lenses to geographical research regarding the 
+understanding of technological diffusion.
+
+## contribution
+- economic geography: re-focus on diffusion studies, better understand geographical patterns of uneven development; turn the focus on active engagement with the digital instead of infrastructural approaches, always difficult to observe @zook2022mapping. 
+- stakeholders 
+	
+## previous studies 
+- [x] @beardsell1999spatial for heterogeneity (computer industry with employment data)
+- [ ] @haller2011determinants for distance mechanism (firms with website in Ireland)
+- [x] @perkins2005international latecomer advantage
+- [x] similar spatial autocorrelation with @ding2010modeling albeit in much more detailed spatial scale 
+- [x] S curves in accordance with @PAPAGIANNIDIS2015308; @lengyel2020role
+- [ ] contrary to results from future studies regarding social media
+[@lengyel2020role], web technologies did not exclusively spread from a
+central location. ???
+- [ ] range of xmid, how small the differences are in speed across LAD?
+- [ ] something about London?
+
+classic studies: @hagerstrand1968innovation; @rogers2010diffusion; @grubler1990rise
+
+specific: urban size @beardsell1999spatial computer industry
+@haller2011determinants neighbourhood
+@lengyel2020role distance
+
+data: [@iso2005; @kemeny2011international; @zook2022mapping]
+stakeholders: [@leibowicz2016representing; @meade2021modelling]
+digital econ: [@solow1957technical; @aghion1990model; @kemeny2011international; @capello2024nexus; @tranosuk]
+
+soft vs. hard technology: @sinai2004geography and @haller2011determinants
+
+contrary to results from future studies regarding social media
+[@lengyel2020role], web technologies did not exclusively spread from a
+central location.
