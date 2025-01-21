@@ -30,4 +30,10 @@ their database only includes headquarters. Not my data.
 ## Gorman 2002
 This paper examines the head and branch locations of the top 40 e-business integration firms in the USA
 
+---
 
+>5. Structure and Focus: The discussion on motivations should be streamlined and clarified. For example, after specifying that the study focuses on commercial websites rather than the web, subsequent references revert to the general term “web.” 
+
+fixed for intro and lit rev.
+
+> 6. Data Consistency: The terminology for the data should be consistent. At one point, the text refers to the “totality of the web,” while elsewhere, it specifies “commercial websites.” Clarify and maintain consistency throughout.

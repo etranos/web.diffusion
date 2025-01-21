@@ -371,7 +371,7 @@ potential local economic benefits justify the need to investigate the
 dynamics of the web diffusion in different scales in the UK. Hence, the second 
 empirical hypothesis states:
 
-> H~2~: The diffusion of the commecrial Web is shaped by both early adoption 
+> H~2~: The diffusion of the commercial Web is shaped by both early adoption 
 and late comer effects.
 
 These are the two hypotheses are empirically tested in @sec-results using the 
@@ -727,44 +727,6 @@ speed when the scale of analysis is as detailed as the LAD. Importantly,
 no previous studies estimated such cumulative adoption curves for areal
 units as small as the UK LADS.
 
-<!-- rankings -->
-The next step assesses the stability and volatility of the LAD in terms
-of their adoption of web technologies. As highlighted in the literature
-[@risk_perceptions], different agents have different perceptions about
-and levels of acceptance of the risks and the potential economic returns
-associated with the adoption of new technologies -- see for instance the
-seminal work of @venkatesh2000theoretical. To reveal such aggregated
-patterns, Figure \ref{rank} plots the ranking of UK LAD based on website
-density. To decrease noise, the average ranking of 1996-1998 and
-2010-2012 is plotted instead of the individual years. The colours depict
-the 5th and 95th percentile of the absolute difference of the LAD
-ranking between 1996-1998 and 2010-2012. While there are quite a few
-obvious cases of LAD that maintained their position between the
-beginning and the end of the study period both at the top or at the
-bottom of the hierarchy, there are also quite a few LAD that changed
-drastically their position. Some of these LAD enjoyed a process that at
-the first instance looks like *leapfrogging* since they managed to jump
-at the top of the hierarchy despite their slow start. There is extensive
-literature regarding the potential benefits of technological
-leapfrogging. The underpinning argument is that latecomers can adopt and
-benefit from new technologies that have been developed elsewhere without
-incurring the hefty initial R&D costs [@teece2008firm]. Although the
-leapfrogging literature does not pay much attention to cities and
-regions [@yu2018sustainability], previous research highlighted the long
-term and sustained productivity benefit of the early adopters of web
-technologies in the UK [@tranosuk]. So, although the LAD system is
-volatile, it is not clear whether the LAD with high concentration of
-late adopters will gain any latecomer-related benefits in a way similar
-to countries experiencing technological leapfrogging. Still, the
-opportunity to catch up that @perkins2005international illustrated at
-the country level, is also visible at the much more detailed LAD scale.
-As previously, this is consistent with including websites with up to 10
-postcodes (see Figure \ref{rank10}).
-
-```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank}Dynamics of wed diffusion (LAD)"}
-path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only0595_av.png")
-knitr::include_graphics(path.image)
-```
 
 ## Exploratory analysis
 
@@ -1215,6 +1177,52 @@ visible at the OA scale (Figure \ref{lisa}. Then, the South East is very
 well integrated with the Greater London, hosts the broader Oxford area
 -- a known hub of research excellence -- and Figure \ref{lisa} revealed
 high web density clusters at the LAD level.
+
+## H2
+
+<!-- H~2~: The diffusion of the commercial Web is shaped by both early adoption  -->
+<!-- and late comer effects. -->
+
+To test the second hypothesis (H~2~) the stability and volatility of the LAD 
+in terms of their adoption of the Web is assessed. As highlighted in 
+the literature [@risk_perceptions], different agents have different perceptions 
+about and levels of acceptance of the risks and the potential economic returns
+associated with the adoption of new technologies -- see for instance the
+seminal work of @venkatesh2000theoretical. To reveal such aggregated
+patterns, Figure \ref{rank} plots the ranking of UK LAD based on website
+density. To decrease noise, the average ranking of 1996-1998 and
+2010-2012 is plotted instead of the individual years. The colours depict
+the 5th and 95th percentile of the absolute difference of the LAD
+ranking between 1996-1998 and 2010-2012. While there are quite a few
+obvious cases of LAD that maintained their position between the
+beginning and the end of the study period both at the top or at the
+bottom of the hierarchy, there are also quite a few LAD that changed
+drastically their position. Some of these LAD enjoyed a process that at
+the first instance looks like *leapfrogging* since they managed to jump
+at the top of the hierarchy despite their slow start. 
+
+There is extensive
+literature regarding the potential benefits of technological
+leapfrogging. The underpinning argument is that latecomers can adopt and
+benefit from new technologies that have been developed elsewhere without
+incurring the hefty initial R&D costs [@teece2008firm]. Although the
+leapfrogging literature does not pay much attention to cities and
+regions [@yu2018sustainability], previous research highlighted the long
+term and sustained productivity benefit of the early adopters of web
+technologies in the UK [@tranosuk]. So, although the LAD system is
+volatile, it is not clear whether the LAD with high concentration of
+late adopters will gain any latecomer-related benefits in a way similar
+to countries experiencing technological leapfrogging. Still, the
+opportunity to catch up that @perkins2005international illustrated at
+the country level, is also visible at the much more detailed LAD scale.
+As previously, this is consistent with including websites with up to 10
+postcodes (see Figure \ref{rank10}).
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank}Dynamics of wed diffusion (LAD)"}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only0595_av.png")
+knitr::include_graphics(path.image)
+```
+
 
 # Conclusions {#sec-conclusions}
 

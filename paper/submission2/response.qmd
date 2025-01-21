@@ -207,27 +207,27 @@ already cited and @feldman2015rknowledge has now been added. These references
 are included in the second section. 
 
 Regarding the statement about economic geography studies on diffusion of 
-new technologies and innovation, I do believe that this is a fair statement. 
-The references listed below are the ones reviewed in the second section and none 
-of them are published in one of the flagship economic geography journals 
-(*Journal of Economic Geography* and *Economic Geography*). There are two papers
-published in *The Professional Geographer*, which is a broad-scope geography 
-journal and then only one paper in *Regional Studies*, which is the closest to
-economic geography. Importantly though, the *Regional Studies* paper 
+new technologies and innovation, respectfully, I do believe that this is a fair
+statement. The references listed below are the ones reviewed in the second 
+section and none of them are published in one of the flagship economic geography
+journals (*Journal of Economic Geography* and *Economic Geography*). There are 
+two papers published in *The Professional Geographer*, which is a broad-scope
+geography journal and then only one paper in *Regional Studies*, which is the 
+closest to economic geography. Importantly though, the *Regional Studies* paper 
 [@feldman2015rknowledge] paper is focused on inventions as observed by patent 
 data contrary to the broader 'adoption of a new technology' approach of this 
 paper. All other papers listed below are published in business and economics 
 journals.
 
-1. @beardsell1999spatial: European Economic Review
-2. @bednarz2020pulled: Industrial and Corporate Change
-3. @haller2011determinants: Applied Economics
-4. @perkins2011internet: The Professional Geographer
-5. @feldman2015rknowledge: Regional Studies
-6. @ding2010modeling: The Professional Geographer
-7. @bakher2013diffusion: Journal of Marketing Analytics
-8. @PAPAGIANNIDIS2015308: Technological Forecasting and Social Change
-9. @lengyel2020role: Scientific reports
+1. @beardsell1999spatial: *European Economic Review*
+2. @bednarz2020pulled: *Industrial and Corporate Change*
+3. @haller2011determinants: *Applied Economics*
+4. @perkins2011internet: *The Professional Geographer*
+5. @feldman2015rknowledge: *Regional Studies*
+6. @ding2010modeling: *The Professional Geographer*
+7. @bakher2013diffusion: *Journal of Marketing Analytics*
+8. @PAPAGIANNIDIS2015308: *Technological Forecasting and Social Change*
+9. @lengyel2020role: *Scientific reports*
 
 Also, the lack of spatial granularity argument has been highlighted in various 
 instances throughout the paper as the main line of justification.
@@ -255,7 +255,7 @@ instances throughout the paper as the main line of justification.
 The revised paper consistently illustrates that the focus is on commercial 
 websites. 
 
-In the relevant paragrapg in the Data and Methods section, the following line
+In the relevant paragraph in the Data and Methods section, the following line
 has been added: "Henceforward any reference to websites will refer to commercial 
 -- .co.uk -- websites".
 
@@ -306,7 +306,7 @@ Added.
 
 This was discussed from the data section onwards, but indeed not before that. 
 Section 2 includes a new paragraph describing the second hypothesis (H~2~), 
-which explicitely discusses the value of the multiscale approach: 
+which explicitly discusses the value of the multiscale approach: 
 "Understanding the diffusion of a new technology in multiple, detailed spatial
 scales is of interest to economic geography as ..."
 
@@ -397,11 +397,21 @@ interviews and observational studies for the same study area [@shoreditch].
 
 **This is only for the map, this is a critical point in diffusion studies**
 
+H1: first descriptives, then modelling
+- S curves
+Figure 1: UK curve, Figure 2: some LAD curves. link to a gif. 
+keep fast slow map, briefly touch upon and say it will be further discussed below
+- neighbourhood
+- hierarchy
+- modelling
+
+H2: link map with ranks. Explore OA stability within LADs
+
 \color{teal}
 \noindent 2. Geographical Scale: While the effort to model diffusion curves at a fine geographical scale is commendable, the paper does not sufficiently explain the benefits or additional knowledge gained from this approach.
 \color{black}
 
-**reveal that theories are valid for lcoal scales and inform local tech policies**
+**reveal that theories are valid for local scales and inform local tech policies**
 
 \color{teal}
 \noindent 3. Early Adopters and Latecomers: The discussion of early-adopter and latecomer advantages is underdeveloped. How do these advantages manifest locally? What specific benefits arise if a company registers its website six months earlier than competitors in other locations? If this aspect is retained, it should be elaborated in the theory section, including how it relates to local capabilities or diffusion hierarchies.
