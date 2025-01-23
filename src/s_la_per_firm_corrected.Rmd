@@ -454,7 +454,7 @@ df %>%
                         LAD21NM, "")) %>% 
 
   
-  filter(abs(diff_1st) > 253 & rank > 100 & q == "95") %>% distinct(LAD21NM)
+  #filter(abs(diff_1st) > 253 & rank > 100 & q == "95") %>% distinct(LAD21NM)
   
   ggplot(aes(year, rank, group = ladcd, alpha=alpha)) +
   geom_bump(aes(colour = q)) + #colour = "red"
@@ -467,17 +467,17 @@ df %>%
   theme(plot.title = element_text(hjust = 0.5)) +
   #theme(legend.position="none") +
   
-  geom_text_repel(aes(x = Inf, label = label), 
-                  size = 3, hjust = 0, color = "darkorange3", 
-                  max.overlaps = Inf,
-                  min.segment.length = Inf,
-                  hjust = "left") + # x = 2012 + .1
-  
-  geom_text_repel(aes(x = -Inf, label = label.low), 
-                  size = 3, hjust = 0, color = "darkorchid4", 
-                  max.overlaps = Inf,
-                  min.segment.length = Inf,
-                  hjust = "left") + # x = 2012 + .1
+  # geom_text_repel(aes(x = Inf, label = label), 
+  #                 size = 3, hjust = 0, color = "darkorange3", 
+  #                 max.overlaps = Inf,
+  #                 min.segment.length = Inf,
+  #                 hjust = "left") + # x = 2012 + .1
+  # 
+  # geom_text_repel(aes(x = -Inf, label = label.low), 
+  #                 size = 3, hjust = 0, color = "darkorchid4", 
+  #                 max.overlaps = Inf,
+  #                 min.segment.length = Inf,
+  #                 hjust = "left") + # x = 2012 + .1
   
   scale_x_continuous(NULL, 
                      #limits = c(1998, 2010), 
@@ -487,6 +487,8 @@ df %>%
 
 ggsave(out.path)
 ```
+
+## Table for leapfroging
 
 ```{r}
 path.in <- paste0(path, "/outputs/s/s_la_per_firm.csv")
@@ -513,6 +515,9 @@ df.late.early <- bind_rows(late, early)
 
 path.out <- paste0(path, "/outputs/ranks/late_early.csv")
 write_csv(df.late.early, path.out)
+
+path.out <- paste0(path, "/outputs/ranks/late.csv")
+write_csv(late, path.out)
 
 # stargazer(df.late.early[1:20,],
 #           type = 'text', 
