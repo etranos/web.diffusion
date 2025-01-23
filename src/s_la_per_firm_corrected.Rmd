@@ -338,6 +338,80 @@ la %>% as_tibble() %>%
   write_csv(path.out)
 ```
 
+## One line plot for all LAD
+
+```{r}
+a.la <- tibble()
+all.la <- df %>% 
+  filter(ladcd != "NA") %>% 
+  distinct(ladcd) %>% 
+  #slice_head(n=100) %>% 
+  simplify2array()
+
+for (i in all.la){
+  data <- df %>% filter(ladcd==i) %>%
+    dplyr::select(year, ladcd, n) 
+  
+  tryCatch(model <- (nls(n ~ SSlogis(year, Asym, xmid, scal), 
+                         data = data, 
+                         control = nls.control(maxiter = 1000))), error=function(e) NULL)
+  
+  model.name <- paste0("model.", i)
+  
+  assign(model.name, model)
+  
+  tryCatch(b.la <- tidy(model), error=function(e) NULL)
+  
+  tryCatch(b.la$r2 <- rsquare(model, data), error=function(e) NULL)
+  
+  tryCatch(a.la <-rbind(a.la, b.la), error=function(e) NULL)
+}
+
+a.la <- a.la %>% filter(term=="xmid") %>% 
+  bind_cols(as_tibble(all.la)) %>% 
+  #mutate(estimate = round(estimate, 0)) %>% 
+  #summarise(r = range(r2))
+  filter(p.value < 0.01 & 
+         r2 > 0.9) %>%    # 376 / 376, all sig, 330 r2 > 0.9
+  dplyr::select(ladcd, estimate, r2, std.error) %>%
+  mutate(fast = ifelse(estimate < xmid.uk, "fast", "slow")) # it was 2003
+
+# predictions 
+pred <- tibble()
+help <- tibble(year = 1996:2012)
+for (i in all.la){
+  model.name <- (paste0("model.", i))
+  #assign(col.name, paste0("pred.", i))
+  pred_ <- df %>% filter(ladcd == i) %>% 
+    mutate(prednls = eval(call("predict", as.name(model.name))))  # "pred.{i}" :=
+  help_ <- help %>% left_join(pred_)  
+
+  pred <- pred %>% bind_rows(help_) 
+}
+
+# plot
+path.out <- paste0(path, "/outputs/s/lad_per_firm_all.png")
+
+ggplot(pred %>% 
+              left_join(a.la), 
+            aes(x = year, y = n, color = fast, group = ladcd)) +
+  geom_line(aes(y = prednls), size = .1, alpha = .7) +
+  scale_x_continuous(NULL, labels = as.character(df$year), breaks = df$year) +
+  #geom_vline(xintercept = xmid.uk) +
+  ylab("N. of websites / per firm") + 
+  labs(color = "Website \ndiffusion speed") +
+  theme(legend.position=c(.9,.15)) +
+  scale_color_manual(values = c("fast" = "purple",
+                                "slow"="orange"),
+                     limits = force) +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.minor = element_blank()) +
+  geom_vline(xintercept = xmid.uk, colour="grey30", linetype="dashed") 
+
+ggsave(filename = path.out, bg="white")
+```
+
 ## Map the xmid
 
 ```{r}
