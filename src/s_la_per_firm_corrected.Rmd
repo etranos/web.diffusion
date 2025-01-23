@@ -29,6 +29,7 @@ library(tidygeocoder)
 library(rms)
 library(stargazer)
 library(ggbump)
+library(latex2exp)
 
 options(scipen=10000)
 
@@ -399,15 +400,19 @@ ggplot(pred %>%
   scale_x_continuous(NULL, labels = as.character(df$year), breaks = df$year) +
   #geom_vline(xintercept = xmid.uk) +
   ylab("N. of websites / per firm") + 
-  labs(color = "Website \ndiffusion speed") +
+  labs(color = "Website diffusion speed") +
   theme(legend.position=c(.9,.15)) +
   scale_color_manual(values = c("fast" = "purple",
                                 "slow"="orange"),
                      limits = force) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
-        panel.grid.minor = element_blank()) +
-  geom_vline(xintercept = xmid.uk, colour="grey30", linetype="dashed") 
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom") +
+  geom_vline(aes(xintercept = xmid.uk, linetype="dashed"), colour="grey30") +
+  scale_linetype_manual(values=c("dashed"), 
+                        labels = c(""), 
+                        name = unname(TeX(c("$t_{0}$ for the UK")))) 
 
 ggsave(filename = path.out, bg="white")
 ```
