@@ -16,8 +16,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
 library(rprojroot)
-library(rgdal)
-library(rgeos)
+# library(rgdal)
+# library(rgeos)
 library(sf)
 library(spdep)
 #library(tmap)
@@ -496,7 +496,8 @@ model.all <- train(n ~                                                          
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
 
 #stopCluster(cl)
 end.time <- Sys.time()
@@ -513,20 +514,23 @@ print(model.all)
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
-# Summary of sample sizes: 4718, 4690, 5040, 4718, 5055, 4704, ... 
+# Summary of sample sizes: 5082, 4354, 4650, 4746, 5130, 4928, ... 
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE       Rsquared   MAE      
-#   2     variance    0.1877289  0.7762104  0.1222690
-#   2     extratrees  0.1945882  0.7537303  0.1274455
-#   4     variance    0.1899769  0.7754308  0.1253349
-#   4     extratrees  0.1925299  0.7604062  0.1270665
-#   6     variance    0.1926697  0.7707287  0.1277624
-#   6     extratrees  0.1930151  0.7601929  0.1280934
+#   2     variance    0.1908100  0.7375479  0.1279762
+#   2     extratrees  0.1994918  0.7045691  0.1340791
+#   4     variance    0.1899064  0.7491920  0.1294553
+#   4     extratrees  0.1985176  0.7110348  0.1347026
+#   6     variance    0.1911215  0.7530296  0.1312026
+#   6     extratrees  0.1992530  0.7110950  0.1359168
 # 
-# Tuning parameter 'min.node.size' was held constant at a value of 5
-# RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule = variance and min.node.size = 5.
+# Tuning parameter 'min.node.size' was held constant at
+#  a value of 5
+# RMSE was used to select the optimal model using
+#  the smallest value.
+# The final values used for the model were mtry =
+#  4, splitrule = variance and min.node.size = 5.
 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
@@ -560,7 +564,7 @@ seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
 set.seed(831)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # 6 feature + 2
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 6) # 6 feature + 2
 
 #for the last model
 set.seed(832)
@@ -601,14 +605,15 @@ for (i in regions){
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
   assign(paste0("model.all",as.character(i)), model.all) # object name = region not in the training data
 }
 
 # stopCluster(cl)
 end.time <- Sys.time() 
 time.taken <- round(end.time - start.time,2)
-time.taken # ca. 4 minutes 
+time.taken # ca. 18 minutes 
 ```
 
 ### Resamples for plots
@@ -765,9 +770,9 @@ tc <- trainControl(method = "cv",
                    index = indices$index,
                    savePredictions = 'final')
 
-detectCores()
-cl <- makePSOCKcluster(14)
-registerDoParallel(cl)
+# detectCores()
+# cl <- makePSOCKcluster(14)
+# registerDoParallel(cl)
 
 start.time <- Sys.time()
 model.all <- train(growth ~                                                     # REPLACE n WITH growth
@@ -779,9 +784,10 @@ model.all <- train(growth ~                                                     
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)  
 
-stopCluster(cl)
+# stopCluster(cl)
 end.time <- Sys.time()
 time.taken <- round(end.time - start.time,2)
 time.taken
@@ -796,16 +802,16 @@ print(model.all)
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
-# Summary of sample sizes: 4044, 3685, 4032, 4044, 4044, 3696, ... 
+# Summary of sample sizes: 4356, 3421, 3720, 4068, 4104, 3872, ... 
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE       Rsquared   MAE      
-#   2     variance    0.2773784  0.6171406  0.2025901
-#   2     extratrees  0.2696423  0.6424804  0.1985126
-#   4     variance    0.2834811  0.5991036  0.2058774
-#   4     extratrees  0.2720828  0.6324695  0.2007287
-#   6     variance    0.2902072  0.5801010  0.2101899
-#   6     extratrees  0.2755322  0.6215775  0.2037045
+#   2     variance    0.3044927  0.5868676  0.2369061
+#   2     extratrees  0.2954167  0.6153847  0.2312128
+#   4     variance    0.3170846  0.5455342  0.2439098
+#   4     extratrees  0.3008763  0.5922954  0.2347268
+#   6     variance    0.3222021  0.5224533  0.2464477
+#   6     extratrees  0.3055270  0.5782538  0.2388544
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
@@ -836,15 +842,15 @@ seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
 set.seed(831)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # 6 feature + 2
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 6) # 6 feature + 2
 
 #for the last model
 set.seed(832)
 seeds[[11]]<-sample.int(1000, 1)
 
 # detectCores()
-cl <- makePSOCKcluster(14)
-registerDoParallel(cl)
+# cl <- makePSOCKcluster(14)
+# registerDoParallel(cl)
 
 # train in every region
 start.time <- Sys.time()
@@ -877,11 +883,12 @@ for (i in regions){
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
   assign(paste0("model.all",as.character(i)), model.all) # object name = region not in the training data
 }
 
-stopCluster(cl)
+# stopCluster(cl)
 end.time <- Sys.time() 
 time.taken <- round(end.time - start.time,2)
 time.taken # ca. 3 minutes 

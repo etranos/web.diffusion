@@ -1,7 +1,7 @@
 variable,importance
-"London's website density, t-1",49.16135487318944
-"nearest city's website density, t-1",36.51309451617304
+"London's website density, t-1",21.61355407891736
+"nearest city's website density, t-1",0
 spatial and temporal lag of website density,100
-year,66.12987548026327
-distance to London,0
-distance to the nearest city,7.435813731693121
+year,31.63534168840565
+distance to London,9.167607420029466
+distance to the nearest city,13.517390590159414

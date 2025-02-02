@@ -213,7 +213,7 @@ df.country <- df.corrected %>%
 fit <- nls(n ~ SSlogis(year, Asym, xmid, scal), data = df.country)
 summary(fit)
 
-# xmid = 2003.118
+# xmid.uk = 2003.118
 xmid.uk <- tidy(fit) %>% 
   filter(term=="xmid") %>% 
   dplyr::select(estimate) %>% as.numeric()
@@ -342,6 +342,8 @@ la %>% as_tibble() %>%
 ## One line plot for all LAD
 
 ```{r}
+# xmid.uk = 2003.118
+
 a.la <- tibble()
 all.la <- df %>% 
   filter(ladcd != "NA") %>% 
@@ -399,7 +401,7 @@ ggplot(pred %>%
   geom_line(aes(y = prednls), size = .1, alpha = .7) +
   scale_x_continuous(NULL, labels = as.character(df$year), breaks = df$year) +
   #geom_vline(xintercept = xmid.uk) +
-  ylab("N. of websites / per firm") + 
+  ylab("N. of websites per firm") + 
   labs(color = "Website diffusion speed") +
   theme(legend.position=c(.9,.15)) +
   scale_color_manual(values = c("fast" = "purple",
