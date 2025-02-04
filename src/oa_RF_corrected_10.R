@@ -11,7 +11,7 @@
 #'   })
 #' ---
 #' 
-## ----setup, include=FALSE-----------------------------------------------------
+## ----setup, include=FALSE-------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
@@ -49,7 +49,7 @@ path <- find_rstudio_root_file()
 #' 
 #' [source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
   dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
@@ -68,7 +68,7 @@ lookup <- read_csv(path.lookup) %>%
 #' I use the problem postcodes from n = 1 as these are the true outliers as per the
 #' line plots.
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 n = 1 #number of unique postcodes. 
 m = 11
 
@@ -117,7 +117,7 @@ problem.pcs <- c("SE24 9HP", "CV8 2ED", "GL16 7YA", "CW1 6GL", "M28 2SL", "DE21 
 #' in the above postcodes. I turn them to NAs and then use a regression to impute these
 #' gaps.
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 df.corrected <- bind_rows(df9610, df1112) %>% 
   filter(year > 1995 & year < 2013) %>% 
   group_by(pc, year) %>% 
@@ -135,7 +135,7 @@ df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
 #' 
 #' ## OA df
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 df <- df.corrected %>% 
   mutate(year = as.integer(as.character(year))) %>% 
   filter(year > 1995 & year < 2013) %>% 
@@ -150,7 +150,7 @@ df <- df.corrected %>%
 #' 
 #' ## spatial data
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # get OA for England and Wales
 path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
 oa.ew <- st_read(path.geo)
@@ -199,7 +199,7 @@ uk <- st_transform(uk, 4326)  # EPSG code for WGS84
 #' 
 #' ## Full panel
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 #oa.sf <- st_as_sf(oa.uk)
 
 oa.full <- replicate(17, oa.uk %>% as_tibble(), simplify = FALSE) %>%
@@ -227,7 +227,7 @@ rm(oa.full)
 #' I use the centroids from arcgis API as they better reflect the city centres than 
 #' than the geometric centres of the boundaries, which I use for `sum(n)`
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # oa centroids
 # oa.uk.c <- (rgeos::gCentroid(oa.uk, byid=TRUE))@coords %>% as.data.frame()
 # oa.uk.c$id <- row.names(oa.uk.c)  #as_tibble(rownames = NA) %>% 
@@ -282,7 +282,7 @@ cities <- geo(city.names, no_query = F, method = "arcgis") %>%
 #' 
 #' ### City boundaries
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 
 # # cities
 # city.names <- c(
@@ -326,7 +326,7 @@ city.boundaries <- rbind(city.boundaries.ew, city.boundaries.sc.ni)
 #' 
 #' ### Retail centres
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # retail centres <- 
 geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
 #retail <-readOGR(geo.path) 
@@ -359,7 +359,7 @@ retail.major.cetres <- retail.major.cetres.help %>%
 #' 
 #' ### Distance to cities
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # NI
 oa.uk.c.ni <- oa.uk.c %>% filter(str_detect(id, "^N"))
 
@@ -419,7 +419,7 @@ sapply(df, function(x) sum(is.na(x)))
 #' 
 #' ### Distance to retail centres
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # dist.retail <- distm(cbind(oa.uk.c$X, oa.uk.c$Y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
 # dist.retail <- round((dist.retail/1000),2) %>% 
 #   as_tibble()  
@@ -484,7 +484,7 @@ df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd"))
 #' 
 #' ### n for cities
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 #help.retail <- dist.retail
 
 # n nearest city
@@ -521,7 +521,7 @@ df <- df %>% left_join(london.boundaries.help, by = c("year" = "year"))
 #' 
 #' ### n for nearest retail
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # Old definition for retail centre
 # df <- df %>% left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
 #                          rename(n.nearest.retail = n), 
@@ -593,7 +593,7 @@ df <- df %>% left_join(retail.help, by = c("dist.retail.name" = "RC_ID", "year" 
 #' 
 #' ## TODO
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # Lookup: OA to regions
 # **FIXED< DELETE IN TEST** NEED TO ADD NI. NOT A PROBLEM FOR NOW AS IT IS FIXED IN THE TEST SECTION
   
@@ -608,7 +608,7 @@ df <- df %>% left_join(retail.help, by = c("dist.retail.name" = "RC_ID", "year" 
 #' 
 #' ## Spatial and spatio-temporal lags
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 # sf_use_s2(FALSE)
 # oa.c <- st_centroid(oa.uk)
 # kn <- knearneigh(oa.c, k = 5)
@@ -629,7 +629,7 @@ df <- df %>%
 #' 
 #' ## RF with CAST
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 
 # Lookup: OA to regions
 path.lookup <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")  
@@ -656,7 +656,8 @@ df <- df %>% group_by(oa11cd) %>%
   mutate(#n.lag = dplyr::lag(n),
          growth = log(n/n.lag),
                     abs.growth = n - n.lag) %>% 
-  relocate(n.lag, .after = n)
+  relocate(n.lag, .after = n) %>% 
+  ungroup()
 
 # out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
 # df <- read_csv(out.path)
@@ -714,14 +715,12 @@ df %>% group_by(year) %>%
 # 
 # df %>% slice_max(order_by = n, n = 5, by = year)
 
-df <- df %>% ungroup()
-
 #' 
 #' ### unregister_dopar function
 #' 
 #' This is helpful when the parallel loop collapses. 
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 unregister_dopar <- function() {
   env <- foreach:::.foreachGlobals
   rm(list=ls(name=env), pos=env)
@@ -731,7 +730,7 @@ unregister_dopar()
 #' 
 #' ### train the model in all data 
 #' 
-## -----------------------------------------------------------------------------
+## -------------------------------------------------------------------
 set.seed(123)
 indices <- CreateSpacetimeFolds(df, 
                                 spacevar = "RGN11CD",
@@ -739,7 +738,7 @@ indices <- CreateSpacetimeFolds(df,
                                 k = 10)
 
 #length is = (n_repeats*nresampling)+1
-seeds <- vector(mode = "list", length = 11)
+seeds <- vector(mode = "list", length = 8)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
 for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables + 2
@@ -768,7 +767,8 @@ model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
 
 # stopCluster(cl)
 end.time <- Sys.time()
@@ -784,21 +784,22 @@ print(model.all)
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
-# Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
+# Summary of sample sizes: 3215700, 2574600, 3128916, 3225315, 2789175, 2618196, ... 
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    22.46734  0.4784290  5.681843
-#   2     extratrees  24.69943  0.3875775  6.049473
-#   5     variance    22.50225  0.4803563  5.664478
-#   5     extratrees  23.95316  0.4143508  6.102471
-#   8     variance    23.14682  0.4644807  5.678126
-#   8     extratrees  24.14426  0.4095256  6.213216
+#   2     variance    21.61442  0.4482161  6.736518
+#   2     extratrees  23.82034  0.3557068  6.584642
+#   5     variance    21.58205  0.4549608  6.845549
+#   5     extratrees  23.00958  0.3848122  6.884375
+#   8     variance    22.07397  0.4426922  6.949996
+#   8     extratrees  23.17989  0.3796106  7.060913
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule = variance and min.node.size = 5.
- 
+# The final values used for the model were mtry = 5, splitrule
+#  = variance and min.node.size = 5.
+
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
@@ -824,26 +825,3 @@ varimp_mars$importance %>%
   rename(variable = rowname,
          importance = Overall) %>% 
   write_csv(path.out)
-
-#' 
-#' ### train the model in a loop for all but one regions
-#' 
-## -----------------------------------------------------------------------------
-rm(list=setdiff(ls(), c("df", "path")))
-
-#' 
-#' ## Correlations
-#' 
-## -----------------------------------------------------------------------------
-cor <- rcorr(as.matrix(df[-(1:3)]))
-r <- cor$r
-p <- cor$P
-
-path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_10.csv")
-r %>% as_tibble(rownames = "rowname") %>% 
-  write_csv(path.out)
-
-path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_10p.csv")
-p %>% as_tibble(rownames = "rowname") %>% 
-  write_csv(path.out)
-

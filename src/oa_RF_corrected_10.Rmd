@@ -656,7 +656,8 @@ df <- df %>% group_by(oa11cd) %>%
   mutate(#n.lag = dplyr::lag(n),
          growth = log(n/n.lag),
                     abs.growth = n - n.lag) %>% 
-  relocate(n.lag, .after = n)
+  relocate(n.lag, .after = n) %>% 
+  ungroup()
 
 # out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
 # df <- read_csv(out.path)
@@ -713,8 +714,6 @@ df %>% group_by(year) %>%
 #   pivot_longer(everything(), names_sep='_', names_to=c('variable', '.value'))
 # 
 # df %>% slice_max(order_by = n, n = 5, by = year)
-
-df <- df %>% ungroup()
 ```
 
 ### unregister_dopar function
@@ -739,7 +738,7 @@ indices <- CreateSpacetimeFolds(df,
                                 k = 10)
 
 #length is = (n_repeats*nresampling)+1
-seeds <- vector(mode = "list", length = 11)
+seeds <- vector(mode = "list", length = 8)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
 for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables + 2
@@ -768,7 +767,8 @@ model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
 
 # stopCluster(cl)
 end.time <- Sys.time()
@@ -784,21 +784,22 @@ print(model.all)
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
-# Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
+# Summary of sample sizes: 3215700, 2574600, 3128916, 3225315, 2789175, 2618196, ... 
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    22.46734  0.4784290  5.681843
-#   2     extratrees  24.69943  0.3875775  6.049473
-#   5     variance    22.50225  0.4803563  5.664478
-#   5     extratrees  23.95316  0.4143508  6.102471
-#   8     variance    23.14682  0.4644807  5.678126
-#   8     extratrees  24.14426  0.4095256  6.213216
+#   2     variance    21.61442  0.4482161  6.736518
+#   2     extratrees  23.82034  0.3557068  6.584642
+#   5     variance    21.58205  0.4549608  6.845549
+#   5     extratrees  23.00958  0.3848122  6.884375
+#   8     variance    22.07397  0.4426922  6.949996
+#   8     extratrees  23.17989  0.3796106  7.060913
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule = variance and min.node.size = 5.
- 
+# The final values used for the model were mtry = 5, splitrule
+#  = variance and min.node.size = 5.
+
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
@@ -843,7 +844,7 @@ k <- 10 #
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables + 2
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # It should be RHS variables + 2
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -883,7 +884,8 @@ for (i in regions){
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
   
   file <- paste0("/hdd/tmp/regions/corrected_10/regions_corrected_10", as.character(i), ".RData")  
   save(model.all, file = file)  # file name = region not in the training data
