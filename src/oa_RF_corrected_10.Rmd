@@ -788,18 +788,18 @@ print(model.all)
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    21.61442  0.4482161  6.736518
-#   2     extratrees  23.82034  0.3557068  6.584642
-#   5     variance    21.58205  0.4549608  6.845549
-#   5     extratrees  23.00958  0.3848122  6.884375
-#   8     variance    22.07397  0.4426922  6.949996
-#   8     extratrees  23.17989  0.3796106  7.060913
+#   2     variance    21.61233  0.4487783  6.733987
+#   2     extratrees  23.80635  0.3564440  6.583231
+#   5     variance    21.59062  0.4546951  6.845095
+#   5     extratrees  23.00905  0.3846503  6.885083
+#   8     variance    22.10042  0.4421229  6.953833
+#   8     extratrees  23.19776  0.3791247  7.061227
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 5, splitrule
-#  = variance and min.node.size = 5.
-
+# The final values used for the model were mtry = 5, splitrule = variance and
+#  min.node.size = 5.
+ 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
