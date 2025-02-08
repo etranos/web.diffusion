@@ -774,7 +774,8 @@ df <- df %>% group_by(oa11cd) %>%
   mutate(#n.lag = dplyr::lag(n),
          growth = log(n/n.lag),
                     abs.growth = n - n.lag) %>% 
-  relocate(n.lag, .after = n)
+  relocate(n.lag, .after = n) %>% 
+  ungroup()
 
 # out.path <- paste0(path, "/data/temp/df_for_oa_rf.csv")
 # df <- read_csv(out.path)
@@ -850,7 +851,7 @@ unregister_dopar()
 ```{r}
 set.seed(123)
 indices <- CreateSpacetimeFolds(df, 
-                                spacevar = "oa11cd",
+                                spacevar = "RGN11CD",
                                 timevar = "year", 
                                 k = 10)
 
@@ -858,7 +859,7 @@ indices <- CreateSpacetimeFolds(df,
 seeds <- vector(mode = "list", length = 11)
 
 #(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
-for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 10) # It should be RHS variables + 2
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # It should be RHS variables + 2
 
 #for the last model
 seeds[[11]]<-sample.int(1000, 1)
@@ -884,7 +885,8 @@ model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity")
+                   importance = "impurity",
+                   num.threads = 15)
 
 # stopCluster(cl)
 end.time <- Sys.time()

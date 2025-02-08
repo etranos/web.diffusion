@@ -776,6 +776,7 @@ time.taken #20.16h
 
 print(model.all)
 
+# [not reproducible despite having the code as the LAD models]
 # Random Forest 
 # 
 # 3716736 samples
@@ -787,18 +788,18 @@ print(model.all)
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    3.235219  0.3131576  1.211443
-#   2     extratrees  3.452069  0.2176445  1.182582
-#   5     variance    3.217974  0.3337214  1.233777
-#   5     extratrees  3.386142  0.2500448  1.251388
-#   8     variance    3.294155  0.3208588  1.240884
-#   8     extratrees  3.418390  0.2496608  1.281916
+#   2     variance    3.236301  0.3128048  1.211779
+#   2     extratrees  3.453903  0.2169766  1.184256
+#   5     variance    3.217652  0.3331498  1.233429
+#   5     extratrees  3.390341  0.2491582  1.254907
+#   8     variance    3.296126  0.3199896  1.241124
+#   8     extratrees  3.418875  0.2485125  1.283134
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 5, splitrule
-#  = variance and min.node.size = 5.
-
+# The final values used for the model were mtry = 5, splitrule = variance
+#  and min.node.size = 5.
+ 
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
