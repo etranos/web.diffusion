@@ -177,3 +177,43 @@ dbl  (3): dointr, doterm, usertype
 +       #V1.domain < m,             # for multiple pc
 +       V1.domain == n,             # for n == 1
 +       year > 1995)   
+Rows: 71137089 Columns: 4
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (2): pc, domain
+dbl (2): year, V1.domain
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> 
+> data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
+> #Created by domain1112.Rmd, which is based on domain.R and uses domain instead of host.
+> #This is what we use for the hyperlinks paper as per George's script
+> 
+> df1112 <- read_csv(data.path2011_2012) %>% 
++   filter(
++     #V1.domain < m,             # for multiple pc
++     V1.domain == n)             # for n == 1
+Rows: 21400526 Columns: 4
+── Column specification ────────────────────────────────────────────────────────
+Delimiter: ","
+chr (2): pc, domain
+dbl (2): year, V1.domain
+
+ℹ Use `spec()` to retrieve the full column specification for this data.
+ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+> 
+> df.long <- bind_rows(df9610, df1112) %>% 
++   filter(year > 1995 & year < 2013) %>% 
++   group_by(pc, year) %>% 
++   summarise(n = n()) %>%
++   ungroup() %>% 
++   #arrange(desc(n)) %>% 
++   pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
++   dplyr::select(pc, n_1996, n_1999, n_2000, n_2001, n_2002, n_2003, n_2004, n_2005, n_2006, n_2007, n_2008, n_2009, n_2010, n_2011, n_2012) %>%
++   arrange(desc(n_2004), desc(n_2005)) %>% 
++   slice_head(n=1000) %>% 
++   pivot_longer(!pc, names_to = "year", values_to = "n") %>% 
++   mutate(year = as.integer(sub("n_", "", year, fixed = TRUE))) %>% 
++   replace(is.na(.), 0) %>% 
++   mutate(outlier = ifelse(n > 1000 & (year==2004 | year == 2005), pc, ""))
