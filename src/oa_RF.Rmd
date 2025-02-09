@@ -902,22 +902,22 @@ print(model.all)
 # 
 # No pre-processing
 # Resampling: Cross-Validated (10 fold) 
-# Summary of sample sizes: 2926910, 2926924, 3136005, 2926924, 3136005, 2926924, ... 
+# Summary of sample sizes: 3215700, 2574600, 3128916, 3225315, 2789175, 2618196, ... 
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    4.999920  0.2053697  1.047293
-#   2     extratrees  5.167655  0.1540213  1.103048
-#   5     variance    5.187039  0.1710128  1.034382
-#   5     extratrees  5.169570  0.1557868  1.122845
-#   8     variance    5.633427  0.1247189  1.035171
-#   8     extratrees  5.182860  0.1563555  1.137332
+#   2     variance    4.644230  0.2444898  1.236831
+#   2     extratrees  4.874616  0.1642528  1.207521
+#   5     variance    4.716793  0.2415236  1.251176
+#   5     extratrees  4.779489  0.2006192  1.294454
+#   8     variance    5.257495  0.1919632  1.262540
+#   8     extratrees  4.814190  0.1951799  1.311195
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
-# The final values used for the model were mtry = 2, splitrule =
-#  variance and min.node.size = 5.
-
+# The final values used for the model were mtry = 2, splitrule = variance
+#  and min.node.size = 5.
+#  
 varimp_mars <- varImp(model.all) 
 varimp_mars$importance <- varimp_mars$importance %>% 
   rownames_to_column() %>% 
@@ -951,6 +951,8 @@ save(model.all, file = path.out)
 # ffsmodel_LLO$selectedvars
 # plot_ffs(ffsmodel_LLO)
 ```
+
+### FROM NOW ON, IT HAS NOT BEEN USED FOR SUBMISSION 2
 
 ### train the model in a loop for all but one regions
 

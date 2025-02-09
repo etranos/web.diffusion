@@ -35,6 +35,7 @@ library(plm)
 library(caret)
 library(randomForest)
 library(CAST)
+library(Hmisc)
 
 options(scipen=10000)
 
@@ -64,6 +65,9 @@ lookup <- read_csv(path.lookup) %>%
 #' 
 #' ## Problem postcodes
 #' 
+#' I use the problem postcodes from n = 1 as these are the true outliers as per the
+#' line plots.
+#' 
 ## --------------------------------------------------------------------------
 n = 1 #number of unique postcodes. 
 m = 11
@@ -75,8 +79,8 @@ data.path9610 <- paste0(data.folder, "domain_pc_year.csv")
 
 df9610 <- read_csv(data.path9610) %>% 
   filter(
-      #V1.domain < m,             # for multiple pc
-      V1.domain == n,             # for n == 1
+      V1.domain < m,               # for multiple pc
+      #V1.domain == n,             # for n == 1
       year > 1995)   
 
 data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
@@ -85,13 +89,13 @@ data.path2011_2012 <- paste0(path, "/data/temp/domain_pc_year1112.csv")
 
 df1112 <- read_csv(data.path2011_2012) %>% 
   filter(
-    #V1.domain < m,             # for multiple pc
-    V1.domain == n)             # for n == 1
+    V1.domain < m)               # for multiple pc
+    #V1.domain == n)             # for n == 1
 
 df.long <- bind_rows(df9610, df1112) %>% 
   filter(year > 1995 & year < 2013) %>% 
   group_by(pc, year) %>% 
-  summarise(n = n()) %>%
+  summarise(n = sum(V1.domain)) %>%
   ungroup() %>% 
   #arrange(desc(n)) %>% 
   pivot_wider(names_from = year, values_from = n, names_prefix = "n_") %>% 
@@ -103,12 +107,8 @@ df.long <- bind_rows(df9610, df1112) %>%
   replace(is.na(.), 0) %>% 
   mutate(outlier = ifelse(n > 1000 & (year==2004 | year == 2005), pc, ""))
 
-problem.pcs <- df.long %>% filter(year==2004 | year == 2005, 
-                   n > 1000) %>% 
-  distinct(pc) 
-
-# n > 1500: "M28 2SL"  "SE24 9HP" "CV8 2ED"  "CW1 6GL"   
-# n > 1000: SE24 9HP, CV8 2ED, GL16 7YA, CW1 6GL, M28 2SL, DE21 7BF
+# From n = 1 as these are the 'true' outliers
+problem.pcs <- c("SE24 9HP", "CV8 2ED", "GL16 7YA", "CW1 6GL", "M28 2SL", "DE21 7BF")
 
 #' 
 #' ## Corrected
@@ -121,9 +121,10 @@ problem.pcs <- df.long %>% filter(year==2004 | year == 2005,
 df.corrected <- bind_rows(df9610, df1112) %>% 
   filter(year > 1995 & year < 2013) %>% 
   group_by(pc, year) %>% 
-  summarise(n = n()) %>% 
+  summarise(n = sum(V1.domain)) %>% 
   ungroup() %>% 
-  mutate(n = ifelse(pc %in% as.character(problem.pcs$pc) & year > 2001 & year <2007, NA, n))
+  # The next line is different than the same for  n = 1: problem.pcs$pc
+  mutate(n = ifelse(pc %in% as.character(problem.pcs) & year > 2001 & year <2007, NA, n))
 
 df.corrected <- pdata.frame(df.corrected)
 predictions <- round(predict(plm(n ~ as.factor(year), effect = "individual", 
@@ -140,7 +141,7 @@ df <- df.corrected %>%
   filter(year > 1995 & year < 2013) %>% 
   left_join(lookup, by = "pc", suffix =c("","")) %>% 
   group_by(year, oa11cd) %>%
-  summarise(n = sum(n)) %>% # **********ATTENTION*********  
+  summarise(n = sum(n)) %>% # for multiple pc  
   ungroup() %>% 
   complete(oa11cd, year) %>% 
   filter(!is.na(oa11cd)) %>% # drop c. 10 - 200 per year, which are not assigned to a LAD
@@ -726,9 +727,12 @@ unregister_dopar <- function() {
 }
 unregister_dopar()
 
-
 #' 
 #' ### train the model in a loop for all but one regions
+#' 
+## --------------------------------------------------------------------------
+rm(list=setdiff(ls(), c("df", "path")))
+
 #' 
 #' 64 GB of swap memory to run the below
 #' 
@@ -762,7 +766,7 @@ for (i in regions){
   
   set.seed(71)
   indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD!=i), 
-                                spacevar = "RGN21CD",
+                                spacevar = "RGN11CD",
                                 timevar = "year", 
                                 k = k)
   
@@ -781,10 +785,10 @@ for (i in regions){
                    method = "ranger",
                    na.action = na.omit,
                    #preProc = c("center", "scale"),
-                   importance = "impurity",,
+                   importance = "impurity",
                    num.threads = 15)
-
-  file <- paste0("/hdd/tmp/regions/corrected/regions_corrected_", as.character(i), ".RData")  
+  
+  file <- paste0("/hdd/tmp/regions/corrected_10/regions_corrected_10", as.character(i), ".RData")  
   save(model.all, file = file)  # file name = region not in the training data
   rm(model.all)
   
@@ -799,6 +803,10 @@ time.taken
 
 #' 
 #' ### Test on one region
+#' 
+#' THE RESULTS ARE WEIRD. REVISIT. 
+#' 
+#' The corrected for n = 1 makes sense. Check the name changes below.
 #' 
 ## ----include=TRUE, results= 'markup', message=FALSE, fig.height=15, fig.width=10----
 
@@ -815,7 +823,7 @@ df %>% group_by(year) %>%
 regions <- df %>% ungroup() %>% distinct(RGN11CD) 
 regions <- as.vector(regions$RGN11CD)
 
-new.path <- "/hdd/tmp/regions/corrected/"
+new.path <- "/hdd/tmp/regions/corrected_10/"
 #filenames <- list.files(paste0(path, "/outputs/rf/models/oa_rf/regions"), pattern = "*.RData", full.names = T)
 
 df.predictions <- data.frame()
@@ -823,8 +831,8 @@ df.predictions <- data.frame()
 for (i in regions){
   
   print(i)
-  
-  load(file = paste0(new.path, "regions_corrected_", as.character(i), ".RData"))
+
+  load(file = paste0(new.path, "regions_corrected_10", as.character(i), ".RData"))
   #model.name <- gsub("/home/nw19521/projects/web.diffusion/outputs/rf/models/oa_rf/regions/|.RData", "", i)
   #assign(as.character(i), model.all)  
   
@@ -844,6 +852,9 @@ for (i in regions){
   df.predictions <- rbind(d, df.predictions)
   
   rm(model.all)
+  
+  print(i)
+  
 }
 
 
@@ -882,10 +893,10 @@ lookup.region <- read_csv(path.lookup) %>%
   dplyr::select(RGN21CD, RGN21NM) %>% 
   distinct() %>% 
   rename(RGN11CD = RGN21CD) %>% 
-  add_row(RGN11CD = c("Scotland", "NI", "Wales"), 
+  add_row(RGN11CD = c("Scotland", "NI", "Wales"),
           RGN21NM = c("Scotland", "Nortern Ireland", "Wales"))
 
-path.out <- paste0(path, "/outputs/rf/figures/test_regions_OA_corrected.csv")
+path.out <- paste0(path, "/outputs/rf/figures/test_regions_OA_corrected_10.csv")
 rf.year.all.metrics %>% 
   as.data.frame() %>%
   rownames_to_column(var = "metrics") %>% 
