@@ -726,6 +726,105 @@ unregister_dopar <- function() {
 }
 unregister_dopar()
 
+#' 
+#' ### train the model in all data 
+#' 
+## --------------------------------------------------------------------------
+set.seed(123)
+indices <- CreateSpacetimeFolds(df, 
+                                spacevar = "RGN11CD",
+                                timevar = "year", 
+                                k = 10)
+
+#length is = (n_repeats*nresampling)+1
+seeds <- vector(mode = "list", length = 11)
+
+#(8 is the number of tuning parameter, mtry for rf, here equal to ncol(iris)-2)
+for(i in 1:10) seeds[[i]]<- sample.int(n=1000, 8) # It should be RHS variables + 2
+
+#for the last model
+seeds[[11]]<-sample.int(1000, 1)
+
+# CV
+tc <- trainControl(method = "cv",
+                   number = 10,
+                   seeds = seeds,
+                   allowParallel = T,
+                   index = indices$index,
+                   savePredictions = 'final')
+
+# detectCores()
+# cl <- makePSOCKcluster(2)
+# registerDoParallel(cl)
+
+start.time <- Sys.time()
+model.all <- train(n ~ #area + dist + dist.retail + London + south + n.slag + n.lag + n.l.slag + n.nearest.city + year,
+                     n.London.lag + n.nearest.city.lag + n.nearest.retail.lag + n.l.slag + year + London + dist + dist.retail,
+                     #London.v + city.v + retail.v + n.l.slag + year,
+                   data = df, 
+                   trControl = tc,
+                   method = "ranger",
+                   na.action = na.omit,
+                   #preProc = c("center", "scale"),
+                   importance = "impurity",
+                   num.threads = 15)
+
+# stopCluster(cl)
+end.time <- Sys.time()
+time.taken <- round(end.time - start.time,2)
+time.taken #20.16h
+
+print(model.all)
+
+# [not reproducible despite having the code as the LAD models]
+# Random Forest 
+# 
+# 3716736 samples
+#       8 predictor
+# 
+# No pre-processing
+# Resampling: Cross-Validated (10 fold) 
+# Summary of sample sizes: 3215700, 2574600, 3128916, 3225315, 2789175, 2618196, ... 
+# Resampling results across tuning parameters:
+# 
+#   mtry  splitrule   RMSE      Rsquared   MAE     
+#   2     variance    3.236301  0.3128048  1.211779
+#   2     extratrees  3.453903  0.2169766  1.184256
+#   5     variance    3.217652  0.3331498  1.233429
+#   5     extratrees  3.390341  0.2491582  1.254907
+#   8     variance    3.296126  0.3199896  1.241124
+#   8     extratrees  3.418875  0.2485125  1.283134
+# 
+# Tuning parameter 'min.node.size' was held constant at a value of 5
+# RMSE was used to select the optimal model using the smallest value.
+# The final values used for the model were mtry = 5, splitrule = variance
+#  and min.node.size = 5.
+ 
+varimp_mars <- varImp(model.all) 
+varimp_mars$importance <- varimp_mars$importance %>% 
+  rownames_to_column() %>% 
+  mutate(rowname = ifelse(rowname == "dist", "distance to the nearest city",
+                          ifelse(rowname == "dist.retail", "distance to the nearest retail centre", 
+                                 ifelse(rowname == "London", "distance to London",
+                                        ifelse(rowname == "n.nearest.retail.lag", "Nearest retail centre's wensite density, t-1",
+                                               ifelse(rowname == "n.London.lag", "London's wensite density, t-1",
+                                                      ifelse(rowname == "n.l.slag", "spatial and temporal lag of wensite density",
+                                                             ifelse(rowname == "n.nearest.city.lag", "Nearest city's wensite density, t-1", rowname)))))))) %>% 
+  column_to_rownames()
+
+path.out <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected.png")
+ggplot(varimp_mars) + theme_minimal() + labs(x="") #+ theme(panel.background = element_rect(fill = "white"))
+ggsave(path.out)
+
+path.out <- paste0(path, "/outputs/rf/models/oa_rf/all_OAs/all_OAs_corrected.RData")
+save(model.all, file = path.out)
+
+path.out <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected.csv")
+varimp_mars$importance %>% 
+  rownames_to_column() %>%
+  rename(variable = rowname,
+         importance = Overall) %>% 
+  write_csv(path.out)
 
 #' 
 #' ### train the model in a loop for all but one regions
@@ -762,7 +861,7 @@ for (i in regions){
   
   set.seed(71)
   indices <- CreateSpacetimeFolds(df %>% filter(RGN11CD!=i), 
-                                spacevar = "RGN21CD",
+                                spacevar = "RGN11CD",
                                 timevar = "year", 
                                 k = k)
   
@@ -899,3 +998,20 @@ rf.year.all.metrics %>%
   arrange(Rsquared) %>% 
   dplyr::select(test.region, Rsquared) %>% 
   write_csv(path.out)
+
+#' 
+#' ## Correlations
+#' 
+## --------------------------------------------------------------------------
+cor <- rcorr(as.matrix(df[-(1:3)]))
+r <- cor$r
+p <- cor$P
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected.csv")
+r %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+
+path.out <- paste0(path, "/outputs/rf/correlations/corr_OA_corrected_p.csv")
+p %>% as_tibble(rownames = "rowname") %>% 
+  write_csv(path.out)
+
