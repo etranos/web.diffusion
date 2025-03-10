@@ -11,7 +11,7 @@
 #'   })
 #' ---
 #' 
-## ----setup, include=FALSE--------------------------------------------------
+## ----setup, include=FALSE-----------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE)
 
 library(tidyverse)
@@ -49,7 +49,7 @@ path <- find_rstudio_root_file()
 #' 
 #' [source](https://geoportal.statistics.gov.uk/datasets/postcode-to-output-area-to-lower-layer-super-output-area-to-middle-layer-super-output-area-to-local-authority-district-august-2021-lookup-in-the-uk/about)
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 path.lookup <- paste0(path,"/data/raw/PCD_OA_LSOA_MSOA_LAD_AUG21_UK_LU.csv")
 lookup <- read_csv(path.lookup) %>% 
   dplyr::select(pcds, oa11cd, lsoa11cd, msoa11cd, ladcd, ladnm) %>% 
@@ -68,7 +68,7 @@ lookup <- read_csv(path.lookup) %>%
 #' I use the problem postcodes from n = 1 as these are the true outliers as per the
 #' line plots.
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 n = 1 #number of unique postcodes. 
 m = 11
 
@@ -117,7 +117,7 @@ problem.pcs <- c("SE24 9HP", "CV8 2ED", "GL16 7YA", "CW1 6GL", "M28 2SL", "DE21 
 #' in the above postcodes. I turn them to NAs and then use a regression to impute these
 #' gaps.
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df.corrected <- bind_rows(df9610, df1112) %>% 
   filter(year > 1995 & year < 2013) %>% 
   group_by(pc, year) %>% 
@@ -135,7 +135,7 @@ df.corrected$n[is.na(df.corrected$n)] <- predictions[is.na(df.corrected$n)]
 #' 
 #' ## OA df
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 df <- df.corrected %>% 
   mutate(year = as.integer(as.character(year))) %>% 
   filter(year > 1995 & year < 2013) %>% 
@@ -150,7 +150,7 @@ df <- df.corrected %>%
 #' 
 #' ## spatial data
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # get OA for England and Wales
 path.geo <- paste0(path, "/data/raw/Output_Areas__December_2011__Boundaries_EW_BGC.geojson")
 oa.ew <- st_read(path.geo)
@@ -199,7 +199,7 @@ uk <- st_transform(uk, 4326)  # EPSG code for WGS84
 #' 
 #' ## Full panel
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #oa.sf <- st_as_sf(oa.uk)
 
 oa.full <- replicate(17, oa.uk %>% as_tibble(), simplify = FALSE) %>%
@@ -227,7 +227,7 @@ rm(oa.full)
 #' I use the centroids from arcgis API as they better reflect the city centres than 
 #' than the geometric centres of the boundaries, which I use for `sum(n)`
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # oa centroids
 # oa.uk.c <- (rgeos::gCentroid(oa.uk, byid=TRUE))@coords %>% as.data.frame()
 # oa.uk.c$id <- row.names(oa.uk.c)  #as_tibble(rownames = NA) %>% 
@@ -282,7 +282,7 @@ cities <- geo(city.names, no_query = F, method = "arcgis") %>%
 #' 
 #' ### City boundaries
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 # # cities
 # city.names <- c(
@@ -326,7 +326,7 @@ city.boundaries <- rbind(city.boundaries.ew, city.boundaries.sc.ni)
 #' 
 #' ### Retail centres
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # retail centres <- 
 geo.path <- paste0(path, "/data/raw/Retail_Boundaries_UK.gpkg")
 #retail <-readOGR(geo.path) 
@@ -359,7 +359,7 @@ retail.major.cetres <- retail.major.cetres.help %>%
 #' 
 #' ### Distance to cities
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # NI
 oa.uk.c.ni <- oa.uk.c %>% filter(str_detect(id, "^N"))
 
@@ -419,7 +419,7 @@ sapply(df, function(x) sum(is.na(x)))
 #' 
 #' ### Distance to retail centres
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # dist.retail <- distm(cbind(oa.uk.c$X, oa.uk.c$Y), cbind(retail.major.cetres$X, retail.major.cetres$Y), fun=distHaversine) 
 # dist.retail <- round((dist.retail/1000),2) %>% 
 #   as_tibble()  
@@ -484,7 +484,7 @@ df <- df %>% left_join(dist.retail, by = c("oa11cd" = "oa11cd"))
 #' 
 #' ### n for cities
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 #help.retail <- dist.retail
 
 # n nearest city
@@ -521,7 +521,7 @@ df <- df %>% left_join(london.boundaries.help, by = c("year" = "year"))
 #' 
 #' ### n for nearest retail
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Old definition for retail centre
 # df <- df %>% left_join(df %>% dplyr::select(oa11cd,year, n) %>% 
 #                          rename(n.nearest.retail = n), 
@@ -593,7 +593,7 @@ df <- df %>% left_join(retail.help, by = c("dist.retail.name" = "RC_ID", "year" 
 #' 
 #' ## TODO
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # Lookup: OA to regions
 # **FIXED< DELETE IN TEST** NEED TO ADD NI. NOT A PROBLEM FOR NOW AS IT IS FIXED IN THE TEST SECTION
   
@@ -608,7 +608,7 @@ df <- df %>% left_join(retail.help, by = c("dist.retail.name" = "RC_ID", "year" 
 #' 
 #' ## Spatial and spatio-temporal lags
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # sf_use_s2(FALSE)
 # oa.c <- st_centroid(oa.uk)
 # kn <- knearneigh(oa.c, k = 5)
@@ -629,7 +629,7 @@ df <- df %>%
 #' 
 #' ## RF with CAST
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 # Lookup: OA to regions
 path.lookup <- paste0(path, "/data/raw/Output_Area_to_Region_(December_2011)_Lookup_in_England.csv")  
@@ -720,23 +720,24 @@ df %>% group_by(year) %>%
 #' 
 #' This is helpful when the parallel loop collapses. 
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 unregister_dopar <- function() {
   env <- foreach:::.foreachGlobals
   rm(list=ls(name=env), pos=env)
 }
 unregister_dopar()
 
+
 #' 
 #' ### train the model in a loop for all but one regions
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 rm(list=setdiff(ls(), c("df", "path")))
 
 #' 
 #' 64 GB of swap memory to run the below
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 
 #folds
 k <- 10 # 
@@ -817,7 +818,7 @@ df %>% group_by(year) %>%
   round(2) %>% kable()
 
 #' 
-## --------------------------------------------------------------------------
+## -----------------------------------------------------------------------------
 # train on all but one region, test on that region
 
 regions <- df %>% ungroup() %>% distinct(RGN11CD) 

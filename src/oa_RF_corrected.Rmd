@@ -788,12 +788,12 @@ print(model.all)
 # Resampling results across tuning parameters:
 # 
 #   mtry  splitrule   RMSE      Rsquared   MAE     
-#   2     variance    3.236301  0.3128048  1.211779
-#   2     extratrees  3.453903  0.2169766  1.184256
-#   5     variance    3.217652  0.3331498  1.233429
-#   5     extratrees  3.390341  0.2491582  1.254907
-#   8     variance    3.296126  0.3199896  1.241124
-#   8     extratrees  3.418875  0.2485125  1.283134
+#   2     variance    3.236887  0.3130255  1.212322
+#   2     extratrees  3.452335  0.2176573  1.182235
+#   5     variance    3.218065  0.3330621  1.233640
+#   5     extratrees  3.390579  0.2490956  1.252252
+#   8     variance    3.295241  0.3206509  1.240731
+#   8     extratrees  3.420014  0.2487011  1.283227
 # 
 # Tuning parameter 'min.node.size' was held constant at a value of 5
 # RMSE was used to select the optimal model using the smallest value.
