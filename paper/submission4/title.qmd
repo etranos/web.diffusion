@@ -1,0 +1,56 @@
+---
+title: "A multi-scale story of the diffusion of a new technology: the web"
+author:
+  - name: Emmanouil Tranos
+    email: e.tranos@bristol.ac.uk
+    affiliations: 
+      - id: some-tech
+        name: University of Bristol
+        department: School of Geographical Sciences
+        address: University Road, BS8 1SS
+        city: Bristol
+        country: UK
+    corresponding: e.tranos@bristol.ac.uk
+address:
+  - attributes:
+        corresponding: true
+    note: This is the first author footnote.
+abstract: |
+    This paper investigates the spatial diffusion of a new technology that is the Web in the UK. It employs novel data and machine learning methods to model the influence of well-established diffusion mechanisms. Contrary to previous studies, it adopts multiple scales, high spatial granularity and a long study period that captures the early stages of the Web until its maturity (1996-2012). Findings reveal the importance of such spatial mechanisms (namely distance, urban hierarchy and the S-shaped pattern of the cumulative level of adoption) even at granular scales. They also highlight spatial heterogeneity and instances of leapfrogging. 
+keywords: 
+  - diffusion
+  - technologies
+  - Web
+  - digital
+date: last-modified
+format:
+  elsevier-pdf:
+    keep-tex: true
+    text: |
+      \usepackage[demo]{graphicx} % "demo" option just for this example
+      \usepackage{subcaption}
+    journal:
+      name: Journal of Economic Geography
+      formatting: preprint
+      model: 3p
+      cite-style: authoryear
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Acknowledgements 
+
+Many thanks to Dr Levi Wolf and Professor Dani Arribas-Bel for their constructive 
+comments. Also many thanks to the participants of the 6th Global Conference on 
+Economic Geography and the Winter Seminar of GfR. Then, many thanks to the 
+organisers of the seminar series and the members of the Quantitative Spatial 
+Science (QuSS) Research Group at the University of Bristol, the Centre for 
+Business Prosperity Research Group at Aston University (Dr Tasos Kitsos), and 
+the Centre for Innovation Research (Professor Tom Broekel) at the University of 
+Stavanger. Finally, many thanks to the editor and the three anonymous reviewers 
+for the very helpful comments and suggestions.
+
+# Funding 
+
+No external funding was received for this work.

@@ -1,0 +1,71 @@
+---
+title: "Response to editor comments"
+format: pdf
+bibliography: bibliography.bib
+---
+
+\color{teal}
+But I think you need to do a little more to tease out the wider theoretical significance of your findings. I can see two ways of doing this. First, you can discuss how the diffusion patterns you identify could apply to other phenomenon. What do we learn from the specifics of the internet in the UK that is relevant to other contexts? This could be other international contexts but more likely it is other technologies. An example that you mention in the literature review is wind turbine technology. I think we need to hear more about how your approach and findings can be applied to other studies of technology diffusion. I also think your findings need linking more to economic geography literatures. Again, you hint at this when mentioning clusters, cities and regions. And the findings clearly talk to those kinds of debates about agglomeration, localization and centripetal forces. I think you need to more explicitly outline in the introduction and conclusions how the diffusion you identify is relevant to, could be further explained by and offers new insights in relation to these (and/or other) wider economic geography debates.
+\color{black}
+
+Thank you for the constructive suggestions. I have added half a paragraph in the 
+introduction, which highlights, as suggested, the link between the findings and
+key economic geography themes. I then further discuss these links in more detail 
+in the Conclusions section. I also expanded the part that discusses the 
+transferability of both the framework this paper offers to other geographical
+contexts, but also the findings to other technologies. I exemplify the latter 
+with 5G antennas, which is a current hot topic. For easy reference, I paste the 
+new text below.
+
+In the Introduction section:
+
+> Hence, this paper exposes the importance of spatially-explicit diffusion 
+mechanisms at granular geographical scales without the risk of MAUP. The results
+are linked to core debates in economic geography about agglomeration 
+externalities, centripetal forces and the spatially clustered demand for new 
+technologies. Although the paper focuses on the Web, the framework offered here 
+and the findings which illustrate the micro-geographical patterns of the 
+diffusion of a new technology are applicable to other new technologies. 
+
+In the Conclusion section:
+
+> This empirical finding speaks directly to the spatial clustering literature. 
+Just like the clustering of firms [@boschma2011emerging; 
+@audretsch1998innovation], the adoption of a new technology is shaped by 
+geographically bounded spillovers and path dependency visible even at very
+local scales.
+
+> ...
+
+> While previous studies had highlighted these mechanisms
+[@hagerstrand1968innovation; @rogers2010diffusion; @grubler1990rise], their role 
+had never been tested before at such a granular scale 
+<!-- response to editor -->
+to overcome the potential risk of a MAUP. The spatial heterogeneity of 
+the diffusion mechanisms the analysis revealed demonstrates the need for 
+observing the diffusion of a new technology at a scale as close as possible to 
+the individual level as otherwise significant adoption patterns and, importantly
+for economic geography, spatially clustered patterns can be missed. 
+The economic geography literature has found evidence of a MAUP in various 
+concepts (see for example @briant2010dots for spatial concentration, 
+agglomeration economies, and trade determinants and @andini2019social for social 
+capital), but this is the first paper that revealed how the scale of observation 
+can affect our understanding of the diffusion of a new technology.
+
+> ...
+
+> These contributions are transferable to different geographical and technological 
+contexts. Although the focus of this paper is the Web, the framework and the 
+findings are applicable to different technologies. For example, the three 
+diffusion mechanisms -- that is distance, urban hierarchy and the S-shaped 
+pattern of the cumulative level of adoption -- and their spatial heterogeneity 
+can be used to explain and, importantly from a policy perspective, predict local 
+demand for different new technologies. While, for instance, it is well expected 
+to firstly install new infrastructure such as 5G antennas in central urban areas, 
+the results indicate that proximity to these core urban areas can also drive 
+local demand for such a technology, probably at a second stage. In terms of 
+the empirical framework, it can be used with any point data representing 
+technological adoption. Also, archived web data can be obtain for other country 
+domains.
+
+## References
