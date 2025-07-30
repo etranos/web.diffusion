@@ -14,7 +14,7 @@ This paper investigates the spatial diffusion of a new technology that is the We
 
 ## Data availability
 
-The data used in this paper can be obtained from [https://doi.org/10.5281/zenodo.16575238](https://doi.org/10.5281/zenodo.16575238)
+The data used in this paper can be obtained from [https://doi.org/10.5281/zenodo.16610235](https://doi.org/10.5281/zenodo.16610235)
 and has been derived from the [JISC UK Web Domain Dataset (1996-2013)](https://data.webarchive.org.uk/opendata/ukwa.ds.2/). 
 DOI: [https://doi.org/10.5259/ukwa.ds.2/1](https://doi.org/10.5259/ukwa.ds.2/1)
 
