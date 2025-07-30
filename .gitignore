@@ -6,7 +6,7 @@
 ._.DS_Store
 **/.DS_Store
 **/._.DS_Store
-/_extensions/
-/abstract_notes/
+_extensions/*
+/abstracts_notes/
 /literature/
 /presentation/
