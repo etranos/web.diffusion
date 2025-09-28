@@ -1,0 +1,292 @@
+---
+title: "A multi-scale story of the diffusion of a new technology: the Web"
+date: last-modified
+format:
+  elsevier-pdf:
+    keep-tex: true
+    text: |
+      \usepackage[demo]{graphicx} % "demo" option just for this example
+      \usepackage{subcaption}
+    journal:
+      name: Journal of Economic Geography
+      model: 3p
+      cite-style: authoryear
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE) # By default, hide code; set to TRUE to see code
+#knitr::opts_chunk$set(fig.pos = 'p') # Places figures on their own pages
+knitr::opts_chunk$set(out.width = '100%', dpi=300) # Figure resolution and size
+knitr::opts_chunk$set(fig.env="figure") # Latex figure environment
+
+#insert libraries here
+library(rprojroot)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(sf)
+library(cowplot)
+library(patchwork)
+
+# This is the project path
+path <- find_rstudio_root_file()
+```
+
+
+<!-- This file is for creating a stand alone appendix. It was created from tranos2025.qmd after deleting everything but the appendix part and adding an equation set counter.-->
+
+<!-- To remove the corresponding author footnote, the appendix.tex should be manually tweaked: delete the \cortext[cor1]{Corresponding author} part. -->
+
+\setcounter{section}{0}
+\renewcommand{\thesection}{\Alph{section}}
+\setcounter{table}{0}
+\renewcommand{\thetable}{A\arabic{table}}
+\setcounter{figure}{0}
+\renewcommand{\thefigure}{A\arabic{figure}}
+\setcounter{equation}{0}
+\renewcommand{\theequation}{A\arabic{equation}}
+
+
+# Appendix {#appendix}
+
+<!-- #sec-appendix -->
+
+<!-- .appendix -->
+
+\counterwithin{figure}{section}
+\counterwithin{table}{section}
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_uk10}Cumulative adoption of the Web, UK; up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/s/s_uk_per_firm_10.png")
+knitr::include_graphics(path.image)
+```
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{s_map10}LAD Web diffusion speed, 1996-2012; up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/s/speed_map_10.png")
+knitr::include_graphics(path.image)
+```
+
+```{r echo=FALSE, message=FALSE, fig.cap="\\label{rank10}Dynamics of Web diffusion based on LAD rankings; up to 10 postcodes per website"}
+path.image <- paste0(path, "/outputs/ranks/web_per_firm2000_2012_only0595_av_10.png")
+knitr::include_graphics(path.image)
+```
+
+```{r, morani10, echo=FALSE, message=FALSE, fig.cap="\\label{morani10}Website density Moran's I; up to 10 postcodes per website"}
+
+path.in.la <- paste0(path, "/outputs/lisa/corrected/LA/morani_la_10.csv")
+path.in.oa <- paste0(path, "/outputs/lisa/corrected/oa/morani_oa_10.csv")
+
+la.m <- read_csv(path.in.la) %>% 
+  filter(p < 0.001) %>% # all values were significant
+  mutate(spatial.unit = 'LAD')
+oa.m <- read_csv(path.in.oa) %>% 
+  filter(p < 0.001) %>% # all values were significant
+  mutate(spatial.unit = 'OA')
+
+bind_rows(la.m, oa.m) %>% 
+  ggplot(aes(x=year, y=morani, fill= spatial.unit)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  ylab('Moran\'s I') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
+```
+
+```{r, echo=FALSE, message=FALSE, fig.cap="\\label{lisa10}\\centering Website density LISA maps; up to 10 postcodes per website", out.height="80%"}
+
+path.image1 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la1996.png")
+path.image2 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la2000.png")
+path.image3 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc11_la2012.png")
+path.image4 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa1996.png")
+path.image5 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa2000.png")
+path.image6 <- paste0(path, "/outputs/lisa/corrected/OA/lisa_level_pc11_oa2012.png")
+path.image7 <- paste0(path, "/outputs/lisa/corrected/LA/lisa_level_pc1_la_legend.png")
+
+p1 <- ggdraw() + draw_image(path.image1)  
+p2 <- ggdraw() + draw_image(path.image2)  
+p3 <- ggdraw() + draw_image(path.image3)  
+p4 <- ggdraw() + draw_image(path.image4) 
+p5 <- ggdraw() + draw_image(path.image5)
+p6 <- ggdraw() + draw_image(path.image6)  
+p7 <- ggdraw() + draw_image(path.image7)  
+
+par(mar=rep(0,4)) # no margins
+
+p <- p1 / plot_spacer() / p4 / p2 / plot_spacer() / p5 / p3 / plot_spacer() / p6 +
+  plot_layout(ncol = 3, widths = c(1, -0.8, 1), heights = c(1,1,1))
+
+# p + inset_element(p7, left = 0.45, bottom = -0.5, right = 0.6, top = 0.1)
+p + inset_element(p7, left = 0.29, bottom = 0.8, right = 0.49, top = 1.2)
+
+```
+
+```{r, gini10, echo=FALSE, message=FALSE, fig.cap="\\label{gini10}Website density Gini coefficient; up to 10 postcodes per website"}
+
+path.in.la <- paste0(path, "/outputs/gini/gini_la_10.csv")
+path.in.oa <- paste0(path, "/outputs/gini/gini_oa_10.csv")
+
+la.gini <- read_csv(path.in.la) %>% 
+  mutate(spatial.unit = 'LAD')
+oa.gini <- read_csv(path.in.oa) %>% 
+  mutate(spatial.unit = 'OA')
+
+bind_rows(la.gini, oa.gini) %>%
+  rename(Gini = 'gini(a$n)') %>% 
+  ggplot(aes(x=year, y=Gini, fill= spatial.unit)) +
+  geom_bar(stat = 'identity', position = 'dodge') +
+  ylab('Gini') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous(NULL, labels = as.character(1996:2012), breaks = 1996:2012) +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7),
+        axis.text.x = element_text(angle = 0, vjust = 0.5, hjust=1))
+```
+
+```{r varimp10, eval = T, echo=FALSE, message = F, warning=FALSE, fig.cap="\\label{var.imp10}Variable importance; up to 10 postcodes per website", out.height="60%"}
+path.importance.lad <- paste0(path, "/outputs/rf/figures/varimp_LA_corrected_10.csv")
+path.importance.oa <- paste0(path, "/outputs/rf/figures/varimp_OA_corrected_10.csv")
+
+importance.oa <- read_csv(path.importance.oa) %>% 
+  mutate(id = c("LD", "NC", "NR", "STL", "Y", "DL", "DNC", "DNR")) %>% 
+  mutate(variable = str_to_sentence(variable))
+importance.lad <- read_csv(path.importance.lad) %>% 
+  mutate(id = c("LD", "NC", "STL", "Y", "DL", "DNC")) %>% 
+  mutate(variable = str_to_sentence(variable))
+
+
+importance.oa %>% 
+  rename(OA = importance) %>% 
+  left_join(importance.lad %>% rename(LAD = importance), by = "id") %>%
+  dplyr::select(-variable.y, -id) %>% 
+  rename(variable = variable.x) %>% 
+  pivot_longer(!variable, names_to = "spatial.unit", values_to = "importance") %>% 
+  mutate(order = ifelse(variable == "Distance to london", 1,
+                        ifelse(variable == "London's website density, t-1", 2,
+                               ifelse(variable == "Distance to the nearest city", 3,
+                                      ifelse(variable == "Nearest city's website density, t-1", 4,
+                                             ifelse(variable == "Distance to the nearest retail centre", 5,
+                                                    ifelse(variable == "Nearest retail centre's website density, t-1", 6,
+                                                           ifelse(variable == "Spatial and temporal lag of website density", 7, 8)))))))) %>% 
+  ggplot(aes(x=importance, y=reorder(variable, desc(order)), #forcats::fct_reorder(variable, importance), 
+         fill = spatial.unit)) +
+  geom_col(position = 'dodge') +
+  ylab('') +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5), 
+        axis.text.x = element_text(vjust = 0.5, hjust=1)) +
+  scale_fill_manual('Spatial unit: ', 
+                    values = c("LAD" = "grey80",
+                                "OA"="grey48"),
+                     limits = force) +
+  scale_x_continuous('Variable importance') +
+  theme(legend.position="bottom",
+        text = element_text(size = 7),
+        legend.text=element_text(size=7),
+        legend.title=element_text(size=7),
+        axis.title=element_text(size=7))
+```
+
+```{r, echo=FALSE, message = F, error=FALSE}
+
+path.geo <- paste0(path, "/data/raw/Local_Authority_Districts_(December_2021)_UK_BUC.geojson")
+la <- st_read(path.geo, quiet = T)
+# source: https://geoportal.statistics.gov.uk/
+
+# spatial transformations
+la <- st_transform(la, 4326)
+
+# regions
+path.regions <- paste0(path, "/data/raw/LAD21_RGN21_EN_LU.csv")
+regions <- read_csv(path.regions)
+
+s.la.path <- paste0(path, "/data/temp/s_la_per_firm.csv")
+
+read.csv(s.la.path) %>% 
+  left_join(la %>% as_tibble() %>% select(LAD21CD, LAD21NM),
+            by = c("ladcd" = "LAD21CD")) %>% 
+  arrange(estimate) %>%
+  left_join(regions %>% select(LAD21CD, RGN21NM), by = c("ladcd" = "LAD21CD")) %>% 
+  select(LAD21NM, RGN21NM, estimate, std.error, r2, fast) %>% 
+  rename(LAD = LAD21NM,
+         Region = RGN21NM,
+         "t_0 estimate" = "estimate",
+         "R-squared" = "r2",
+         "Std. error" = "std.error",
+         "Diffusion speed" = "fast") %>% 
+  kable(caption= "S-curve estiamtes for LAD\\label{table.s.lads}", 
+        digits=3,
+        align = c("l", "l", "c", "c", "c", "c"),
+        col.names = c("LAD", "Region", "$t_0$ estimate", "Std. error", "$R^2$", "Diffusion speed"))
+```
+
+```{r regions_no_imp}
+path.lad <- paste0(path, "/outputs/rf/figures/test_regions_LA_corrected_10.csv")
+path.oa <- paste0(path, "/outputs/rf/figures/test_regions_OA_corrected_10.csv")
+
+lad <- read.csv(path.lad) %>% 
+  rename('RSquared LAD' = Rsquared)
+
+oa <- read.csv(path.oa) %>% rename(Region = test.region,
+                                   'RSquared OA' = Rsquared)
+
+lad %>% left_join(oa) %>% 
+  mutate('Rank OA' = rank(desc(`RSquared OA`)),
+         'Rank LAD' = rank(desc(`RSquared LAD`))) %>% 
+  relocate(5, .after = 2) %>% 
+  arrange(`Rank LAD`) %>% 
+  kable(caption= "Regional differences; up to 10 postcodes per website\\label{table.regions.10}", 
+        digits=3,
+        col.names = c("Region", "$R^2$ LAD", "Rank LAD", "$R^2$ OA", "Rank OA")) 
+```
+
+|                   | $RMSE$ | $R^{2}$ | $MAE$ |
+|-------------------|--------|---------|-------|
+| Local Authorities | 0.286  | 0.506   | 0.223 |
+
+: Model metrics for growth model {#tbl-model-growth-metrics}
+
+@tbl-model-growth-metrics presents the results of a Random Forest model that 
+was trained based on Equation \ref{model.growth} using all LAD data points. In
+essence, this is a model similar to the one estimated based on Equation
+3 and presented in Table 2, with the main difference 
+being the dependent variable which is the year growth rate of website 
+density for each LAD. To avoid cases with LAD have no websites, 
+$t \in [2000, 2012]$. The high predictive capability of the model reflects 
+the robustness of the modelling approach.
+
+\begin{align} \label{model.growth}
+Website\,Density\,Growth_{t} \sim Distance\,London +
+Website\,density\,London_{t-1} +\notag\\
+Distance\,Nearest\,City +
+Website\,density\,Nearest\,City_{t-1} +\notag\\
+Distance\,Nearest\,Retail_{i} +
+Website\,density\,Nearest\,Retail_{t-1} +\notag\\
+W*\, Website\,density_{t-1} +\notag\\ 
+year_{t}
+\end{align}
+
+
+<!-- # References {#references .unnumbered} -->

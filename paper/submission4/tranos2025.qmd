@@ -412,7 +412,7 @@ To capture the diffusion of the commercial Web, a website density metric is
 developed for two different geographical scales that are discussed later in 
 this section. The main data are counts of commercial websites that are 
 calculated using data from the Internet Archive[^2] and, specifically, the 
-JISC UK Web Domain Dataset [@ukwebarchive]. The Internet Archive is one of the 
+JISC UK Web Domain Dataset [@ukwebarchive][^3]. The Internet Archive is one of the 
 most complete and oldest archive of webpages in the world operating since
 1996 [@ainsworth2011much; @holzmann2016dawn]. It is a web crawler, which
 discovers webpages by following the hyperlinks of every webpage it
@@ -423,6 +423,7 @@ long list of 2.5 billion URLs of archived webpages including also the
 archival timestamp.
 
 [^2]: [https://archive.org/](https://archive.org/).
+[^3]: The data used here is directly available from @tranos_2025_16610235.
 
 Instead of using the whole .uk ccTLD, this paper focuses on its
 commercial subset, the .co.uk second level domain (SLD). This choice
@@ -567,9 +568,9 @@ are standardised by the number of firms in LAD to avoid biases associated with
 LAD hosting a large number of firms. Given that there is no such readily 
 available statistic for the OA, the actual OA level counts are used. However, 
 because of the the consistent spatial definition of OA (they host 40-250
-households),[^3] website counts in OA are interpreted as a density metric too.
+households),[^4] website counts in OA are interpreted as a density metric too.
 
-[^3]: <https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies>
+[^4]: <https://www.ons.gov.uk/methodology/geography/ukgeographies/statisticalgeographies>
 
 <!-- S -->
 These website density metrics are used for the different stages of the analysis. 
@@ -647,7 +648,7 @@ one year lag of website density in London, the largest city in the UK, and a
 one year lag of the website density in the nearest city. Both variables clearly
 illustrate the urban hierarchy in the UK. Especially for the OA models, a 
 third predictor is added to capture hierarchy at a much more granular scale:
-a one year lag of the website density in the the nearest retail centre [^4]. As
+a one year lag of the website density in the the nearest retail centre [^5]. As
 the literature illustrates, retail centres are key components of urban systems
 [@dennis2002central; @jones2021reframing]. Due to the small sizes of the retail 
 centres, the latter is only relevant for and included in the OA models and not 
@@ -672,7 +673,7 @@ pattern of the cumulative adoption is captured by a time trend variable.
 Hence, the model will follow the following generic form (Eq.
 \ref{eq:model}):
 
-[^4]: The retail centres data have been obtained by the Consumer Data Research Centre, an ESRC data investment, under project ID CDRC 498-01, ES/L011840/1; ES/L011891/1: <https://data.cdrc.ac.uk/dataset/retail-centre-boundaries-and-open-indicators>.
+[^5]: The retail centres data have been obtained by the Consumer Data Research Centre, an ESRC data investment, under project ID CDRC 498-01, ES/L011840/1; ES/L011891/1: <https://data.cdrc.ac.uk/dataset/retail-centre-boundaries-and-open-indicators>.
 
 
 \begin{align} \label{eq:model}
